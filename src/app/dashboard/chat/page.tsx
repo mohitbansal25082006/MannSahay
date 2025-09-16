@@ -15,17 +15,30 @@ import {
   AlertTriangle,
   Lightbulb,
   Heart,
-  Phone
+  Phone,
+  Mic,
+  Square,
+  Play,
+  Pause,
+  Volume2
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import ReactMarkdown from 'react-markdown';
+import { useAudioRecorder } from '@/hooks/useAudioRecorder';
+import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 
 const suggestedMessages = [
   "I'm feeling really stressed about my exams",
   "How can I manage anxiety?",
   "I feel lonely at college",
   "Help me with sleep issues",
-  "I'm overwhelmed with assignments"
+  "I'm overwhelmed with assignments",
+  // Hindi suggestions
+  "मैं अपनी परीक्षाओं को लेकर बहुत तनाव में हूं",
+  "चिंता को कैसे प्रबंधित कर सकता हूं?",
+  "मैं कॉलेज में अकेला महसूस करता हूं",
+  "नींद की समस्याओं में मदद करें",
+  "मैं असाइनमेंट्स से अभिभूत हूं"
 ];
 
 const emergencyContacts = [
@@ -43,13 +56,41 @@ const emergencyContacts = [
     name: "Indian Emergency",
     number: "108 or 112",
     description: "Emergency services in India"
+  },
+  {
+    name: "Vandrevala Foundation",
+    number: "9999666555",
+    description: "Mental health support in India"
   }
 ];
 
 export default function ChatPage() {
   const { data: session } = useSession();
-  const [language, setLanguage] = useState('en');
+  const [language, setLanguage] = useState<'en' | 'hi'>('en');
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [isGeneratingSpeech, setIsGeneratingSpeech] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const {
+    isRecording,
+    audioBlob,
+    audioUrl,
+    startRecording,
+    stopRecording,
+    clearRecording,
+    error: recordingError
+  } = useAudioRecorder();
+
+  const {
+    isPlaying,
+    currentTime,
+    duration,
+    play,
+    pause,
+    seek,
+    loadAudio,
+    error: playbackError
+  } = useAudioPlayer();
 
   const { messages, input, handleInputChange, handleSubmit, isLoading, setInput, setMessages } = useChat({
     api: '/api/chat',
@@ -69,9 +110,17 @@ export default function ChatPage() {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    if (recordingError) {
+      console.error('Recording error:', recordingError);
+    }
+    if (playbackError) {
+      console.error('Playback error:', playbackError);
+    }
+  }, [recordingError, playbackError]);
+
   const handleSuggestedMessage = (message: string) => {
     setInput(message);
-    // Auto-submit after a short delay
     setTimeout(() => {
       const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
       const form = document.querySelector('form');
@@ -91,6 +140,74 @@ export default function ChatPage() {
     if (!input.trim()) return;
     
     handleSubmit(e as any);
+  };
+
+  const handleAudioSubmit = async () => {
+    if (!audioBlob) return;
+
+    setIsTranscribing(true);
+    try {
+      const formData = new FormData();
+      formData.append('audio', audioBlob);
+      formData.append('language', language);
+
+      const response = await fetch('/api/audio/transcribe', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const { text } = await response.json();
+        setInput(text);
+        // Auto-submit after transcription
+        setTimeout(() => {
+          const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+          const form = document.querySelector('form');
+          form?.dispatchEvent(submitEvent);
+          clearRecording();
+        }, 100);
+      } else {
+        console.error('Transcription failed');
+      }
+    } catch (error) {
+      console.error('Transcription error:', error);
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+
+  const handleTextToSpeech = async (text: string) => {
+    setIsGeneratingSpeech(true);
+    try {
+      const response = await fetch('/api/audio/speech', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: text,
+          language: language,
+        }),
+      });
+
+      if (response.ok) {
+        const audioBuffer = await response.arrayBuffer();
+        loadAudio(audioBuffer);
+        play();
+      } else {
+        console.error('Speech generation failed');
+      }
+    } catch (error) {
+      console.error('Speech generation error:', error);
+    } finally {
+      setIsGeneratingSpeech(false);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -210,6 +327,23 @@ export default function ChatPage() {
                             <p className="text-sm">{message.content}</p>
                           )}
                         </div>
+                        
+                        {/* Audio playback for assistant messages */}
+                        {message.role === 'assistant' && (
+                          <div className="mt-2 flex items-center space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleTextToSpeech(message.content)}
+                              disabled={isGeneratingSpeech}
+                              className="text-xs"
+                            >
+                              <Volume2 className="h-3 w-3 mr-1" />
+                              {isGeneratingSpeech ? 'Generating...' : 'Listen'}
+                            </Button>
+                          </div>
+                        )}
+                        
                         <p className="text-xs text-gray-500 mt-1">
                           {new Date().toLocaleTimeString()}
                         </p>
@@ -241,16 +375,62 @@ export default function ChatPage() {
               
               {/* Input Area */}
               <div className="p-4 border-t">
+                {/* Audio Recording Section */}
+                {audioBlob && (
+                  <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-blue-800">Recorded audio</span>
+                      <audio src={audioUrl!} controls className="h-8" />
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        size="sm"
+                        onClick={handleAudioSubmit}
+                        disabled={isTranscribing}
+                      >
+                        {isTranscribing ? 'Transcribing...' : 'Send Audio'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={clearRecording}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 <form onSubmit={customHandleSubmit}>
                   <div className="flex space-x-2">
                     <Textarea
                       value={input}
                       onChange={handleInputChange}
                       onKeyPress={handleKeyPress}
-                      placeholder={language === 'hi' ? 'अपने विचार साझा करें...' : 'Share your thoughts...'}
+                      placeholder={
+                        language === 'hi' 
+                          ? 'अपने विचार साझा करें या माइक्रोफोन बटन दबाएं...' 
+                          : 'Share your thoughts or press the microphone button...'
+                      }
                       className="flex-1 min-h-[44px] max-h-32 resize-none"
-                      disabled={isLoading}
+                      disabled={isLoading || isRecording}
                     />
+                    
+                    {/* Voice Recording Button */}
+                    <Button
+                      type="button"
+                      variant={isRecording ? "destructive" : "outline"}
+                      onClick={isRecording ? stopRecording : startRecording}
+                      disabled={isLoading}
+                      className="flex-shrink-0"
+                    >
+                      {isRecording ? (
+                        <Square className="h-4 w-4" />
+                      ) : (
+                        <Mic className="h-4 w-4" />
+                      )}
+                    </Button>
+                    
                     <Button 
                       type="submit" 
                       disabled={!input.trim() || isLoading}
@@ -260,6 +440,38 @@ export default function ChatPage() {
                     </Button>
                   </div>
                 </form>
+
+                {/* Audio Player */}
+                {isPlaying && (
+                  <div className="mt-3 p-3 bg-green-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={isPlaying ? pause : play}
+                      >
+                        {isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+                      </Button>
+                      <div className="flex-1">
+                        <div className="text-xs text-green-800 mb-1">
+                          Playing response...
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-xs text-green-600">{formatTime(currentTime)}</span>
+                          <input
+                            type="range"
+                            min="0"
+                            max={duration}
+                            value={currentTime}
+                            onChange={(e) => seek(parseFloat(e.target.value))}
+                            className="flex-1 h-1 bg-green-200 rounded-lg appearance-none cursor-pointer"
+                          />
+                          <span className="text-xs text-green-600">{formatTime(duration)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
