@@ -38,6 +38,11 @@ const emergencyContacts = [
     name: "Crisis Text Line",
     number: "Text HOME to 741741",
     description: "Free 24/7 crisis support"
+  },
+  {
+    name: "Indian Emergency",
+    number: "108 or 112",
+    description: "Emergency services in India"
   }
 ];
 
@@ -46,9 +51,14 @@ export default function ChatPage() {
   const [language, setLanguage] = useState('en');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading, setInput } = useChat({
+  const { messages, input, handleInputChange, handleSubmit, isLoading, setInput, setMessages } = useChat({
     api: '/api/chat',
-    body: { language },
+    body: {
+      language: language
+    },
+    onError: (error) => {
+      console.error('Chat error:', error);
+    }
   });
 
   const scrollToBottom = () => {
@@ -61,6 +71,12 @@ export default function ChatPage() {
 
   const handleSuggestedMessage = (message: string) => {
     setInput(message);
+    // Auto-submit after a short delay
+    setTimeout(() => {
+      const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+      const form = document.querySelector('form');
+      form?.dispatchEvent(submitEvent);
+    }, 100);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -70,8 +86,15 @@ export default function ChatPage() {
     }
   };
 
+  const customHandleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    
+    handleSubmit(e as any);
+  };
+
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           AI Chat Companion
@@ -112,9 +135,9 @@ export default function ChatPage() {
               </CardTitle>
             </CardHeader>
             
-            <CardContent className="flex-1 flex flex-col">
+            <CardContent className="flex-1 flex flex-col p-0">
               {/* Messages Area */}
-              <ScrollArea className="flex-1 pr-4">
+              <ScrollArea className="flex-1 px-6 py-4">
                 <div className="space-y-4">
                   {messages.length === 0 && (
                     <div className="text-center py-8">
@@ -143,9 +166,9 @@ export default function ChatPage() {
                     </div>
                   )}
                   
-                  {messages.map((message) => (
+                  {messages.map((message, index) => (
                     <div
-                      key={message.id}
+                      key={index}
                       className={`flex items-start space-x-3 ${
                         message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''
                       }`}
@@ -217,25 +240,27 @@ export default function ChatPage() {
               </ScrollArea>
               
               {/* Input Area */}
-              <form onSubmit={handleSubmit} className="mt-4">
-                <div className="flex space-x-2">
-                  <Textarea
-                    value={input}
-                    onChange={handleInputChange}
-                    onKeyPress={handleKeyPress}
-                    placeholder={language === 'hi' ? 'अपने विचार साझा करें...' : 'Share your thoughts...'}
-                    className="flex-1 min-h-[44px] max-h-32 resize-none"
-                    disabled={isLoading}
-                  />
-                  <Button 
-                    type="submit" 
-                    disabled={!input.trim() || isLoading}
-                    size="lg"
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
-              </form>
+              <div className="p-4 border-t">
+                <form onSubmit={customHandleSubmit}>
+                  <div className="flex space-x-2">
+                    <Textarea
+                      value={input}
+                      onChange={handleInputChange}
+                      onKeyPress={handleKeyPress}
+                      placeholder={language === 'hi' ? 'अपने विचार साझा करें...' : 'Share your thoughts...'}
+                      className="flex-1 min-h-[44px] max-h-32 resize-none"
+                      disabled={isLoading}
+                    />
+                    <Button 
+                      type="submit" 
+                      disabled={!input.trim() || isLoading}
+                      size="lg"
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </form>
+              </div>
             </CardContent>
           </Card>
         </div>

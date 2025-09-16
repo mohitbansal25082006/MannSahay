@@ -3,30 +3,53 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { openai, assessRiskLevel, systemPrompt } from '@/lib/openai';
 import { prisma } from '@/lib/db';
-import { OpenAIStream, StreamingTextResponse } from 'ai';
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    console.log('Chat API called');
     
-    if (!session?.user?.id) {
+    const session = await getServerSession(authOptions);
+    console.log('Session:', session);
+    
+    if (!session?.user?.email) {
+      console.log('Unauthorized: No session or email');
       return new Response('Unauthorized', { status: 401 });
     }
 
-    const { message, language = 'en' } = await request.json();
+    // Get user from database to ensure they exist
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    });
 
-    if (!message || typeof message !== 'string') {
+    if (!user) {
+      console.log('User not found in database');
+      return new Response('User not found', { status: 404 });
+    }
+
+    // Parse the request body
+    const body = await request.json();
+    console.log('Request body:', body);
+    
+    const { messages: chatMessages, language = 'en' } = body;
+    
+    // Extract the latest message from the messages array
+    const latestMessage = chatMessages?.[chatMessages.length - 1]?.content;
+    console.log('Latest message:', latestMessage);
+
+    if (!latestMessage || typeof latestMessage !== 'string') {
+      console.log('Invalid message format:', latestMessage);
       return new Response('Message is required', { status: 400 });
     }
 
     // Assess risk level
-    const riskLevel = assessRiskLevel(message);
+    const riskLevel = assessRiskLevel(latestMessage);
+    console.log('Risk level assessed:', riskLevel);
 
     // Save user message to database
     await prisma.chat.create({
       data: {
-        userId: session.user.id,
-        content: message,
+        userId: user.id,
+        content: latestMessage,
         role: 'user',
         language,
         riskLevel: riskLevel as any
@@ -35,61 +58,79 @@ export async function POST(request: NextRequest) {
 
     // Get recent chat history for context
     const recentChats = await prisma.chat.findMany({
-      where: { userId: session.user.id },
+      where: { userId: user.id },
       orderBy: { timestamp: 'desc' },
       take: 10
     });
 
-    // Build conversation history
-    const messages = [
+    // Build conversation history for OpenAI
+    const openaiMessages = [
       {
         role: 'system' as const,
-        content: `${systemPrompt}\n\nUser's preferred language: ${language === 'hi' ? 'Hindi' : 'English'}. You may mix Hindi and English naturally.`
+        content: `${systemPrompt}\n\nUser's preferred language: ${language === 'hi' ? 'Hindi' : 'English'}. Respond in the same language as the user's message.`
       },
-      ...recentChats.reverse().slice(0, 8).map(chat => ({
+      ...recentChats.reverse().map(chat => ({
         role: chat.role as 'user' | 'assistant',
         content: chat.content
-      })),
-      {
-        role: 'user' as const,
-        content: message
-      }
+      }))
     ];
 
     // Add crisis response if high risk
     if (riskLevel === 'HIGH') {
-      messages.unshift({
+      openaiMessages.unshift({
         role: 'system' as const,
-        content: 'IMPORTANT: This user may be in crisis. Be extra supportive and gently encourage seeking immediate help from a counselor, trusted person, or emergency services. Still provide emotional support but prioritize safety.'
+        content: 'CRISIS ALERT: User may be in immediate danger. Be extremely supportive, validate their feelings, and strongly encourage contacting emergency services (108/112), a trusted person, or crisis helpline immediately while still providing emotional support.'
       });
     }
+
+    console.log('Sending to OpenAI:', openaiMessages);
 
     // Call OpenAI API
     const response = await openai.chat.completions.create({
       model: 'gpt-4',
-      messages,
+      messages: openaiMessages,
       temperature: 0.7,
       max_tokens: 500,
       stream: true,
     });
 
-    // Convert the response to a ReadableStream to avoid type issues
-    const readableStream = new ReadableStream({
+    // Create a custom ReadableStream
+    const stream = new ReadableStream({
       async start(controller) {
         const encoder = new TextEncoder();
-        // @ts-ignore - We'll handle the stream manually to avoid type conflicts
-        for await (const chunk of response) {
-          const text = chunk.choices[0]?.delta?.content || '';
-          if (text) {
-            controller.enqueue(encoder.encode(text));
+        let fullResponse = '';
+
+        try {
+          for await (const chunk of response) {
+            const content = chunk.choices[0]?.delta?.content || '';
+            if (content) {
+              fullResponse += content;
+              controller.enqueue(encoder.encode(content));
+            }
           }
+
+          // Save AI response to database after stream completes
+          if (fullResponse.trim()) {
+            await prisma.chat.create({
+              data: {
+                userId: user.id,
+                content: fullResponse,
+                role: 'assistant',
+                language,
+                riskLevel: riskLevel as any
+              }
+            });
+          }
+
+          controller.close();
+        } catch (error) {
+          console.error('Stream error:', error);
+          controller.error(error);
         }
-        controller.close();
       },
     });
 
-    // Create streaming response using the custom stream
-    return new StreamingTextResponse(readableStream, {
+    return new Response(stream, {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
       },
