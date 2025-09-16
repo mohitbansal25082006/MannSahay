@@ -4,75 +4,266 @@ export const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Crisis keywords for risk detection
-export const crisisKeywords = [
-  'suicide', 'kill myself', 'end my life', 'want to die', 'self harm',
-  'cutting myself', 'overdose', 'jump off', 'hanging myself',
-  'suicide plan', 'goodbye forever', 'better off dead',
-  // Hindi crisis keywords
-  'आत्महत्या', 'खुदकुशी', 'मर जाऊं', 'जान दे दूं', 'खत्म कर दूं',
-  'सब खत्म', 'अब नहीं रह सकता', 'थक गया हूं'
+// Enhanced crisis keywords with contextual understanding
+export const crisisKeywords = {
+  HIGH_RISK: [
+    // English - Immediate danger
+    'suicide', 'kill myself', 'end my life', 'want to die', 'going to die', 'suicide plan',
+    'goodbye forever', 'better off dead', 'hanging myself', 'overdose', 'jump off',
+    'cut my wrists', 'pills to end', 'final goodbye', 'can\'t go on', 'nobody will miss me',
+    
+    // Hindi - Immediate danger
+    'आत्महत्या', 'खुदकुशी', 'मर जाऊं', 'जान दे दूं', 'खत्म कर दूं', 'मरना चाहता हूं',
+    'सब खत्म', 'अब नहीं रह सकता', 'जीना नहीं चाहता', 'फांसी लगाऊंगा', 'गोलियां खा लूंगा'
+  ],
+  
+  MEDIUM_RISK: [
+    // English - Self-harm and severe distress
+    'self harm', 'cutting myself', 'hurting myself', 'hopeless', 'worthless', 'useless',
+    'everyone hates me', 'no point in living', 'can\'t take it anymore', 'want to disappear',
+    'harming myself', 'cutting', 'burning myself', 'punishing myself',
+    
+    // Hindi - Self-harm and severe distress
+    'खुद को नुकसान', 'काटना', 'निराश', 'उम्मीद नहीं', 'बेकार हूं', 'निकम्मा हूं',
+    'कोई प्यार नहीं करता', 'सबको नफरत है', 'गायब हो जाना चाहता हूं', 'खुद को सजा'
+  ],
+  
+  LOW_RISK: [
+    // English - Mild distress
+    'depressed', 'anxious', 'stressed', 'overwhelmed', 'sad', 'lonely', 'tired',
+    'can\'t sleep', 'worried', 'scared', 'confused', 'lost', 'empty', 'numb',
+    
+    // Hindi - Mild distress
+    'उदास', 'चिंतित', 'तनाव', 'अभिभूत', 'दुखी', 'अकेला', 'थका हुआ',
+    'नींद नहीं आती', 'डरा हुआ', 'परेशान', 'खाली', 'सुन्न', 'भ्रमित'
+  ]
+};
+
+// Contextual keywords for positive responses
+export const positiveKeywords = [
+  'happy', 'excited', 'grateful', 'thankful', 'better', 'improving', 'hopeful',
+  'खुश', 'उत्साहित', 'आभारी', 'बेहतर', 'सुधार', 'उम्मीद'
 ];
 
-// Function to assess risk level
+// Academic stress keywords
+export const academicStressKeywords = [
+  'exam', 'test', 'assignment', 'project', 'grades', 'marks', 'pressure', 'competition',
+  'परीक्षा', 'टेस्ट', 'असाइनमेंट', 'प्रोजेक्ट', 'नंबर', 'दबाव', 'प्रतिस्पर्धा'
+];
+
+// Family and relationship keywords
+export const socialKeywords = [
+  'family', 'parents', 'friends', 'relationship', 'breakup', 'fight', 'argument',
+  'परिवार', 'माता-पिता', 'दोस्त', 'रिश्ता', 'झगड़ा', 'लड़ाई'
+];
+
+// Enhanced risk assessment with context understanding
 export function assessRiskLevel(message: string): 'NONE' | 'LOW' | 'MEDIUM' | 'HIGH' {
   const lowerMessage = message.toLowerCase();
   
-  // High risk - immediate crisis indicators
-  const highRiskKeywords = [
-    'suicide', 'kill myself', 'end my life', 'want to die', 'आत्महत्या',
-    'खुदकुशी', 'मर जाऊं', 'जान दे दूं'
-  ];
-  if (highRiskKeywords.some(keyword => lowerMessage.includes(keyword))) {
+  // Check for high-risk indicators
+  if (crisisKeywords.HIGH_RISK.some(keyword => lowerMessage.includes(keyword.toLowerCase()))) {
     return 'HIGH';
   }
   
-  // Medium risk - concerning but not immediate
-  const mediumRiskKeywords = [
-    'self harm', 'cutting', 'hurting myself', 'hopeless', 'खुद को नुकसान',
-    'काटना', 'निराश', 'उम्मीद नहीं'
-  ];
-  if (mediumRiskKeywords.some(keyword => lowerMessage.includes(keyword))) {
+  // Check for medium-risk indicators
+  if (crisisKeywords.MEDIUM_RISK.some(keyword => lowerMessage.includes(keyword.toLowerCase()))) {
     return 'MEDIUM';
   }
   
-  // Low risk - mild distress indicators
-  const lowRiskKeywords = [
-    'depressed', 'anxious', 'stressed', 'overwhelmed', 'sad',
-    'उदास', 'चिंतित', 'तनाव', 'अभिभूत', 'दुखी'
-  ];
-  if (lowRiskKeywords.some(keyword => lowerMessage.includes(keyword))) {
+  // Check for low-risk indicators
+  if (crisisKeywords.LOW_RISK.some(keyword => lowerMessage.includes(keyword.toLowerCase()))) {
     return 'LOW';
   }
   
   return 'NONE';
 }
 
-// System prompt for AI assistant
-export const systemPrompt = `You are MannSahay, a compassionate AI mental health companion for Indian college students. 
+// Context analysis for better responses
+export function analyzeMessageContext(message: string): {
+  isAcademicStress: boolean;
+  isSocialIssue: boolean;
+  isPositive: boolean;
+  language: 'en' | 'hi' | 'mixed';
+  emotionalIntensity: 'low' | 'medium' | 'high';
+} {
+  const lowerMessage = message.toLowerCase();
+  
+  // Detect language
+  const hindiPattern = /[\u0900-\u097F]/;
+  const hasHindi = hindiPattern.test(message);
+  const hasEnglish = /[a-zA-Z]/.test(message);
+  
+  let language: 'en' | 'hi' | 'mixed' = 'en';
+  if (hasHindi && hasEnglish) language = 'mixed';
+  else if (hasHindi) language = 'hi';
+  
+  // Check context categories
+  const isAcademicStress = academicStressKeywords.some(keyword => 
+    lowerMessage.includes(keyword.toLowerCase())
+  );
+  
+  const isSocialIssue = socialKeywords.some(keyword => 
+    lowerMessage.includes(keyword.toLowerCase())
+  );
+  
+  const isPositive = positiveKeywords.some(keyword => 
+    lowerMessage.includes(keyword.toLowerCase())
+  );
+  
+  // Assess emotional intensity
+  const riskLevel = assessRiskLevel(message);
+  let emotionalIntensity: 'low' | 'medium' | 'high' = 'low';
+  if (riskLevel === 'HIGH') emotionalIntensity = 'high';
+  else if (riskLevel === 'MEDIUM' || riskLevel === 'LOW') emotionalIntensity = 'medium';
+  
+  return {
+    isAcademicStress,
+    isSocialIssue,
+    isPositive,
+    language,
+    emotionalIntensity
+  };
+}
 
-Key Instructions:
-1. Be empathetic, warm, and culturally sensitive
-2. Use simple language and occasionally include Hindi words naturally when appropriate
-3. Provide practical coping strategies and emotional support
-4. If you detect crisis situations, acknowledge the feelings but encourage seeking human help
-5. Reference Indian cultural contexts, festivals, family dynamics when relevant
-6. Keep responses concise but meaningful (2-3 paragraphs max)
-7. Always maintain hope and encourage professional help when needed
-8. Respond in the same language as the user's message (English or Hindi)
+// Enhanced system prompt with Indian cultural context - English version
+export const englishSystemPrompt = `You are MannSahay, a highly empathetic AI mental health companion specifically designed for Indian college students. You are culturally aware, linguistically adaptive, and therapeutically informed.
 
-Remember: You're a supportive companion, not a replacement for professional therapy.`;
+CORE IDENTITY & APPROACH:
+- You embody the warmth of Indian hospitality with professional mental health support
+- You understand the unique pressures of Indian education system, family expectations, and social dynamics
+- You provide evidence-based coping strategies adapted to Indian cultural context
+- You respond only in English, without using any Hindi words or phrases
+
+CONVERSATION PRINCIPLES:
+1. EMPATHY FIRST: Always validate emotions before offering solutions
+2. CULTURAL SENSITIVITY: Reference Indian festivals, family structures, educational pressures when relevant
+3. PRACTICAL WISDOM: Combine modern psychology with traditional Indian wisdom (yoga, meditation)
+4. LANGUAGE ADAPTATION: Respond only in English as requested by the user
+5. HOPE MAINTENANCE: Always end with encouragement and actionable next steps
+
+RESPONSE STRUCTURE:
+1. Emotional Validation (1-2 sentences)
+2. Understanding/Reflection (2-3 sentences)
+3. Practical Guidance (2-4 sentences with specific techniques)
+4. Cultural Connection (if relevant - festivals, values, family dynamics)
+5. Encouragement & Next Steps (1-2 sentences)
+
+CRISIS RESPONSE PROTOCOL:
+- HIGH RISK: Immediate validation + urgent professional help encouragement + crisis numbers
+- MEDIUM RISK: Deep empathy + coping strategies + gentle counseling suggestion
+- LOW RISK: Supportive guidance + practical techniques + check-in encouragement
+
+INDIAN CONTEXT AWARENESS:
+- Academic: JEE/NEET pressure, board exams, career competition, parental expectations
+- Social: Joint family dynamics, arranged marriage pressure
+- Cultural: Festival seasons, religious practices, regional differences
+- Economic: Financial stress, scholarship concerns, job market anxiety
+
+THERAPEUTIC TECHNIQUES TO USE:
+- Cognitive Behavioral Therapy (CBT) concepts in simple language
+- Mindfulness and meditation
+- Breathing exercises
+- Grounding techniques adapted to Indian settings
+- Progressive muscle relaxation
+- Journaling and reflection practices
+
+BOUNDARIES & SAFETY:
+- You are NOT a replacement for professional therapy
+- Always encourage professional help for serious issues
+- Provide crisis helpline numbers for India
+- Never diagnose or prescribe medication
+- Maintain hope while being realistic
+
+Remember: You're not just an AI - you're a caring friend who understands the Indian student experience deeply.`;
+
+// Enhanced system prompt with Indian cultural context - Hindi version
+export const hindiSystemPrompt = `आप मनसहाय हैं, भारतीय कॉलेज छात्रों के लिए विशेष रूप से डिज़ाइन की गई एक अत्यंत सहानुभूतिशील AI मानसिक स्वास्थ्य साथी। आप सांस्कृतिक रूप से जागरूक, भाषाई रूप से अनुकूलनीय और चिकित्सीय रूप से सूचित हैं।
+
+मूल पहचान और दृष्टिकोण:
+- आप पेशेवर मानसिक स्वास्थ्य सहायता के साथ भारतीय आतिथ्य की गर्मजोशी को प्रदर्शित करते हैं
+- आप भारतीय शिक्षा प्रणाली, पारिवारिक अपेक्षाओं और सामाजिक गतिशीलता के अद्वितीय दबावों को समझते हैं
+- आप भारतीय सांस्कृतिक संदर्भ के अनुकूल साक्ष्य-आधारित सामना करने की रणनीतियाँ प्रदान करते हैं
+- आप केवल हिंदी में प्रतिक्रिया देते हैं, बिना किसी अंग्रेजी शब्दों या वाक्यांशों का उपयोग किए
+
+बातचीत के सिद्धांत:
+1. सहानुभूति पहले: समाधान देने से पहले हमेशा भावनाओं को मान्य करें
+2. सांस्कृतिक संवेदनशीलता: प्रासंगिक होने पर भारतीय त्योहारों, पारिवारिक संरचनाओं, शैक्षिक दबावों का संदर्भ लें
+3. व्यावहारिक ज्ञान: आधुनिक मनोविज्ञान को पारंपरिक भारतीय ज्ञान (योग, ध्यान) के साथ जोड़ें
+4. भाषा अनुकूलन: उपयोगकर्ता द्वारा अनुरोधित केवल हिंदी में प्रतिक्रिया दें
+5. आशा रखें: हमेशा प्रोत्साहन और कार्रवाई योग्य अगले कदमों के साथ समाप्त करें
+
+प्रतिक्रिया संरचना:
+1. भावनात्मक सत्यापन (1-2 वाक्य)
+2. समझ/प्रतिबिंब (2-3 वाक्य)
+3. व्यावहारिक मार्गदर्शन (विशिष्ट तकनीकों के साथ 2-4 वाक्य)
+4. सांस्कृतिक संबंध (यदि प्रासंगिक हो - त्योहार, मूल्य, पारिवारिक गतिशीलता)
+5. प्रोत्साहन और अगले कदम (1-2 वाक्य)
+
+संकट प्रतिक्रिया प्रोटोकॉल:
+- उच्च जोखिम: तत्काल सत्यापन + जरूरी पेशेवर मदद प्रोत्साहन + संकट हेल्पलाइन नंबर
+- मध्यम जोखिम: गहरी सहानुभूति + सामना करने की रणनीतियाँ + कोमल परामर्श सुझाव
+- कम जोखिम: सहायक मार्गदर्शन + व्यावहारिक तकनीकें + जांच प्रोत्साहन
+
+भारतीय संदर्भ जागरूकता:
+- शैक्षणिक: JEE/NEET का दबाव, बोर्ड परीक्षाएं, करियर प्रतिस्पर्धा, माता-पिता की अपेक्षाएं
+- सामाजिक: संयुक्त परिवार की गतिशीलता, अरेंज्ड मैरिज का दबाव
+- सांस्कृतिक: त्योहार के मौसम, धार्मिक प्रथाएं, क्षेत्रीय अंतर
+- आर्थिक: वित्तीय तनाव, छात्रवृत्ति संबंधी चिंताएं, नौकरी बाजार की चिंता
+
+चिकित्सीय तकनीकें:
+- सरल भाषा में संज्ञानात्मक व्यवहार थेरेपी (CBT) अवधारणाएं
+- माइंडफुलनेस और ध्यान
+- श्वास अभ्यास
+- भारतीय सेटिंग्स के अनुकूल ग्राउंडिंग तकनीकें
+- प्रोग्रेसिव मसल रिलैक्सेशन
+- जर्नलिंग और रिफ्लेक्शन प्रथाएं
+
+सीमाएं और सुरक्षा:
+- आप पेशेवर चिकित्सा का विकल्प नहीं हैं
+- गंभीर मुद्दों के लिए हमेशा पेशेवर मदद को प्रोत्साहित करें
+- भारत के लिए संकट हेल्पलाइन नंबर प्रदान करें
+- कभी भी निदान या दवा निर्धारित न करें
+- यथार्थवादी रहते हुए आशा बनाए रखें
+
+याद रखें: आप सिर्फ एक AI नहीं हैं - आप एक देखभाल करने वाले दोस्त हैं जो भारतीय छात्र के अनुभव को गहराई से समझते हैं।`;
+
+// Conversation starters based on context - English only
+export const englishContextualStarters = {
+  academic: "It sounds like academic pressure is weighing heavily on you. Many Indian students face this - you're not alone in feeling overwhelmed by expectations.",
+  social: "Relationships and social situations can be really challenging, especially with the unique pressures in Indian families and friend circles.",
+  positive: "I'm so glad to hear something positive from you! It's wonderful when we can recognize the good moments."
+};
+
+// Conversation starters based on context - Hindi only
+export const hindiContextualStarters = {
+  academic: "लगता है पढ़ाई का दबाव तुम्हें बहुत परेशान कर रहा है। बहुत से भारतीय छात्र इसका सामना करते हैं - तुम अकेले नहीं हो।",
+  social: "रिश्ते और सामाजिक स्थितियां वाकई चुनौतीपूर्ण हो सकती हैं, खासकर भारतीय परिवारों और दोस्तों के दबाव के साथ।",
+  positive: "तुम्हारी तरफ से कुछ सकारात्मक सुनकर बहुत खुशी हुई! जब हम अच्छे पलों को पहचान सकते हैं तो यह बहुत अच्छी बात है।"
+};
+
+// Helper function to get contextual starter based on language
+function getContextualStarter(
+  contextType: 'academic' | 'social' | 'positive', 
+  language: 'en' | 'hi'
+): string {
+  return language === 'hi' 
+    ? hindiContextualStarters[contextType] 
+    : englishContextualStarters[contextType];
+}
 
 // Function to transcribe audio using Whisper
 export async function transcribeAudio(audioBlob: Blob, language: 'en' | 'hi' = 'en'): Promise<string> {
   try {
-    // Convert Blob to File-like object
     const formData = new FormData();
     const file = new File([audioBlob], 'audio.webm', { type: 'audio/webm' });
     formData.append('file', file);
     formData.append('model', 'whisper-1');
     formData.append('language', language);
     formData.append('response_format', 'json');
+    formData.append('prompt', language === 'hi' 
+      ? 'यह एक भारतीय छात्र की मानसिक स्वास्थ्य से संबंधित बातचीत है।' 
+      : 'This is a mental health conversation from an Indian student.');
 
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
@@ -94,10 +285,22 @@ export async function transcribeAudio(audioBlob: Blob, language: 'en' | 'hi' = '
   }
 }
 
-// Function to generate speech using TTS
-export async function generateSpeech(text: string, language: 'en' | 'hi' = 'en'): Promise<ArrayBuffer> {
+// Function to generate speech with emotion-aware voice selection
+export async function generateSpeech(
+  text: string, 
+  language: 'en' | 'hi' = 'en',
+  emotion: 'neutral' | 'supportive' | 'urgent' = 'neutral'
+): Promise<ArrayBuffer> {
   try {
-    const voice = language === 'hi' ? 'shimmer' : 'alloy'; // Different voices for different languages
+    // Select voice based on language and emotion
+    let voice = 'alloy';
+    if (language === 'hi') {
+      voice = emotion === 'supportive' ? 'nova' : 'shimmer';
+    } else {
+      voice = emotion === 'supportive' ? 'echo' : emotion === 'urgent' ? 'fable' : 'alloy';
+    }
+    
+    const speed = emotion === 'urgent' ? 0.85 : 0.9;
     
     const response = await fetch('https://api.openai.com/v1/audio/speech', {
       method: 'POST',
@@ -106,11 +309,11 @@ export async function generateSpeech(text: string, language: 'en' | 'hi' = 'en')
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'tts-1',
+        model: 'tts-1-hd', // Use higher quality model
         voice: voice,
         input: text,
         response_format: 'mp3',
-        speed: 0.9,
+        speed: speed,
       }),
     });
 
@@ -121,6 +324,92 @@ export async function generateSpeech(text: string, language: 'en' | 'hi' = 'en')
     return await response.arrayBuffer();
   } catch (error) {
     console.error('Speech generation error:', error);
+    throw error;
+  }
+}
+
+// Generate contextual response with GPT-4
+export async function generateContextualResponse(
+  message: string,
+  selectedLanguage: 'en' | 'hi' = 'en',
+  chatHistory: Array<{role: string, content: string}> = [],
+  userContext?: {
+    name?: string,
+    previousSessions?: number,
+    riskLevel?: string,
+    preferences?: any
+  }
+): Promise<string> {
+  try {
+    const context = analyzeMessageContext(message);
+    const riskLevel = assessRiskLevel(message);
+    
+    // Use the appropriate system prompt based on selected language
+    const systemPrompt = selectedLanguage === 'hi' ? hindiSystemPrompt : englishSystemPrompt;
+    
+    // Build enhanced system prompt with context
+    let enhancedPrompt = systemPrompt;
+    
+    if (context.isAcademicStress) {
+      enhancedPrompt += selectedLanguage === 'hi' 
+        ? '\n\nवर्तमान संदर्भ: उपयोगकर्ता शैक्षणिक तनाव का अनुभव कर रहा है। अध्ययन-जीवन संतुलन, परीक्षा की चिंता और माता-पिता के दबाव से निपटने की रणनीतियों पर ध्यान दें।'
+        : '\n\nCURRENT CONTEXT: User is experiencing academic stress. Focus on study-life balance, exam anxiety, and parental pressure coping strategies.';
+    }
+    
+    if (context.isSocialIssue) {
+      enhancedPrompt += selectedLanguage === 'hi'
+        ? '\n\nवर्तमान संदर्भ: उपयोगकर्ता सामाजिक/संबंध संबंधी मुद्दों से निपट रहा है। भारतीय पारिवारिक गतिशीलता, मित्रता की चुनौतियों या रोमांटिक चिंताओं को संवेदनशीलता से संबोधित करें।'
+        : '\n\nCURRENT CONTEXT: User is dealing with social/relationship issues. Address Indian family dynamics, friendship challenges, or romantic concerns sensitively.';
+    }
+    
+    if (riskLevel === 'HIGH') {
+      enhancedPrompt += selectedLanguage === 'hi'
+        ? '\n\nसंकट चेतावनी: उपयोगकर्ता में उच्च-जोखिम संकेतक दिखाई देते हैं। तत्काल भावनात्मक सहायता प्रदान करें, भावनाओं को मान्य करें और पेशेवर मदद को दृढ़ता से प्रोत्साहित करें। भारतीय संकट हेल्पलाइन शामिल करें।'
+        : '\n\nCRISIS ALERT: User shows high-risk indicators. Provide immediate emotional support, validate feelings, and strongly encourage professional help. Include Indian crisis helplines.';
+    }
+    
+    // Select contextual starter based on selected language
+    let starter = '';
+    if (context.isAcademicStress) {
+      starter = getContextualStarter('academic', selectedLanguage);
+    } else if (context.isSocialIssue) {
+      starter = getContextualStarter('social', selectedLanguage);
+    } else if (context.isPositive) {
+      starter = getContextualStarter('positive', selectedLanguage);
+    }
+    
+    // Build conversation with context
+    const messages = [
+      {
+        role: 'system' as const,
+        content: enhancedPrompt + (starter ? `\n\nStart your response with this context: "${starter}"` : '')
+      },
+      ...chatHistory.map(chat => ({
+        role: chat.role as 'user' | 'assistant',
+        content: chat.content
+      })),
+      {
+        role: 'user' as const,
+        content: message
+      }
+    ];
+    
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4-turbo-preview',
+      messages: messages,
+      temperature: 0.7,
+      max_tokens: 600,
+      presence_penalty: 0.1,
+      frequency_penalty: 0.1,
+    });
+    
+    return response.choices[0]?.message?.content || 
+      (selectedLanguage === 'hi' 
+        ? 'मैं समझता हूं कि आप संपर्क कर रहे हैं। मुझे आपके साथ इसे काम करने में मदद करने दें।' 
+        : 'I understand you\'re reaching out. Let me help you work through this.');
+    
+  } catch (error) {
+    console.error('Response generation error:', error);
     throw error;
   }
 }

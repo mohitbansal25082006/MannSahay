@@ -1,12 +1,13 @@
+// File: src/app/api/chat/route.ts
 import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { openai, assessRiskLevel, systemPrompt } from '@/lib/openai';
+import { openai, assessRiskLevel, analyzeMessageContext, generateContextualResponse } from '@/lib/openai';
 import { prisma } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('Chat API called');
+    console.log('Enhanced Chat API called');
     
     const session = await getServerSession(authOptions);
     console.log('Session:', session);
@@ -16,7 +17,7 @@ export async function POST(request: NextRequest) {
       return new Response('Unauthorized', { status: 401 });
     }
 
-    // Get user from database to ensure they exist
+    // Get user from database
     const user = await prisma.user.findUnique({
       where: { email: session.user.email }
     });
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log('Request body:', body);
     
-    const { messages: chatMessages, language = 'en' } = body;
+    const { messages: chatMessages, language = 'en', sessionId } = body;
     
     // Extract the latest message from the messages array
     const latestMessage = chatMessages?.[chatMessages.length - 1]?.content;
@@ -41,88 +42,145 @@ export async function POST(request: NextRequest) {
       return new Response('Message is required', { status: 400 });
     }
 
-    // Assess risk level
+    // Analyze message context and assess risk
+    const messageContext = analyzeMessageContext(latestMessage);
     const riskLevel = assessRiskLevel(latestMessage);
-    console.log('Risk level assessed:', riskLevel);
+    console.log('Message analysis:', { messageContext, riskLevel });
+
+    // Handle session management
+    let currentSessionId = sessionId;
+    
+    if (!currentSessionId) {
+      // Create new session if none exists
+      const activeSession = await prisma.chatSession.findFirst({
+        where: { 
+          userId: user.id,
+          isActive: true
+        }
+      });
+
+      if (!activeSession) {
+        // Generate title from first message (truncated)
+        const autoTitle = latestMessage.length > 50 
+          ? latestMessage.substring(0, 47) + '...'
+          : latestMessage;
+
+        const newSession = await prisma.chatSession.create({
+          data: {
+            userId: user.id,
+            title: autoTitle,
+            language,
+            isActive: true,
+            riskLevel: riskLevel as any
+          }
+        });
+        currentSessionId = newSession.id;
+      } else {
+        currentSessionId = activeSession.id;
+      }
+    }
 
     // Save user message to database
     await prisma.chat.create({
       data: {
         userId: user.id,
+        sessionId: currentSessionId,
         content: latestMessage,
         role: 'user',
         language,
-        riskLevel: riskLevel as any
+        riskLevel: riskLevel as any,
+        context: messageContext
       }
     });
 
-    // Get recent chat history for context
+    // Get recent chat history from current session for context
     const recentChats = await prisma.chat.findMany({
-      where: { userId: user.id },
+      where: { 
+        sessionId: currentSessionId,
+        userId: user.id 
+      },
       orderBy: { timestamp: 'desc' },
-      take: 10
+      take: 20 // Get more context for better responses
     });
 
     // Build conversation history for OpenAI
-    const openaiMessages = [
-      {
-        role: 'system' as const,
-        content: `${systemPrompt}\n\nUser's preferred language: ${language === 'hi' ? 'Hindi' : 'English'}. Respond in the same language as the user's message.`
-      },
-      ...recentChats.reverse().map(chat => ({
-        role: chat.role as 'user' | 'assistant',
+    const conversationHistory = recentChats
+      .reverse()
+      .slice(-10) // Keep last 10 messages for context
+      .map(chat => ({
+        role: chat.role,
         content: chat.content
-      }))
-    ];
+      }));
 
-    // Add crisis response if high risk
-    if (riskLevel === 'HIGH') {
-      openaiMessages.unshift({
-        role: 'system' as const,
-        content: 'CRISIS ALERT: User may be in immediate danger. Be extremely supportive, validate their feelings, and strongly encourage contacting emergency services (108/112), a trusted person, or crisis helpline immediately while still providing emotional support.'
-      });
+    // Generate contextual response using enhanced OpenAI function
+    let aiResponse: string;
+    
+    try {
+      aiResponse = await generateContextualResponse(
+        latestMessage, 
+        language as 'en' | 'hi', // Add the language parameter
+        conversationHistory as Array<{role: string, content: string}>,
+        {
+          name: user.name || undefined,
+          previousSessions: undefined, // You might want to calculate this
+          riskLevel: riskLevel,
+          preferences: { language }
+        }
+      );
+    } catch (error) {
+      console.error('OpenAI generation error:', error);
+      // Fallback response
+      aiResponse = language === 'hi' 
+        ? 'मैं समझ रहा हूं कि आप कुछ कहना चाह रहे हैं। कृपया मुझे बताएं कि मैं आपकी कैसे मदद कर सकता हूं?'
+        : 'I understand you\'re reaching out. Please tell me how I can help you today.';
     }
 
-    console.log('Sending to OpenAI:', openaiMessages);
-
-    // Call OpenAI API
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4',
-      messages: openaiMessages,
-      temperature: 0.7,
-      max_tokens: 500,
-      stream: true,
-    });
-
-    // Create a custom ReadableStream
+    // Create streaming response
     const stream = new ReadableStream({
       async start(controller) {
         const encoder = new TextEncoder();
-        let fullResponse = '';
-
+        
         try {
-          for await (const chunk of response) {
-            const content = chunk.choices[0]?.delta?.content || '';
-            if (content) {
-              fullResponse += content;
-              controller.enqueue(encoder.encode(content));
-            }
+          // Stream the response word by word for better UX
+          const words = aiResponse.split(' ');
+          
+          for (let i = 0; i < words.length; i++) {
+            const chunk = i === 0 ? words[i] : ' ' + words[i];
+            controller.enqueue(encoder.encode(chunk));
+            
+            // Add slight delay for realistic typing effect
+            await new Promise(resolve => setTimeout(resolve, 50));
           }
 
-          // Save AI response to database after stream completes
-          if (fullResponse.trim()) {
-            await prisma.chat.create({
-              data: {
-                userId: user.id,
-                content: fullResponse,
-                role: 'assistant',
-                language,
-                riskLevel: riskLevel as any
-              }
-            });
-          }
+          // Save AI response to database after streaming
+          const savedResponse = await prisma.chat.create({
+            data: {
+              userId: user.id,
+              sessionId: currentSessionId,
+              content: aiResponse,
+              role: 'assistant',
+              language,
+              riskLevel: riskLevel as any,
+              context: messageContext
+            }
+          });
+
+          // Update session metadata
+          await prisma.chatSession.update({
+            where: { id: currentSessionId },
+            data: {
+              lastMessageAt: new Date(),
+              totalMessages: {
+                increment: 2 // User message + AI response
+              },
+              riskLevel: riskLevel === 'HIGH' ? 'HIGH' : 
+                        riskLevel === 'MEDIUM' ? 'MEDIUM' : 
+                        undefined // Only update if higher risk
+            }
+          });
 
           controller.close();
+
         } catch (error) {
           console.error('Stream error:', error);
           controller.error(error);
@@ -133,11 +191,76 @@ export async function POST(request: NextRequest) {
     return new Response(stream, {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
+        'X-Session-Id': currentSessionId, // Return session ID in header
       },
     });
 
   } catch (error) {
-    console.error('Chat API error:', error);
+    console.error('Enhanced Chat API error:', error);
+    return new Response('Internal Server Error', { status: 500 });
+  }
+}
+
+// GET: Retrieve chat history for a specific session
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.email) {
+      return new Response('Unauthorized', { status: 401 });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    });
+
+    if (!user) {
+      return new Response('User not found', { status: 404 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const sessionId = searchParams.get('sessionId');
+    const limit = parseInt(searchParams.get('limit') || '50');
+    const offset = parseInt(searchParams.get('offset') || '0');
+
+    if (!sessionId) {
+      return new Response('Session ID is required', { status: 400 });
+    }
+
+    // Verify user owns this session
+    const chatSession = await prisma.chatSession.findFirst({
+      where: { 
+        id: sessionId,
+        userId: user.id
+      }
+    });
+
+    if (!chatSession) {
+      return new Response('Chat session not found', { status: 404 });
+    }
+
+    // Get chat messages for the session
+    const chats = await prisma.chat.findMany({
+      where: { 
+        sessionId: sessionId,
+        userId: user.id 
+      },
+      orderBy: { timestamp: 'asc' },
+      skip: offset,
+      take: limit
+    });
+
+    return new Response(JSON.stringify({ 
+      chats,
+      session: chatSession,
+      hasMore: chats.length === limit
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+  } catch (error) {
+    console.error('Chat history GET error:', error);
     return new Response('Internal Server Error', { status: 500 });
   }
 }
