@@ -400,7 +400,7 @@ export default function ChatPage() {
   return (
     <div className="h-screen flex flex-col bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b px-4 pt-0 pb-4 sm:px-6">
+      <div className="bg-white border-b px-1 py-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             {/* Mobile menu button */}
@@ -420,7 +420,7 @@ export default function ChatPage() {
               </SheetContent>
             </Sheet>
 
-            <div className="mr-6">
+            <div className="mr-6 -mt-2">
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
                 AI Chat Companion
               </h1>
