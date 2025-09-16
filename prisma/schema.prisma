@@ -1,12 +1,15 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -24,6 +27,7 @@ model Account {
   @@unique([provider, providerAccountId])
   @@map("accounts")
 }
+
 model Session {
   id           String   @id @default(cuid())
   sessionToken String   @unique
@@ -32,6 +36,7 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@map("sessions")
 }
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -44,13 +49,15 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   
-  accounts Account[]
-  sessions Session[]
-  chats    Chat[]
-  bookings Booking[]
-  posts    Post[]
+  accounts     Account[]
+  sessions     Session[]
+  chats        Chat[]
+  chatSessions ChatSession[] // NEW: Chat sessions for organization
+  bookings     Booking[]
+  posts        Post[]
   @@map("users")
 }
+
 model VerificationToken {
   identifier String
   token      String   @unique
@@ -58,18 +65,50 @@ model VerificationToken {
   @@unique([identifier, token])
   @@map("verificationtokens")
 }
+
+// NEW: Chat Session model for organizing conversations
+model ChatSession {
+  id          String   @id @default(cuid())
+  title       String?  // Auto-generated or user-defined title
+  isActive    Boolean  @default(true) // Current active session
+  isArchived  Boolean  @default(false)
+  language    String   @default("en")
+  riskLevel   RiskLevel @default(NONE) // Highest risk level in session
+  totalMessages Int    @default(0)
+  lastMessageAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String
+  
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chats Chat[]
+  
+  @@index([userId, isActive])
+  @@index([userId, lastMessageAt])
+  @@map("chat_sessions")
+}
+
+// Enhanced Chat model with session relationship
 model Chat {
   id        String   @id @default(cuid())
   content   String   @db.Text
-  role      String
+  role      String   // 'user' or 'assistant'
   timestamp DateTime @default(now())
   userId    String
+  sessionId String   // NEW: Links to ChatSession
   language  String?  @default("en")
   riskLevel RiskLevel @default(NONE)
+  context   Json?    // NEW: Store context analysis (academic, social, etc.)
+  audioUrl  String?  // NEW: For voice messages
   
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  @@index([sessionId, timestamp])
+  @@index([userId, timestamp])
   @@map("chats")
 }
+
 model Counselor {
   id           String    @id @default(cuid())
   name         String
@@ -82,6 +121,7 @@ model Counselor {
   bookings Booking[]
   @@map("counselors")
 }
+
 model Booking {
   id          String        @id @default(cuid())
   slotTime    DateTime
@@ -95,6 +135,7 @@ model Booking {
   counselor Counselor @relation(fields: [counselorId], references: [id])
   @@map("bookings")
 }
+
 model Post {
   id          String    @id @default(cuid())
   title       String?
@@ -109,6 +150,7 @@ model Post {
   replies Reply[]
   @@map("posts")
 }
+
 model Reply {
   id        String   @id @default(cuid())
   content   String   @db.Text
@@ -119,6 +161,7 @@ model Reply {
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
   @@map("replies")
 }
+
 model Resource {
   id          String      @id @default(cuid())
   title       String
@@ -132,18 +175,21 @@ model Resource {
   createdAt   DateTime    @default(now())
   @@map("resources")
 }
+
 enum BookingStatus {
   PENDING
   CONFIRMED
   CANCELLED
   COMPLETED
 }
+
 enum RiskLevel {
   NONE
   LOW
   MEDIUM
   HIGH
 }
+
 enum ResourceType {
   ARTICLE
   VIDEO

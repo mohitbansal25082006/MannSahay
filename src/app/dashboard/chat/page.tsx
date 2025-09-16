@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useChat } from 'ai/react';
+import { useChat, type Message } from 'ai/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,12 +20,52 @@ import {
   Square,
   Play,
   Pause,
-  Volume2
+  Volume2,
+  MessageSquare,
+  Plus,
+  Trash2,
+  Edit,
+  Save,
+  FolderOpen
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import ReactMarkdown from 'react-markdown';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
+import { useChatSessions } from '@/hooks/useChatSessions';
+import { ChatSessionSidebar } from '@/components/chat/ChatSessionSidebar';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+
+interface ChatSession {
+  id: string;
+  title: string | null;
+  isActive: boolean;
+  isArchived: boolean;
+  language: string;
+  riskLevel: 'NONE' | 'LOW' | 'MEDIUM' | 'HIGH';
+  totalMessages: number;
+  lastMessageAt: string;
+  createdAt: string;
+  updatedAt: string;
+  _count: {
+    chats: number;
+  };
+  chats: Array<{
+    content: string;
+    role: string;
+    timestamp: string;
+  }>;
+}
 
 const suggestedMessages = [
   "I'm feeling really stressed about my exams",
@@ -69,6 +109,11 @@ export default function ChatPage() {
   const [language, setLanguage] = useState<'en' | 'hi'>('en');
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isGeneratingSpeech, setIsGeneratingSpeech] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [saveTitle, setSaveTitle] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -92,15 +137,46 @@ export default function ChatPage() {
     error: playbackError
   } = useAudioPlayer();
 
+  const {
+    sessions,
+    currentSession,
+    isLoading: isLoadingSessions,
+    createSession,
+    loadSession,
+    updateSession,
+    deleteSession,
+    error: sessionsError
+  } = useChatSessions();
+
   const { messages, input, handleInputChange, handleSubmit, isLoading, setInput, setMessages } = useChat({
     api: '/api/chat',
     body: {
-      language: language
+      language: language,
+      sessionId: currentSession?.id
+    },
+    onFinish: async (message: Message) => {
+      // Extract session ID from the streamed response
+      if (message.content && message.content.includes('SESSION_ID:')) {
+        const sessionId = message.content.split('SESSION_ID:')[1];
+        if (sessionId) {
+          setCurrentSessionId(sessionId);
+          // Refresh the sessions list to show the new/updated session
+          // This will be handled by the useChatSessions hook
+        }
+      }
     },
     onError: (error) => {
       console.error('Chat error:', error);
     }
   });
+
+  // Load messages when a session is selected
+  useEffect(() => {
+    if (currentSession) {
+      loadSessionMessages(currentSession.id);
+      setCurrentSessionId(currentSession.id);
+    }
+  }, [currentSession]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -117,7 +193,62 @@ export default function ChatPage() {
     if (playbackError) {
       console.error('Playback error:', playbackError);
     }
-  }, [recordingError, playbackError]);
+    if (sessionsError) {
+      console.error('Sessions error:', sessionsError);
+    }
+  }, [recordingError, playbackError, sessionsError]);
+
+  const loadSessionMessages = async (sessionId: string) => {
+    try {
+      const response = await fetch(`/api/chat/sessions/${sessionId}`);
+      if (response.ok) {
+        const data = await response.json();
+        const sessionMessages = data.session.chats.map((chat: any) => ({
+          id: chat.id,
+          content: chat.content,
+          role: chat.role,
+          createdAt: new Date(chat.timestamp)
+        }));
+        
+        setMessages(sessionMessages);
+      }
+    } catch (error) {
+      console.error('Error loading session messages:', error);
+    }
+  };
+
+  const handleNewSession = async () => {
+    const newSession = await createSession(
+      language === 'hi' ? 'नई बातचीत' : 'New Conversation',
+      language
+    );
+    if (newSession) {
+      setMessages([]);
+      setCurrentSessionId(newSession.id);
+      setShowHistory(false);
+    }
+  };
+
+  const handleSessionSelect = (session: ChatSession) => {
+    loadSession(session.id);
+    setCurrentSessionId(session.id);
+    setShowHistory(false);
+  };
+
+  const handleSaveSession = async () => {
+    if (!currentSessionId || !saveTitle.trim()) return;
+    
+    setIsSaving(true);
+    try {
+      await updateSession(currentSessionId, { title: saveTitle.trim() });
+      setSaveDialogOpen(false);
+      setSaveTitle('');
+    } catch (error) {
+      console.error('Error saving session:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleSuggestedMessage = (message: string) => {
     setInput(message);
@@ -210,8 +341,18 @@ export default function ChatPage() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           AI Chat Companion
@@ -240,16 +381,78 @@ export default function ChatPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* Chat History Sidebar */}
+        <div className="lg:col-span-1">
+          <ChatSessionSidebar 
+            onSessionSelect={handleSessionSelect}
+            language={language}
+          />
+        </div>
+        
         {/* Chat Interface */}
         <div className="lg:col-span-3">
           <Card className="h-[600px] flex flex-col">
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center">
-                <Bot className="h-5 w-5 mr-2 text-blue-600" />
-                MannSahay AI
-                <Badge variant="secondary" className="ml-2">Online</Badge>
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <Bot className="h-5 w-5 mr-2 text-blue-600" />
+                  <CardTitle className="flex items-center">
+                    {currentSession?.title || 'New Conversation'}
+                    <Badge variant="secondary" className="ml-2">Online</Badge>
+                  </CardTitle>
+                </div>
+                <div className="flex items-center space-x-2">
+                  {/* Save Button */}
+                  <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm" disabled={!currentSessionId}>
+                        <Save className="h-4 w-4 mr-1" />
+                        Save
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Save Conversation</DialogTitle>
+                        <DialogDescription>
+                          Give your conversation a name to save it for later.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="title" className="text-right">
+                            Title
+                          </Label>
+                          <Input
+                            id="title"
+                            value={saveTitle}
+                            onChange={(e) => setSaveTitle(e.target.value)}
+                            placeholder="Enter conversation title"
+                            className="col-span-3"
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setSaveDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button onClick={handleSaveSession} disabled={isSaving || !saveTitle.trim()}>
+                          {isSaving ? 'Saving...' : 'Save'}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleNewSession}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    New
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
             
             <CardContent className="flex-1 flex flex-col p-0">
