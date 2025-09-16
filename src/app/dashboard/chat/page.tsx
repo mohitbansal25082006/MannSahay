@@ -28,7 +28,9 @@ import {
   Save,
   FolderOpen,
   Archive,
-  ArchiveRestore
+  ArchiveRestore,
+  Menu,
+  X
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import ReactMarkdown from 'react-markdown';
@@ -47,6 +49,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 interface ChatSession {
   id: string;
@@ -119,6 +122,8 @@ export default function ChatPage() {
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const [archiveTitle, setArchiveTitle] = useState('');
   const [isArchiving, setIsArchiving] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -163,13 +168,10 @@ export default function ChatPage() {
       sessionId: currentSession?.id
     },
     onFinish: async (message: Message) => {
-      // Extract session ID from the streamed response
       if (message.content && message.content.includes('SESSION_ID:')) {
         const sessionId = message.content.split('SESSION_ID:')[1];
         if (sessionId) {
           setCurrentSessionId(sessionId);
-          // Refresh the sessions list to show the new/updated session
-          // This will be handled by the useChatSessions hook
         }
       }
     },
@@ -183,7 +185,6 @@ export default function ChatPage() {
     if (currentSession) {
       loadSessionMessages(currentSession.id);
       setCurrentSessionId(currentSession.id);
-      // Pre-fill archive dialog with current session title
       setArchiveTitle(currentSession.title || '');
     }
   }, [currentSession]);
@@ -236,6 +237,7 @@ export default function ChatPage() {
       setMessages([]);
       setCurrentSessionId(newSession.id);
       setShowHistory(false);
+      setSidebarOpen(false);
     }
   };
 
@@ -243,6 +245,7 @@ export default function ChatPage() {
     loadSession(session.id);
     setCurrentSessionId(session.id);
     setShowHistory(false);
+    setSidebarOpen(false);
   };
 
   const handleSaveSession = async () => {
@@ -267,7 +270,6 @@ export default function ChatPage() {
     try {
       await archiveSession(currentSessionId);
       setArchiveDialogOpen(false);
-      // Clear current session after archiving
       setMessages([]);
       setCurrentSessionId(null);
     } catch (error) {
@@ -280,7 +282,6 @@ export default function ChatPage() {
   const handleUnarchiveSession = async (sessionId: string) => {
     try {
       await unarchiveSession(sessionId);
-      // Load the unarchived session
       const session = await loadSession(sessionId);
       if (session) {
         setCurrentSessionId(sessionId);
@@ -330,7 +331,6 @@ export default function ChatPage() {
       if (response.ok) {
         const { text } = await response.json();
         setInput(text);
-        // Auto-submit after transcription
         setTimeout(() => {
           const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
           const form = document.querySelector('form');
@@ -392,38 +392,162 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          AI Chat Companion
-        </h1>
-        <p className="text-gray-600">
-          Share your thoughts and feelings. I'm here to listen and support you.
-        </p>
-        
-        {/* Language Toggle */}
-        <div className="flex items-center space-x-2 mt-4">
-          <span className="text-sm text-gray-500">Language:</span>
-          <Button
-            variant={language === 'en' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setLanguage('en')}
-          >
-            English
-          </Button>
-          <Button
-            variant={language === 'hi' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setLanguage('hi')}
-          >
-            हिंदी
-          </Button>
+    <div className="h-screen flex flex-col bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b px-4 py-4 sm:px-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            {/* Mobile menu button */}
+            <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="sm" className="lg:hidden">
+                  <Menu className="h-4 w-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-80 p-0">
+                <div className="h-full">
+                  <ChatSessionSidebar 
+                    onSessionSelect={handleSessionSelect}
+                    language={language}
+                  />
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            <div>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
+                AI Chat Companion
+              </h1>
+              <p className="text-sm sm:text-base text-gray-600 hidden sm:block">
+                Share your thoughts and feelings. I'm here to listen and support you.
+              </p>
+            </div>
+          </div>
+
+          {/* Language Toggle */}
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-500 hidden sm:inline">Language:</span>
+            <Button
+              variant={language === 'en' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setLanguage('en')}
+            >
+              En
+            </Button>
+            <Button
+              variant={language === 'hi' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setLanguage('hi')}
+            >
+              हि
+            </Button>
+
+            {/* Mobile right sidebar button */}
+            <Sheet open={rightSidebarOpen} onOpenChange={setRightSidebarOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="sm" className="lg:hidden">
+                  <AlertTriangle className="h-4 w-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-80">
+                <div className="space-y-4">
+                  {/* Crisis Support - Mobile */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center text-red-600">
+                        <AlertTriangle className="h-4 w-4 mr-2" />
+                        Crisis Support
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <p className="text-sm text-gray-600">
+                        If you're in crisis, please reach out immediately:
+                      </p>
+                      {emergencyContacts.map((contact, index) => (
+                        <div key={index} className="p-3 bg-red-50 rounded-lg">
+                          <h4 className="font-medium text-sm text-red-800">
+                            {contact.name}
+                          </h4>
+                          <p className="font-mono text-sm text-red-700">
+                            {contact.number}
+                          </p>
+                          <p className="text-xs text-red-600">
+                            {contact.description}
+                          </p>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+
+                  {/* Quick Tips - Mobile */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center text-green-600">
+                        <Lightbulb className="h-4 w-4 mr-2" />
+                        Quick Tips
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="p-3 bg-green-50 rounded-lg">
+                          <h4 className="font-medium text-sm text-green-800 mb-1">
+                            Breathing Exercise
+                          </h4>
+                          <p className="text-xs text-green-700">
+                            4-7-8 technique: Inhale 4, hold 7, exhale 8
+                          </p>
+                        </div>
+                        
+                        <div className="p-3 bg-blue-50 rounded-lg">
+                          <h4 className="font-medium text-sm text-blue-800 mb-1">
+                            Grounding
+                          </h4>
+                          <p className="text-xs text-blue-700">
+                            Name 5 things you can see, 4 you can hear, 3 you can touch
+                          </p>
+                        </div>
+                        
+                        <div className="p-3 bg-purple-50 rounded-lg">
+                          <h4 className="font-medium text-sm text-purple-800 mb-1">
+                            Affirmation
+                          </h4>
+                          <p className="text-xs text-purple-700">
+                            "This feeling is temporary. I am stronger than I know."
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Professional Help - Mobile */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center text-blue-600">
+                        <Heart className="h-4 w-4 mr-2" />
+                        Need More Support?
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-gray-600 mb-3">
+                        Consider booking a session with our professional counselors.
+                      </p>
+                      <Button className="w-full" size="sm">
+                        <Phone className="h-4 w-4 mr-2" />
+                        Book Counselor
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Chat History Sidebar */}
-        <div className="lg:col-span-1">
+      {/* Main Content */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left Sidebar - Desktop only */}
+        <div className="hidden lg:block w-80 bg-white border-r">
           <ChatSessionSidebar 
             onSessionSelect={handleSessionSelect}
             language={language}
@@ -431,33 +555,36 @@ export default function ChatPage() {
         </div>
         
         {/* Chat Interface */}
-        <div className="lg:col-span-3">
-          <Card className="h-[600px] flex flex-col">
-            <CardHeader className="pb-3">
+        <div className="flex-1 flex flex-col">
+          <Card className="flex-1 flex flex-col m-0 border-0 rounded-none">
+            <CardHeader className="pb-3 border-b">
               <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Bot className="h-5 w-5 mr-2 text-blue-600" />
-                  <CardTitle className="flex items-center">
-                    {currentSession?.title || 'New Conversation'}
+                <div className="flex items-center min-w-0">
+                  <Bot className="h-5 w-5 mr-2 text-blue-600 flex-shrink-0" />
+                  <CardTitle className="flex items-center truncate">
+                    <span className="truncate">
+                      {currentSession?.title || 'New Conversation'}
+                    </span>
                     {currentSession?.isArchived && (
-                      <Badge variant="outline" className="ml-2">
+                      <Badge variant="outline" className="ml-2 flex-shrink-0">
                         <Archive className="h-3 w-3 mr-1" />
                         Archived
                       </Badge>
                     )}
-                    <Badge variant="secondary" className="ml-2">Online</Badge>
+                    <Badge variant="secondary" className="ml-2 flex-shrink-0">Online</Badge>
                   </CardTitle>
                 </div>
-                <div className="flex items-center space-x-2">
+                
+                <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
                   {/* Save Button */}
                   <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button variant="outline" size="sm" disabled={!currentSessionId}>
+                      <Button variant="outline" size="sm" disabled={!currentSessionId} className="hidden sm:flex">
                         <Save className="h-4 w-4 mr-1" />
-                        Save
+                        <span className="hidden md:inline">Save</span>
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-md">
+                    <DialogContent className="sm:max-w-md mx-4">
                       <DialogHeader>
                         <DialogTitle>Save Conversation</DialogTitle>
                         <DialogDescription>
@@ -496,12 +623,13 @@ export default function ChatPage() {
                         variant="outline" 
                         size="sm" 
                         disabled={!currentSessionId || currentSession?.isArchived}
+                        className="hidden sm:flex"
                       >
                         <Archive className="h-4 w-4 mr-1" />
-                        Archive
+                        <span className="hidden md:inline">Archive</span>
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-md">
+                    <DialogContent className="sm:max-w-md mx-4">
                       <DialogHeader>
                         <DialogTitle>Archive Conversation</DialogTitle>
                         <DialogDescription>
@@ -537,15 +665,16 @@ export default function ChatPage() {
                     </DialogContent>
                   </Dialog>
 
-                  {/* Unarchive Button (only shown for archived sessions) */}
+                  {/* Unarchive Button */}
                   {currentSession?.isArchived && (
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleUnarchiveSession(currentSession.id)}
+                      className="hidden sm:flex"
                     >
                       <ArchiveRestore className="h-4 w-4 mr-1" />
-                      Unarchive
+                      <span className="hidden md:inline">Unarchive</span>
                     </Button>
                   )}
                   
@@ -554,16 +683,16 @@ export default function ChatPage() {
                     size="sm"
                     onClick={handleNewSession}
                   >
-                    <Plus className="h-4 w-4 mr-1" />
-                    New
+                    <Plus className="h-4 w-4 sm:mr-1" />
+                    <span className="hidden sm:inline">New</span>
                   </Button>
                 </div>
               </div>
             </CardHeader>
             
-            <CardContent className="flex-1 flex flex-col p-0">
-              {/* Messages Area */}
-              <ScrollArea className="flex-1 px-6 py-4">
+            <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
+              {/* Messages Area with Scrollbar */}
+              <ScrollArea className="flex-1 px-4 sm:px-6 py-4" style={{ maxHeight: 'calc(100vh - 200px)' }}>
                 <div className="space-y-4">
                   {messages.length === 0 && (
                     <div className="text-center py-8">
@@ -577,13 +706,13 @@ export default function ChatPage() {
                       
                       {/* Suggested Messages */}
                       <div className="flex flex-wrap justify-center gap-2">
-                        {suggestedMessages.map((msg, index) => (
+                        {suggestedMessages.slice(0, window.innerWidth < 640 ? 4 : suggestedMessages.length).map((msg, index) => (
                           <Button
                             key={index}
                             variant="outline"
                             size="sm"
                             onClick={() => handleSuggestedMessage(msg)}
-                            className="text-xs"
+                            className="text-xs max-w-xs truncate"
                           >
                             {msg}
                           </Button>
@@ -599,7 +728,7 @@ export default function ChatPage() {
                         message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''
                       }`}
                     >
-                      <Avatar className="h-8 w-8">
+                      <Avatar className="h-8 w-8 flex-shrink-0">
                         {message.role === 'user' ? (
                           <>
                             <AvatarImage src={session?.user?.image || ''} />
@@ -615,25 +744,25 @@ export default function ChatPage() {
                       </Avatar>
                       
                       <div
-                        className={`flex-1 max-w-xs sm:max-w-md lg:max-w-lg xl:max-w-xl ${
+                        className={`flex-1 min-w-0 max-w-[85%] sm:max-w-[75%] ${
                           message.role === 'user' ? 'text-right' : 'text-left'
                         }`}
                       >
                         <div
-                          className={`inline-block p-3 rounded-lg ${
+                          className={`inline-block p-3 rounded-lg break-words ${
                             message.role === 'user'
                               ? 'bg-blue-600 text-white'
                               : 'bg-gray-100 text-gray-900'
                           }`}
                         >
                           {message.role === 'assistant' ? (
-                            <div className="prose prose-sm max-w-none">
+                            <div className="prose prose-sm max-w-none break-words overflow-wrap-anywhere">
                               <ReactMarkdown>
                                 {message.content}
                               </ReactMarkdown>
                             </div>
                           ) : (
-                            <p className="text-sm">{message.content}</p>
+                            <p className="text-sm break-words">{message.content}</p>
                           )}
                         </div>
                         
@@ -662,7 +791,7 @@ export default function ChatPage() {
                   
                   {isLoading && (
                     <div className="flex items-start space-x-3">
-                      <Avatar className="h-8 w-8">
+                      <Avatar className="h-8 w-8 flex-shrink-0">
                         <AvatarFallback className="bg-blue-100">
                           <Bot className="h-4 w-4 text-blue-600" />
                         </AvatarFallback>
@@ -683,7 +812,7 @@ export default function ChatPage() {
               </ScrollArea>
               
               {/* Input Area */}
-              <div className="p-4 border-t">
+              <div className="p-4 border-t bg-white">
                 {/* Audio Recording Section */}
                 {audioBlob && (
                   <div className="mb-4 p-3 bg-blue-50 rounded-lg">
@@ -744,6 +873,7 @@ export default function ChatPage() {
                       type="submit" 
                       disabled={!input.trim() || isLoading}
                       size="lg"
+                      className="flex-shrink-0"
                     >
                       <Send className="h-4 w-4" />
                     </Button>
@@ -786,95 +916,96 @@ export default function ChatPage() {
           </Card>
         </div>
         
-        {/* Sidebar */}
-        <div className="lg:col-span-1 space-y-4">
-          
-          {/* Crisis Support */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center text-red-600">
-                <AlertTriangle className="h-4 w-4 mr-2" />
-                Crisis Support
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm text-gray-600">
-                If you're in crisis, please reach out immediately:
-              </p>
-              {emergencyContacts.map((contact, index) => (
-                <div key={index} className="p-3 bg-red-50 rounded-lg">
-                  <h4 className="font-medium text-sm text-red-800">
-                    {contact.name}
-                  </h4>
-                  <p className="font-mono text-sm text-red-700">
-                    {contact.number}
-                  </p>
-                  <p className="text-xs text-red-600">
-                    {contact.description}
-                  </p>
+        {/* Right Sidebar - Desktop only */}
+        <div className="hidden lg:block w-80 bg-white border-l">
+          <div className="h-full p-4 space-y-4 overflow-y-auto">
+            {/* Crisis Support */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center text-red-600">
+                  <AlertTriangle className="h-4 w-4 mr-2" />
+                  Crisis Support
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-sm text-gray-600">
+                  If you're in crisis, please reach out immediately:
+                </p>
+                {emergencyContacts.map((contact, index) => (
+                  <div key={index} className="p-3 bg-red-50 rounded-lg">
+                    <h4 className="font-medium text-sm text-red-800">
+                      {contact.name}
+                    </h4>
+                    <p className="font-mono text-sm text-red-700">
+                      {contact.number}
+                    </p>
+                    <p className="text-xs text-red-600">
+                      {contact.description}
+                    </p>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+            
+            {/* Quick Tips */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center text-green-600">
+                  <Lightbulb className="h-4 w-4 mr-2" />
+                  Quick Tips
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="p-3 bg-green-50 rounded-lg">
+                    <h4 className="font-medium text-sm text-green-800 mb-1">
+                      Breathing Exercise
+                    </h4>
+                    <p className="text-xs text-green-700">
+                      4-7-8 technique: Inhale 4, hold 7, exhale 8
+                    </p>
+                  </div>
+                  
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <h4 className="font-medium text-sm text-blue-800 mb-1">
+                      Grounding
+                    </h4>
+                    <p className="text-xs text-blue-700">
+                      Name 5 things you can see, 4 you can hear, 3 you can touch
+                    </p>
+                  </div>
+                  
+                  <div className="p-3 bg-purple-50 rounded-lg">
+                    <h4 className="font-medium text-sm text-purple-800 mb-1">
+                      Affirmation
+                    </h4>
+                    <p className="text-xs text-purple-700">
+                      "This feeling is temporary. I am stronger than I know."
+                    </p>
+                  </div>
                 </div>
-              ))}
-            </CardContent>
-          </Card>
-          
-          {/* Quick Tips */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center text-green-600">
-                <Lightbulb className="h-4 w-4 mr-2" />
-                Quick Tips
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="p-3 bg-green-50 rounded-lg">
-                  <h4 className="font-medium text-sm text-green-800 mb-1">
-                    Breathing Exercise
-                  </h4>
-                  <p className="text-xs text-green-700">
-                    4-7-8 technique: Inhale 4, hold 7, exhale 8
-                  </p>
-                </div>
-                
-                <div className="p-3 bg-blue-50 rounded-lg">
-                  <h4 className="font-medium text-sm text-blue-800 mb-1">
-                    Grounding
-                  </h4>
-                  <p className="text-xs text-blue-700">
-                    Name 5 things you can see, 4 you can hear, 3 you can touch
-                  </p>
-                </div>
-                
-                <div className="p-3 bg-purple-50 rounded-lg">
-                  <h4 className="font-medium text-sm text-purple-800 mb-1">
-                    Affirmation
-                  </h4>
-                  <p className="text-xs text-purple-700">
-                    "This feeling is temporary. I am stronger than I know."
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Professional Help */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center text-blue-600">
-                <Heart className="h-4 w-4 mr-2" />
-                Need More Support?
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-600 mb-3">
-                Consider booking a session with our professional counselors.
-              </p>
-              <Button className="w-full" size="sm">
-                <Phone className="h-4 w-4 mr-2" />
-                Book Counselor
-              </Button>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+            
+            {/* Professional Help */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center text-blue-600">
+                  <Heart className="h-4 w-4 mr-2" />
+                  Need More Support?
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600 mb-3">
+                  Consider booking a session with our professional counselors.
+                </p>
+                <Button className="w-full" size="sm">
+                  <Phone className="h-4 w-4 mr-2" />
+                  Book Counselor
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>

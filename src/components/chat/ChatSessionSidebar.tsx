@@ -144,7 +144,7 @@ export const ChatSessionSidebar: React.FC<ChatSessionSidebarProps> = ({
   const formatLastMessage = (session: ChatSession) => {
     if (!session.chats || session.chats.length === 0) return '';
     const message = session.chats[0].content || '';
-    return message.length > 50 ? message.substring(0, 47) + '...' : message;
+    return message.length > 40 ? message.substring(0, 37) + '...' : message;
   };
 
   const getChatCount = (session: ChatSession) => {
@@ -156,40 +156,46 @@ export const ChatSessionSidebar: React.FC<ChatSessionSidebarProps> = ({
   };
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg flex items-center">
+    <div className="h-full flex flex-col bg-white">
+      {/* Header */}
+      <div className="p-4 border-b bg-white">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center min-w-0">
             {showArchived ? (
               <>
-                <FolderOpen className="h-5 w-5 mr-2 text-orange-600" />
-                {language === 'hi' ? 'संग्रहीत बातचीत' : 'Archived'}
+                <FolderOpen className="h-5 w-5 mr-2 text-orange-600 flex-shrink-0" />
+                <span className="font-semibold text-lg truncate">
+                  {language === 'hi' ? 'संग्रहीत' : 'Archived'}
+                </span>
               </>
             ) : (
               <>
-                <Inbox className="h-5 w-5 mr-2 text-blue-600" />
-                {language === 'hi' ? 'बातचीत' : 'Conversations'}
+                <Inbox className="h-5 w-5 mr-2 text-blue-600 flex-shrink-0" />
+                <span className="font-semibold text-lg truncate">
+                  {language === 'hi' ? 'बातचीत' : 'Conversations'}
+                </span>
               </>
             )}
-            <Badge variant="secondary" className="ml-2">
+            <Badge variant="secondary" className="ml-2 flex-shrink-0">
               {showArchived ? archivedSessions.length : sessions.length}
             </Badge>
-          </CardTitle>
-          <div className="flex items-center space-x-2">
+          </div>
+          <div className="flex items-center space-x-1 flex-shrink-0">
             <Button 
               variant={showArchived ? "default" : "outline"}
               size="sm"
               onClick={toggleArchivedView}
+              className="text-xs"
             >
               {showArchived ? (
                 <>
-                  <Inbox className="h-4 w-4 mr-1" />
-                  Active
+                  <Inbox className="h-3 w-3 mr-1" />
+                  <span className="hidden sm:inline">Active</span>
                 </>
               ) : (
                 <>
-                  <FolderOpen className="h-4 w-4 mr-1" />
-                  Archive
+                  <FolderOpen className="h-3 w-3 mr-1" />
+                  <span className="hidden sm:inline">Archive</span>
                 </>
               )}
             </Button>
@@ -197,8 +203,10 @@ export const ChatSessionSidebar: React.FC<ChatSessionSidebarProps> = ({
               size="sm" 
               onClick={handleNewSession}
               disabled={isLoading}
+              className="text-xs"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-3 w-3" />
+              <span className="hidden sm:inline ml-1">New</span>
             </Button>
           </div>
         </div>
@@ -211,22 +219,24 @@ export const ChatSessionSidebar: React.FC<ChatSessionSidebarProps> = ({
               placeholder={language === 'hi' ? 'खोजें...' : 'Search...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8"
+              className="pl-8 text-sm"
             />
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="text-xs">
                   <Filter className="h-3 w-3 mr-1" />
-                  {filterRisk === 'ALL' 
-                    ? (language === 'hi' ? 'सभी' : 'All')
-                    : filterRisk
-                  }
+                  <span className="truncate">
+                    {filterRisk === 'ALL' 
+                      ? (language === 'hi' ? 'सभी' : 'All')
+                      : filterRisk
+                    }
+                  </span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent align="start">
                 <DropdownMenuItem onClick={() => setFilterRisk('ALL')}>
                   {language === 'hi' ? 'सभी रिस्क लेवल' : 'All Risk Levels'}
                 </DropdownMenuItem>
@@ -248,149 +258,160 @@ export const ChatSessionSidebar: React.FC<ChatSessionSidebarProps> = ({
             </DropdownMenu>
           </div>
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent className="flex-1 p-0">
-        <ScrollArea className="h-full px-4">
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-800">{error}</p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="mt-2"
-                onClick={clearError}
-              >
-                {language === 'hi' ? 'बंद करें' : 'Dismiss'}
-              </Button>
-            </div>
-          )}
-
-          {filteredSessions.length === 0 && !isLoading ? (
-            <div className="text-center py-8">
-              <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-sm text-gray-500">
-                {showArchived 
-                  ? (language === 'hi' ? 'कोई संग्रहीत बातचीत नहीं मिली' : 'No archived conversations')
-                  : (language === 'hi' ? 'कोई बातचीत नहीं मिली' : 'No conversations found')
-                }
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-2 pb-4">
-              {filteredSessions.map((session) => (
-                <div
-                  key={session.id}
-                  className={`group p-3 rounded-lg border cursor-pointer transition-colors hover:bg-gray-50 ${
-                    currentSession?.id === session.id ? 'bg-blue-50 border-blue-200' : 'border-gray-200'
-                  }`}
-                  onClick={() => handleSessionClick(session)}
+      {/* Sessions List */}
+      <div className="flex-1 overflow-hidden">
+        <ScrollArea className="h-full">
+          <div className="p-4">
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-800">{error}</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-2"
+                  onClick={clearError}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <h4 className="text-sm font-medium truncate">
-                          {session.title || (language === 'hi' ? 'बिना शीर्षक' : 'Untitled')}
-                        </h4>
-                        {session.riskLevel && session.riskLevel !== 'NONE' && (
-                          <Badge variant={getRiskBadgeColor(session.riskLevel)} className="text-xs">
-                            {session.riskLevel}
-                          </Badge>
-                        )}
-                        {session.isArchived && (
-                          <Badge variant="outline" className="text-xs">
-                            <Archive className="h-3 w-3 mr-1" />
-                            {language === 'hi' ? 'संग्रहीत' : 'Archived'}
-                          </Badge>
-                        )}
-                      </div>
-                      
-                      {session.chats && session.chats.length > 0 && (
-                        <p className="text-xs text-gray-500 truncate mb-2">
-                          {formatLastMessage(session)}
-                        </p>
-                      )}
+                  {language === 'hi' ? 'बंद करें' : 'Dismiss'}
+                </Button>
+              </div>
+            )}
 
-                      <div className="flex items-center space-x-3 text-xs text-gray-400">
-                        <div className="flex items-center space-x-1">
-                          <MessageCircle className="h-3 w-3" />
-                          <span>{getChatCount(session)}</span>
+            {filteredSessions.length === 0 && !isLoading ? (
+              <div className="text-center py-8">
+                <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-sm text-gray-500">
+                  {showArchived 
+                    ? (language === 'hi' ? 'कोई संग्रहीत बातचीत नहीं' : 'No archived conversations')
+                    : (language === 'hi' ? 'कोई बातचीत नहीं' : 'No conversations found')
+                  }
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {filteredSessions.map((session) => (
+                  <div
+                    key={session.id}
+                    className={`group p-3 rounded-lg border cursor-pointer transition-all hover:bg-gray-50 hover:shadow-sm ${
+                      currentSession?.id === session.id 
+                        ? 'bg-blue-50 border-blue-200 shadow-sm' 
+                        : 'border-gray-200'
+                    }`}
+                    onClick={() => handleSessionClick(session)}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        {/* Title and badges */}
+                        <div className="flex items-start justify-between mb-1">
+                          <h4 className="text-sm font-medium truncate pr-2">
+                            {session.title || (language === 'hi' ? 'बिना शीर्षक' : 'Untitled')}
+                          </h4>
+                          <div className="flex items-center space-x-1 flex-shrink-0">
+                            {session.riskLevel && session.riskLevel !== 'NONE' && (
+                              <Badge variant={getRiskBadgeColor(session.riskLevel)} className="text-xs px-1 py-0">
+                                {session.riskLevel}
+                              </Badge>
+                            )}
+                            {session.isArchived && (
+                              <Badge variant="outline" className="text-xs px-1 py-0">
+                                <Archive className="h-2 w-2" />
+                              </Badge>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center space-x-1">
-                          <Clock className="h-3 w-3" />
-                          <span>
-                            {formatDistanceToNow(new Date(getLastMessageTime(session)), { addSuffix: true })}
-                          </span>
+                        
+                        {/* Last message preview */}
+                        {session.chats && session.chats.length > 0 && (
+                          <p className="text-xs text-gray-500 truncate mb-2 leading-relaxed">
+                            {formatLastMessage(session)}
+                          </p>
+                        )}
+
+                        {/* Metadata */}
+                        <div className="flex items-center justify-between text-xs text-gray-400">
+                          <div className="flex items-center space-x-3">
+                            <div className="flex items-center space-x-1">
+                              <MessageCircle className="h-3 w-3" />
+                              <span>{getChatCount(session)}</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <Clock className="h-3 w-3" />
+                              <span className="truncate">
+                                {formatDistanceToNow(new Date(getLastMessageTime(session)), { addSuffix: true })}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Actions Menu */}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MoreVertical className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingSession(session);
+                                  setNewTitle(session.title || '');
+                                }}
+                              >
+                                <Edit className="h-4 w-4 mr-2" />
+                                {language === 'hi' ? 'नाम बदलें' : 'Rename'}
+                              </DropdownMenuItem>
+                              
+                              {session.isArchived ? (
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleUnarchiveSession(session.id);
+                                  }}
+                                >
+                                  <ArchiveRestore className="h-4 w-4 mr-2" />
+                                  {language === 'hi' ? 'अनसंग्रहीत करें' : 'Unarchive'}
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleArchiveSession(session.id);
+                                  }}
+                                >
+                                  <Archive className="h-4 w-4 mr-2" />
+                                  {language === 'hi' ? 'संग्रहीत करें' : 'Archive'}
+                                </DropdownMenuItem>
+                              )}
+                              
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteSession(session.id);
+                                }}
+                                className="text-red-600 focus:text-red-600"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                {language === 'hi' ? 'हटाएं' : 'Delete'}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
                     </div>
-
-                    {/* Session Actions Menu */}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingSession(session);
-                            setNewTitle(session.title || '');
-                          }}
-                        >
-                          <Edit className="h-4 w-4 mr-2" />
-                          {language === 'hi' ? 'नाम बदलें' : 'Rename'}
-                        </DropdownMenuItem>
-                        
-                        {session.isArchived ? (
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleUnarchiveSession(session.id);
-                            }}
-                          >
-                            <ArchiveRestore className="h-4 w-4 mr-2" />
-                            {language === 'hi' ? 'अनसंग्रहीत करें' : 'Unarchive'}
-                          </DropdownMenuItem>
-                        ) : (
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleArchiveSession(session.id);
-                            }}
-                          >
-                            <Archive className="h-4 w-4 mr-2" />
-                            {language === 'hi' ? 'संग्रहीत करें' : 'Archive'}
-                          </DropdownMenuItem>
-                        )}
-                        
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteSession(session.id);
-                          }}
-                          className="text-red-600 focus:text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          {language === 'hi' ? 'हटाएं' : 'Delete'}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </ScrollArea>
-      </CardContent>
+      </div>
 
       {/* Rename Dialog */}
       <Dialog 
@@ -402,7 +423,7 @@ export const ChatSessionSidebar: React.FC<ChatSessionSidebarProps> = ({
           }
         }}
       >
-        <DialogContent>
+        <DialogContent className="mx-4 max-w-md">
           <DialogHeader>
             <DialogTitle>
               {language === 'hi' ? 'बातचीत का नाम बदलें' : 'Rename Conversation'}
@@ -426,12 +447,14 @@ export const ChatSessionSidebar: React.FC<ChatSessionSidebarProps> = ({
                   setEditingSession(null);
                   setNewTitle('');
                 }}
+                size="sm"
               >
                 {language === 'hi' ? 'रद्द करें' : 'Cancel'}
               </Button>
               <Button 
                 onClick={() => editingSession && handleRenameSession(editingSession.id)}
                 disabled={!newTitle.trim()}
+                size="sm"
               >
                 {language === 'hi' ? 'सहेजें' : 'Save'}
               </Button>
@@ -439,6 +462,6 @@ export const ChatSessionSidebar: React.FC<ChatSessionSidebarProps> = ({
           </div>
         </DialogContent>
       </Dialog>
-    </Card>
+    </div>
   );
 };
