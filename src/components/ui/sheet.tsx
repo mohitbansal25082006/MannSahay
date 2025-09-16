@@ -48,9 +48,14 @@ function SheetContent({
   className,
   children,
   side = "right",
+  // provide an accessible default title. If you want a visible title, use the exported
+  // SheetTitle component (it will render a visible Title). If not provided, this
+  // hidden title satisfies Radix's accessibility requirement.
+  title = "Dialog",
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
   side?: "top" | "right" | "bottom" | "left"
+  title?: string
 }) {
   return (
     <SheetPortal>
@@ -71,9 +76,14 @@ function SheetContent({
         )}
         {...props}
       >
+        {/* Accessible title: keep it visually hidden by default so screen-readers have a Title.
+            If you want a visible title, render <SheetTitle> inside your SheetHeader instead. */}
+        <SheetPrimitive.Title className="sr-only">{title}</SheetPrimitive.Title>
+
         {children}
+
         <SheetPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">
-          <XIcon className="size-4" />
+          <XIcon className="h-4 w-4" />
           <span className="sr-only">Close</span>
         </SheetPrimitive.Close>
       </SheetPrimitive.Content>

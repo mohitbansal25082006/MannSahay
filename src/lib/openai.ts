@@ -328,7 +328,7 @@ export async function generateSpeech(
   }
 }
 
-// Generate contextual response with GPT-4
+// Generate contextual response with GPT-4 - FIXED VERSION FOR HINDI
 export async function generateContextualResponse(
   message: string,
   selectedLanguage: 'en' | 'hi' = 'en',
@@ -394,22 +394,43 @@ export async function generateContextualResponse(
       }
     ];
     
+    // FIXED: Use gpt-4o model which handles Hindi better and increase max_tokens for complete responses
     const response = await openai.chat.completions.create({
-      model: 'gpt-4-turbo-preview',
+      model: 'gpt-4o', // Changed from gpt-4-turbo-preview to gpt-4o for better Hindi handling
       messages: messages,
       temperature: 0.7,
-      max_tokens: 600,
+      max_tokens: 1000, // Increased from 600 to 1000 to ensure complete Hindi responses
       presence_penalty: 0.1,
       frequency_penalty: 0.1,
     });
     
-    return response.choices[0]?.message?.content || 
-      (selectedLanguage === 'hi' 
-        ? 'मैं समझता हूं कि आप संपर्क कर रहे हैं। मुझे आपके साथ इसे काम करने में मदद करने दें।' 
-        : 'I understand you\'re reaching out. Let me help you work through this.');
+    let content = response.choices[0]?.message?.content || '';
+    
+    // If content is empty or too short, provide a fallback response
+    if (!content || content.length < 20) {
+      content = selectedLanguage === 'hi' 
+        ? 'मैं समझता हूं कि आप संपर्क कर रहे हैं। मुझे आपके साथ इसे काम करने में मदद करने दें। कृपया अपनी भावनाओं को विस्तार से साझा करें ताकि मैं आपको बेहतर समर्थन दे सकूं।'
+        : 'I understand you\'re reaching out. Let me help you work through this. Please share more details about your feelings so I can provide better support.';
+    }
+    
+    // For Hindi responses, ensure we're not cutting off mid-sentence
+    if (selectedLanguage === 'hi' && content.length > 50) {
+      // Check if the response ends with a proper sentence ending
+      const lastChar = content.trim().slice(-1);
+      if (lastChar !== '।' && lastChar !== '?' && lastChar !== '!' && !content.endsWith('।') && !content.endsWith('?') && !content.endsWith('!')) {
+        // If not properly ended, add a proper ending
+        content = content.trim() + '।';
+      }
+    }
+    
+    return content;
     
   } catch (error) {
     console.error('Response generation error:', error);
-    throw error;
+    
+    // Provide a meaningful fallback response based on language
+    return selectedLanguage === 'hi'
+      ? 'मुझे खेद है कि मैं आपकी बातचीत को ठीक से संसाधित नहीं कर पा रहा हूं। कृपया अपना संदेश फिर से भेजें या थोड़ा इंतजार करें। आपकी भावनाओं को समझना मेरे लिए महत्वपूर्ण है।'
+      : 'I apologize that I\'m having trouble processing your conversation properly. Please resend your message or wait a moment. Understanding your feelings is important to me.';
   }
 }

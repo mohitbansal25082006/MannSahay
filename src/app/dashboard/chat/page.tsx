@@ -455,95 +455,97 @@ export default function ChatPage() {
                   <AlertTriangle className="h-4 w-4" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-80">
-                <div className="space-y-4">
-                  {/* Crisis Support - Mobile */}
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center text-red-600">
-                        <AlertTriangle className="h-4 w-4 mr-2" />
-                        Crisis Support
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <p className="text-sm text-gray-600">
-                        If you're in crisis, please reach out immediately:
-                      </p>
-                      {emergencyContacts.map((contact, index) => (
-                        <div key={index} className="p-3 bg-red-50 rounded-lg">
-                          <h4 className="font-medium text-sm text-red-800">
-                            {contact.name}
-                          </h4>
-                          <p className="font-mono text-sm text-red-700">
-                            {contact.number}
-                          </p>
-                          <p className="text-xs text-red-600">
-                            {contact.description}
-                          </p>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
+              <SheetContent side="right" className="w-80 p-0">
+                <ScrollArea className="h-full p-4">
+                  <div className="space-y-4">
+                    {/* Crisis Support - Mobile */}
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center text-red-600">
+                          <AlertTriangle className="h-4 w-4 mr-2" />
+                          Crisis Support
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <p className="text-sm text-gray-600">
+                          If you're in crisis, please reach out immediately:
+                        </p>
+                        {emergencyContacts.map((contact, index) => (
+                          <div key={index} className="p-3 bg-red-50 rounded-lg">
+                            <h4 className="font-medium text-sm text-red-800">
+                              {contact.name}
+                            </h4>
+                            <p className="font-mono text-sm text-red-700">
+                              {contact.number}
+                            </p>
+                            <p className="text-xs text-red-600">
+                              {contact.description}
+                            </p>
+                          </div>
+                        ))}
+                      </CardContent>
+                    </Card>
 
-                  {/* Quick Tips - Mobile */}
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center text-green-600">
-                        <Lightbulb className="h-4 w-4 mr-2" />
-                        Quick Tips
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <div className="p-3 bg-green-50 rounded-lg">
-                          <h4 className="font-medium text-sm text-green-800 mb-1">
-                            Breathing Exercise
-                          </h4>
-                          <p className="text-xs text-green-700">
-                            4-7-8 technique: Inhale 4, hold 7, exhale 8
-                          </p>
+                    {/* Quick Tips - Mobile */}
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center text-green-600">
+                          <Lightbulb className="h-4 w-4 mr-2" />
+                          Quick Tips
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          <div className="p-3 bg-green-50 rounded-lg">
+                            <h4 className="font-medium text-sm text-green-800 mb-1">
+                              Breathing Exercise
+                            </h4>
+                            <p className="text-xs text-green-700">
+                              4-7-8 technique: Inhale 4, hold 7, exhale 8
+                            </p>
+                          </div>
+                          
+                          <div className="p-3 bg-blue-50 rounded-lg">
+                            <h4 className="font-medium text-sm text-blue-800 mb-1">
+                              Grounding
+                            </h4>
+                            <p className="text-xs text-blue-700">
+                              Name 5 things you can see, 4 you can hear, 3 you can touch
+                            </p>
+                          </div>
+                          
+                          <div className="p-3 bg-purple-50 rounded-lg">
+                            <h4 className="font-medium text-sm text-purple-800 mb-1">
+                              Affirmation
+                            </h4>
+                            <p className="text-xs text-purple-700">
+                              "This feeling is temporary. I am stronger than I know."
+                            </p>
+                          </div>
                         </div>
-                        
-                        <div className="p-3 bg-blue-50 rounded-lg">
-                          <h4 className="font-medium text-sm text-blue-800 mb-1">
-                            Grounding
-                          </h4>
-                          <p className="text-xs text-blue-700">
-                            Name 5 things you can see, 4 you can hear, 3 you can touch
-                          </p>
-                        </div>
-                        
-                        <div className="p-3 bg-purple-50 rounded-lg">
-                          <h4 className="font-medium text-sm text-purple-800 mb-1">
-                            Affirmation
-                          </h4>
-                          <p className="text-xs text-purple-700">
-                            "This feeling is temporary. I am stronger than I know."
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
 
-                  {/* Professional Help - Mobile */}
-                  <Card>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center text-blue-600">
-                        <Heart className="h-4 w-4 mr-2" />
-                        Need More Support?
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-gray-600 mb-3">
-                        Consider booking a session with our professional counselors.
-                      </p>
-                      <Button className="w-full" size="sm">
-                        <Phone className="h-4 w-4 mr-2" />
-                        Book Counselor
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </div>
+                    {/* Professional Help - Mobile */}
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center text-blue-600">
+                          <Heart className="h-4 w-4 mr-2" />
+                          Need More Support?
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-gray-600 mb-3">
+                          Consider booking a session with our professional counselors.
+                        </p>
+                        <Button className="w-full" size="sm">
+                          <Phone className="h-4 w-4 mr-2" />
+                          Book Counselor
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </ScrollArea>
               </SheetContent>
             </Sheet>
           </div>
