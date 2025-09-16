@@ -1,4 +1,3 @@
-// File: src/components/chat/ChatSessionSidebar.tsx
 'use client';
 
 import React, { useState } from 'react';
@@ -12,11 +11,14 @@ import {
   MoreVertical, 
   Edit, 
   Archive, 
+  ArchiveRestore,
   Trash2,
   Clock,
   AlertTriangle,
   Search,
-  Filter
+  Filter,
+  FolderOpen,
+  Inbox
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -47,6 +49,7 @@ export const ChatSessionSidebar: React.FC<ChatSessionSidebarProps> = ({
 }) => {
   const {
     sessions,
+    archivedSessions,
     currentSession,
     isLoading,
     error,
@@ -54,6 +57,9 @@ export const ChatSessionSidebar: React.FC<ChatSessionSidebarProps> = ({
     loadSession,
     updateSession,
     deleteSession,
+    archiveSession,
+    unarchiveSession,
+    loadArchivedSessions,
     clearError
   } = useChatSessions();
 
@@ -61,16 +67,20 @@ export const ChatSessionSidebar: React.FC<ChatSessionSidebarProps> = ({
   const [editingSession, setEditingSession] = useState<ChatSession | null>(null);
   const [newTitle, setNewTitle] = useState('');
   const [filterRisk, setFilterRisk] = useState<'ALL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'NONE'>('ALL');
+  const [showArchived, setShowArchived] = useState(false);
 
-  // Filter sessions based on search and risk level
-  const filteredSessions = sessions.filter(session => {
+  // Filter sessions based on search, risk level, and archived status
+  const filteredSessions = (showArchived ? archivedSessions : sessions).filter(session => {
+    const sessionTitle = session.title || '';
+    const firstChatContent = session.chats?.[0]?.content || '';
+    
     const matchesSearch = searchQuery === '' || 
-      session.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      session.chats[0]?.content?.toLowerCase().includes(searchQuery.toLowerCase());
+      sessionTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      firstChatContent.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesRisk = filterRisk === 'ALL' || session.riskLevel === filterRisk;
     
-    return matchesSearch && matchesRisk && !session.isArchived;
+    return matchesSearch && matchesRisk;
   });
 
   const handleNewSession = async () => {
@@ -99,7 +109,11 @@ export const ChatSessionSidebar: React.FC<ChatSessionSidebarProps> = ({
   };
 
   const handleArchiveSession = async (sessionId: string) => {
-    await updateSession(sessionId, { isArchived: true });
+    await archiveSession(sessionId);
+  };
+
+  const handleUnarchiveSession = async (sessionId: string) => {
+    await unarchiveSession(sessionId);
   };
 
   const handleDeleteSession = async (sessionId: string) => {
@@ -108,6 +122,13 @@ export const ChatSessionSidebar: React.FC<ChatSessionSidebarProps> = ({
       : 'Are you sure you want to delete this conversation?'
     )) {
       await deleteSession(sessionId);
+    }
+  };
+
+  const toggleArchivedView = () => {
+    setShowArchived(!showArchived);
+    if (!showArchived && archivedSessions.length === 0) {
+      loadArchivedSessions();
     }
   };
 
@@ -121,26 +142,65 @@ export const ChatSessionSidebar: React.FC<ChatSessionSidebarProps> = ({
   };
 
   const formatLastMessage = (session: ChatSession) => {
-    if (!session.chats[0]) return '';
-    const message = session.chats[0].content;
+    if (!session.chats || session.chats.length === 0) return '';
+    const message = session.chats[0].content || '';
     return message.length > 50 ? message.substring(0, 47) + '...' : message;
+  };
+
+  const getChatCount = (session: ChatSession) => {
+    return session._count?.chats || (session.chats?.length || 0);
+  };
+
+  const getLastMessageTime = (session: ChatSession) => {
+    return session.lastMessageAt || session.createdAt || new Date();
   };
 
   return (
     <Card className="h-full flex flex-col">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">
-            {language === 'hi' ? 'बातचीत' : 'Conversations'}
+          <CardTitle className="text-lg flex items-center">
+            {showArchived ? (
+              <>
+                <FolderOpen className="h-5 w-5 mr-2 text-orange-600" />
+                {language === 'hi' ? 'संग्रहीत बातचीत' : 'Archived'}
+              </>
+            ) : (
+              <>
+                <Inbox className="h-5 w-5 mr-2 text-blue-600" />
+                {language === 'hi' ? 'बातचीत' : 'Conversations'}
+              </>
+            )}
+            <Badge variant="secondary" className="ml-2">
+              {showArchived ? archivedSessions.length : sessions.length}
+            </Badge>
           </CardTitle>
-          <Button 
-            size="sm" 
-            onClick={handleNewSession}
-            disabled={isLoading}
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            {language === 'hi' ? 'नई' : 'New'}
-          </Button>
+          <div className="flex items-center space-x-2">
+            <Button 
+              variant={showArchived ? "default" : "outline"}
+              size="sm"
+              onClick={toggleArchivedView}
+            >
+              {showArchived ? (
+                <>
+                  <Inbox className="h-4 w-4 mr-1" />
+                  Active
+                </>
+              ) : (
+                <>
+                  <FolderOpen className="h-4 w-4 mr-1" />
+                  Archive
+                </>
+              )}
+            </Button>
+            <Button 
+              size="sm" 
+              onClick={handleNewSession}
+              disabled={isLoading}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Search and Filter */}
@@ -210,9 +270,10 @@ export const ChatSessionSidebar: React.FC<ChatSessionSidebarProps> = ({
             <div className="text-center py-8">
               <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
               <p className="text-sm text-gray-500">
-                {language === 'hi' 
-                  ? 'कोई बातचीत नहीं मिली' 
-                  : 'No conversations found'}
+                {showArchived 
+                  ? (language === 'hi' ? 'कोई संग्रहीत बातचीत नहीं मिली' : 'No archived conversations')
+                  : (language === 'hi' ? 'कोई बातचीत नहीं मिली' : 'No conversations found')
+                }
               </p>
             </div>
           ) : (
@@ -231,14 +292,20 @@ export const ChatSessionSidebar: React.FC<ChatSessionSidebarProps> = ({
                         <h4 className="text-sm font-medium truncate">
                           {session.title || (language === 'hi' ? 'बिना शीर्षक' : 'Untitled')}
                         </h4>
-                        {session.riskLevel !== 'NONE' && (
+                        {session.riskLevel && session.riskLevel !== 'NONE' && (
                           <Badge variant={getRiskBadgeColor(session.riskLevel)} className="text-xs">
                             {session.riskLevel}
                           </Badge>
                         )}
+                        {session.isArchived && (
+                          <Badge variant="outline" className="text-xs">
+                            <Archive className="h-3 w-3 mr-1" />
+                            {language === 'hi' ? 'संग्रहीत' : 'Archived'}
+                          </Badge>
+                        )}
                       </div>
                       
-                      {session.chats[0] && (
+                      {session.chats && session.chats.length > 0 && (
                         <p className="text-xs text-gray-500 truncate mb-2">
                           {formatLastMessage(session)}
                         </p>
@@ -247,12 +314,12 @@ export const ChatSessionSidebar: React.FC<ChatSessionSidebarProps> = ({
                       <div className="flex items-center space-x-3 text-xs text-gray-400">
                         <div className="flex items-center space-x-1">
                           <MessageCircle className="h-3 w-3" />
-                          <span>{session._count.chats}</span>
+                          <span>{getChatCount(session)}</span>
                         </div>
                         <div className="flex items-center space-x-1">
                           <Clock className="h-3 w-3" />
                           <span>
-                            {formatDistanceToNow(new Date(session.lastMessageAt), { addSuffix: true })}
+                            {formatDistanceToNow(new Date(getLastMessageTime(session)), { addSuffix: true })}
                           </span>
                         </div>
                       </div>
@@ -281,15 +348,29 @@ export const ChatSessionSidebar: React.FC<ChatSessionSidebarProps> = ({
                           <Edit className="h-4 w-4 mr-2" />
                           {language === 'hi' ? 'नाम बदलें' : 'Rename'}
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleArchiveSession(session.id);
-                          }}
-                        >
-                          <Archive className="h-4 w-4 mr-2" />
-                          {language === 'hi' ? 'संग्रहीत करें' : 'Archive'}
-                        </DropdownMenuItem>
+                        
+                        {session.isArchived ? (
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUnarchiveSession(session.id);
+                            }}
+                          >
+                            <ArchiveRestore className="h-4 w-4 mr-2" />
+                            {language === 'hi' ? 'अनसंग्रहीत करें' : 'Unarchive'}
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleArchiveSession(session.id);
+                            }}
+                          >
+                            <Archive className="h-4 w-4 mr-2" />
+                            {language === 'hi' ? 'संग्रहीत करें' : 'Archive'}
+                          </DropdownMenuItem>
+                        )}
+                        
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           onClick={(e) => {

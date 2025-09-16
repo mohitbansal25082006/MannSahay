@@ -27,12 +27,13 @@ export interface ChatSession {
 export const useChatSessions = () => {
   const { data: session } = useSession();
   const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [archivedSessions, setArchivedSessions] = useState<ChatSession[]>([]);
   const [currentSession, setCurrentSession] = useState<ChatSession | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Load all chat sessions
-  const loadSessions = useCallback(async () => {
+  const loadSessions = useCallback(async (includeArchived = false) => {
     if (!session?.user) return;
 
     try {
@@ -46,10 +47,19 @@ export const useChatSessions = () => {
       }
 
       const data = await response.json();
-      setSessions(data.sessions || []);
+      const allSessions = data.sessions || [];
+
+      // Separate active and archived sessions
+      const active = allSessions.filter((s: ChatSession) => !s.isArchived);
+      const archived = allSessions.filter((s: ChatSession) => s.isArchived);
+
+      setSessions(active);
+      if (includeArchived) {
+        setArchivedSessions(archived);
+      }
 
       // Set current active session
-      const activeSession = data.sessions?.find((s: ChatSession) => s.isActive);
+      const activeSession = active.find((s: ChatSession) => s.isActive);
       if (activeSession) {
         setCurrentSession(activeSession);
       }
@@ -57,6 +67,34 @@ export const useChatSessions = () => {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load sessions');
       console.error('Load sessions error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [session]);
+
+  // Load archived sessions specifically
+  const loadArchivedSessions = useCallback(async () => {
+    if (!session?.user) return;
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const response = await fetch('/api/chat/sessions');
+      
+      if (!response.ok) {
+        throw new Error('Failed to load archived sessions');
+      }
+
+      const data = await response.json();
+      const allSessions = data.sessions || [];
+      const archived = allSessions.filter((s: ChatSession) => s.isArchived);
+      
+      setArchivedSessions(archived);
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load archived sessions');
+      console.error('Load archived sessions error:', err);
     } finally {
       setIsLoading(false);
     }
@@ -126,6 +164,14 @@ export const useChatSessions = () => {
         isActive: s.id === sessionId
       })));
 
+      // If it's an archived session, also unarchive it
+      if (loadedSession.isArchived) {
+        await updateSession(sessionId, { isArchived: false });
+        // Move from archived to active sessions
+        setArchivedSessions(prev => prev.filter(s => s.id !== sessionId));
+        setSessions(prev => [...prev, { ...loadedSession, isArchived: false }]);
+      }
+
       setCurrentSession(loadedSession);
       return loadedSession;
 
@@ -138,7 +184,7 @@ export const useChatSessions = () => {
     }
   }, [session]);
 
-  // Update session (rename or archive)
+  // Update session (rename, archive)
   const updateSession = useCallback(async (
     sessionId: string, 
     updates: { title?: string; isArchived?: boolean }
@@ -165,9 +211,17 @@ export const useChatSessions = () => {
       const updatedSession = data.session;
 
       // Update sessions list
-      setSessions(prev => prev.map(s => 
-        s.id === sessionId ? { ...s, ...updatedSession } : s
-      ));
+      if (updates.isArchived) {
+        // Moving to archived
+        setSessions(prev => prev.filter(s => s.id !== sessionId));
+        setArchivedSessions(prev => [...prev, updatedSession]);
+      } else {
+        // Moving from archived to active or updating active
+        setSessions(prev => prev.map(s => 
+          s.id === sessionId ? { ...s, ...updatedSession } : s
+        ));
+        setArchivedSessions(prev => prev.filter(s => s.id !== sessionId));
+      }
 
       if (currentSession?.id === sessionId) {
         setCurrentSession(prev => prev ? { ...prev, ...updatedSession } : null);
@@ -202,6 +256,7 @@ export const useChatSessions = () => {
 
       // Remove from sessions list
       setSessions(prev => prev.filter(s => s.id !== sessionId));
+      setArchivedSessions(prev => prev.filter(s => s.id !== sessionId));
 
       // If deleted session was current, clear current session
       if (currentSession?.id === sessionId) {
@@ -219,6 +274,16 @@ export const useChatSessions = () => {
     }
   }, [session, currentSession]);
 
+  // Archive session
+  const archiveSession = useCallback(async (sessionId: string) => {
+    return await updateSession(sessionId, { isArchived: true });
+  }, [updateSession]);
+
+  // Unarchive session
+  const unarchiveSession = useCallback(async (sessionId: string) => {
+    return await updateSession(sessionId, { isArchived: false });
+  }, [updateSession]);
+
   // Auto-load sessions when user is authenticated
   useEffect(() => {
     if (session?.user) {
@@ -228,14 +293,18 @@ export const useChatSessions = () => {
 
   return {
     sessions,
+    archivedSessions,
     currentSession,
     isLoading,
     error,
     loadSessions,
+    loadArchivedSessions,
     createSession,
     loadSession,
     updateSession,
     deleteSession,
+    archiveSession,
+    unarchiveSession,
     clearError: () => setError(null),
   };
 };

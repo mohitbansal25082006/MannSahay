@@ -26,7 +26,9 @@ import {
   Trash2,
   Edit,
   Save,
-  FolderOpen
+  FolderOpen,
+  Archive,
+  ArchiveRestore
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import ReactMarkdown from 'react-markdown';
@@ -114,6 +116,9 @@ export default function ChatPage() {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [saveTitle, setSaveTitle] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
+  const [archiveTitle, setArchiveTitle] = useState('');
+  const [isArchiving, setIsArchiving] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -139,12 +144,15 @@ export default function ChatPage() {
 
   const {
     sessions,
+    archivedSessions,
     currentSession,
     isLoading: isLoadingSessions,
     createSession,
     loadSession,
     updateSession,
     deleteSession,
+    archiveSession,
+    unarchiveSession,
     error: sessionsError
   } = useChatSessions();
 
@@ -175,6 +183,8 @@ export default function ChatPage() {
     if (currentSession) {
       loadSessionMessages(currentSession.id);
       setCurrentSessionId(currentSession.id);
+      // Pre-fill archive dialog with current session title
+      setArchiveTitle(currentSession.title || '');
     }
   }, [currentSession]);
 
@@ -247,6 +257,36 @@ export default function ChatPage() {
       console.error('Error saving session:', error);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleArchiveSession = async () => {
+    if (!currentSessionId) return;
+    
+    setIsArchiving(true);
+    try {
+      await archiveSession(currentSessionId);
+      setArchiveDialogOpen(false);
+      // Clear current session after archiving
+      setMessages([]);
+      setCurrentSessionId(null);
+    } catch (error) {
+      console.error('Error archiving session:', error);
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
+  const handleUnarchiveSession = async (sessionId: string) => {
+    try {
+      await unarchiveSession(sessionId);
+      // Load the unarchived session
+      const session = await loadSession(sessionId);
+      if (session) {
+        setCurrentSessionId(sessionId);
+      }
+    } catch (error) {
+      console.error('Error unarchiving session:', error);
     }
   };
 
@@ -399,6 +439,12 @@ export default function ChatPage() {
                   <Bot className="h-5 w-5 mr-2 text-blue-600" />
                   <CardTitle className="flex items-center">
                     {currentSession?.title || 'New Conversation'}
+                    {currentSession?.isArchived && (
+                      <Badge variant="outline" className="ml-2">
+                        <Archive className="h-3 w-3 mr-1" />
+                        Archived
+                      </Badge>
+                    )}
                     <Badge variant="secondary" className="ml-2">Online</Badge>
                   </CardTitle>
                 </div>
@@ -442,6 +488,66 @@ export default function ChatPage() {
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
+
+                  {/* Archive Button */}
+                  <Dialog open={archiveDialogOpen} onOpenChange={setArchiveDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        disabled={!currentSessionId || currentSession?.isArchived}
+                      >
+                        <Archive className="h-4 w-4 mr-1" />
+                        Archive
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Archive Conversation</DialogTitle>
+                        <DialogDescription>
+                          This conversation will be moved to your archive and won't appear in the main list.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="archive-title" className="text-right">
+                            Title
+                          </Label>
+                          <Input
+                            id="archive-title"
+                            value={archiveTitle}
+                            onChange={(e) => setArchiveTitle(e.target.value)}
+                            placeholder="Conversation title"
+                            className="col-span-3"
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setArchiveDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button 
+                          onClick={handleArchiveSession} 
+                          disabled={isArchiving || !archiveTitle.trim()}
+                          variant="outline"
+                        >
+                          {isArchiving ? 'Archiving...' : 'Archive'}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+
+                  {/* Unarchive Button (only shown for archived sessions) */}
+                  {currentSession?.isArchived && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleUnarchiveSession(currentSession.id)}
+                    >
+                      <ArchiveRestore className="h-4 w-4 mr-1" />
+                      Unarchive
+                    </Button>
+                  )}
                   
                   <Button
                     variant="outline"
@@ -682,6 +788,7 @@ export default function ChatPage() {
         
         {/* Sidebar */}
         <div className="lg:col-span-1 space-y-4">
+          
           {/* Crisis Support */}
           <Card>
             <CardHeader className="pb-3">
