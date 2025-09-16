@@ -1,8 +1,25 @@
+"use client"
 import AuthButtons from "@/components/auth/auth-buttons"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
+import { getSession } from "next-auth/react"
+import { useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 
 export default function SignInPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard'
+
+  useEffect(() => {
+    // Check if user is already authenticated and redirect if they are
+    getSession().then(session => {
+      if (session) {
+        router.push(callbackUrl)
+      }
+    })
+  }, [router, callbackUrl])
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-gray-900 dark:to-gray-800 p-4">
       <div className="w-full max-w-md">
