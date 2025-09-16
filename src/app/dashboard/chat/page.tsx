@@ -124,7 +124,13 @@ export default function ChatPage() {
   const [isArchiving, setIsArchiving] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false); // Add this state to track client-side rendering
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Set isClient to true when component mounts on the client
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const {
     isRecording,
@@ -394,7 +400,7 @@ export default function ChatPage() {
   return (
     <div className="h-screen flex flex-col bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b px-4 py-4 sm:px-6">
+      <div className="bg-white border-b px-4 pt-0 pb-4 sm:px-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             {/* Mobile menu button */}
@@ -414,7 +420,7 @@ export default function ChatPage() {
               </SheetContent>
             </Sheet>
 
-            <div>
+            <div className="mr-6">
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
                 AI Chat Companion
               </h1>
@@ -706,7 +712,7 @@ export default function ChatPage() {
                       
                       {/* Suggested Messages */}
                       <div className="flex flex-wrap justify-center gap-2">
-                        {suggestedMessages.slice(0, window.innerWidth < 640 ? 4 : suggestedMessages.length).map((msg, index) => (
+                        {suggestedMessages.slice(0, isClient ? (window.innerWidth < 640 ? 4 : suggestedMessages.length) : 4).map((msg, index) => (
                           <Button
                             key={index}
                             variant="outline"
