@@ -88,6 +88,15 @@ export default function PostItem({
       }
     }
   };
+
+  const handleEdit = () => {
+    if (onEdit) {
+      onEdit();
+    } else {
+      // Navigate to edit page
+      window.location.href = `/dashboard/forum/post/${post.id}/edit`;
+    }
+  };
   
   const getRiskColor = (riskLevel: string) => {
     switch (riskLevel) {
@@ -185,7 +194,7 @@ export default function PostItem({
                   <>
                     <button
                       onClick={() => {
-                        onEdit?.();
+                        handleEdit();
                         setShowActions(false);
                       }}
                       className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"

@@ -15,6 +15,8 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useSession } from 'next-auth/react';
+import EditReplyForm from './edit-reply-form';
+import { toast } from 'sonner';
 
 interface ReplyItemProps {
   reply: {
@@ -57,6 +59,7 @@ export default function ReplyItem({
   const { data: session } = useSession();
   const [showActions, setShowActions] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   
   const isAuthor = currentUserId === reply.author.id;
 
@@ -86,6 +89,63 @@ export default function ReplyItem({
       default: return 'bg-gray-100 text-gray-800';
     }
   };
+
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this reply?')) return;
+
+    try {
+      const response = await fetch(`/api/forum/replies/${reply.id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        toast.success('Reply deleted successfully');
+        if (onDelete) onDelete();
+      } else {
+        toast.error('Failed to delete reply');
+      }
+    } catch (error) {
+      console.error('Error deleting reply:', error);
+      toast.error('Failed to delete reply');
+    }
+  };
+
+  const handleFlag = async () => {
+    const reason = prompt('Please provide a reason for flagging this reply:');
+    if (!reason) return;
+
+    try {
+      const response = await fetch('/api/forum/flag', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ replyId: reply.id, reason }),
+      });
+
+      if (response.ok) {
+        toast.success('Reply has been flagged for review');
+      } else {
+        toast.error('Failed to flag reply');
+      }
+    } catch (error) {
+      console.error('Error flagging reply:', error);
+      toast.error('Failed to flag reply');
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <EditReplyForm
+        reply={reply}
+        onCancel={() => setIsEditing(false)}
+        onSuccess={() => {
+          setIsEditing(false);
+          if (onEdit) onEdit();
+        }}
+      />
+    );
+  }
 
   return (
     <Card className={`${isNested ? 'ml-8 mt-2' : 'mt-4'} border-l-4 ${reply.flagged ? 'border-l-red-500' : 'border-l-gray-200'}`}>
@@ -155,14 +215,17 @@ export default function ReplyItem({
                 {(isAuthor || isAdmin) && (
                   <>
                     <button
-                      onClick={onEdit}
+                      onClick={() => {
+                        setIsEditing(true);
+                        setShowActions(false);
+                      }}
                       className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
                       <Edit className="h-4 w-4 inline mr-2" />
                       Edit
                     </button>
                     <button
-                      onClick={onDelete}
+                      onClick={handleDelete}
                       className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                     >
                       <Trash2 className="h-4 w-4 inline mr-2" />
@@ -171,7 +234,7 @@ export default function ReplyItem({
                   </>
                 )}
                 <button
-                  onClick={onFlag}
+                  onClick={handleFlag}
                   className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 >
                   <Flag className="h-4 w-4 inline mr-2" />
