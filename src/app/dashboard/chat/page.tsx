@@ -608,64 +608,67 @@ export default function ChatPage() {
                     </Button>
                   </div>
 
-                  <Dialog open={archiveDialogOpen} onOpenChange={setArchiveDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        disabled={!currentSessionId || currentSession?.isArchived}
+                  {/* Conditional Archive/Unarchive Button */}
+                  {currentSession && (
+                    currentSession.isArchived ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleUnarchiveSession(currentSession.id)}
                         className="hidden sm:flex"
                       >
-                        <Archive className="h-4 w-4 mr-1" />
-                        <span className="hidden md:inline">Archive</span>
+                        <ArchiveRestore className="h-4 w-4 mr-1" />
+                        <span className="hidden md:inline">Unarchive</span>
                       </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-md mx-4">
-                      <DialogHeader>
-                        <DialogTitle>Archive Conversation</DialogTitle>
-                        <DialogDescription>
-                          This conversation will be moved to your archive and won't appear in the main list.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="archive-title" className="text-right">
-                            Title
-                          </Label>
-                          <Input
-                            id="archive-title"
-                            value={archiveTitle}
-                            onChange={(e) => setArchiveTitle(e.target.value)}
-                            placeholder="Conversation title"
-                            className="col-span-3"
-                          />
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button variant="outline" onClick={() => setArchiveDialogOpen(false)}>
-                          Cancel
-                        </Button>
-                        <Button 
-                          onClick={handleArchiveSession} 
-                          disabled={isArchiving || !archiveTitle.trim()}
-                          variant="outline"
-                        >
-                          {isArchiving ? 'Archiving...' : 'Archive'}
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-
-                  {currentSession?.isArchived && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleUnarchiveSession(currentSession.id)}
-                      className="hidden sm:flex"
-                    >
-                      <ArchiveRestore className="h-4 w-4 mr-1" />
-                      <span className="hidden md:inline">Unarchive</span>
-                    </Button>
+                    ) : (
+                      <Dialog open={archiveDialogOpen} onOpenChange={setArchiveDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            disabled={!currentSessionId}
+                            className="hidden sm:flex"
+                          >
+                            <Archive className="h-4 w-4 mr-1" />
+                            <span className="hidden md:inline">Archive</span>
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md mx-4">
+                          <DialogHeader>
+                            <DialogTitle>Archive Conversation</DialogTitle>
+                            <DialogDescription>
+                              This conversation will be moved to your archive and won't appear in the main list.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                              <Label htmlFor="archive-title" className="text-right">
+                                Title
+                              </Label>
+                              <Input
+                                id="archive-title"
+                                value={archiveTitle}
+                                onChange={(e) => setArchiveTitle(e.target.value)}
+                                placeholder="Conversation title"
+                                className="col-span-3"
+                              />
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <Button variant="outline" onClick={() => setArchiveDialogOpen(false)}>
+                              Cancel
+                            </Button>
+                            <Button 
+                              onClick={handleArchiveSession} 
+                              disabled={isArchiving || !archiveTitle.trim()}
+                              variant="outline"
+                            >
+                              {isArchiving ? 'Archiving...' : 'Archive'}
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    )
                   )}
                   
                   <Button
