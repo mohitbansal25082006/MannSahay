@@ -281,7 +281,9 @@ export default function PostPage() {
     return replyList.map(reply => (
       <div key={reply.id}>
         <ReplyItem
+          key={reply.id}
           reply={reply}
+          postId={id || ''}
           currentUserId={session?.user?.id}
           onReply={() => setReplyingTo(reply.id)}
           onFlag={() => handleFlagReply(reply.id)}

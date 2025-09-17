@@ -11,17 +11,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { postId, replyId } = await request.json();
+    const { replyId } = await request.json();
 
-    if (!postId && !replyId) {
-      return NextResponse.json({ error: 'postId or replyId is required' }, { status: 400 });
+    if (!replyId) {
+      return NextResponse.json({ error: 'replyId is required' }, { status: 400 });
     }
 
     // Check if already liked
     const existingLike = await prisma.like.findFirst({
       where: {
         userId: session.user.id,
-        postId,
         replyId,
       },
     });
@@ -37,34 +36,31 @@ export async function POST(request: NextRequest) {
       const like = await prisma.like.create({
         data: {
           userId: session.user.id,
-          postId,
           replyId,
         },
       });
 
-      // If liking a reply, notify the reply author
-      if (replyId) {
-        const reply = await prisma.reply.findUnique({
-          where: { id: replyId },
-          include: { author: true },
-        });
+      // Notify the reply author
+      const reply = await prisma.reply.findUnique({
+        where: { id: replyId },
+        include: { author: true },
+      });
 
-        if (reply && reply.authorId !== session.user.id) {
-          await prisma.notification.create({
-            data: {
-              title: 'New Like',
-              message: `Someone liked your reply`,
-              type: 'like',
-              userId: reply.authorId,
-            },
-          });
-        }
+      if (reply && reply.authorId !== session.user.id) {
+        await prisma.notification.create({
+          data: {
+            title: 'New Like on Your Reply',
+            message: `Someone liked your reply`,
+            type: 'like',
+            userId: reply.authorId,
+          },
+        });
       }
 
       return NextResponse.json({ liked: true, like });
     }
   } catch (error) {
-    console.error('Like/Unlike error:', error);
+    console.error('Like/Unlike reply error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

@@ -11,18 +11,20 @@ import { toast } from 'sonner';
 
 interface CreateReplyFormProps {
   postId: string;
-  parentId?: string;
+  replyId?: string; // For replying to a reply
   onReplyCreated?: () => void;
   placeholder?: string;
   className?: string;
+  isNested?: boolean;
 }
 
 export default function CreateReplyForm({
   postId,
-  parentId,
+  replyId,
   onReplyCreated,
   placeholder = "Write your reply...",
-  className = ""
+  className = "",
+  isNested = false
 }: CreateReplyFormProps) {
   const { data: session } = useSession();
   const [content, setContent] = useState('');
@@ -39,16 +41,20 @@ export default function CreateReplyForm({
     setIsSubmitting(true);
     
     try {
-      const response = await fetch('/api/forum/replies', {
+      const url = replyId 
+        ? '/api/forum/replies/reply' // For replying to a reply
+        : '/api/forum/replies'; // For replying to a post
+        
+      const body = replyId
+        ? { content, postId, replyId }
+        : { content, postId, parentId: undefined };
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          content,
-          postId,
-          parentId,
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
@@ -70,7 +76,7 @@ export default function CreateReplyForm({
   };
 
   return (
-    <Card className={className}>
+    <Card className={`${className} ${isNested ? 'ml-8' : ''}`}>
       <CardContent className="pt-4">
         <form onSubmit={handleSubmit}>
           <div className="flex space-x-3">
