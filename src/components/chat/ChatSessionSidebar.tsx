@@ -349,7 +349,7 @@ export const ChatSessionSidebar: React.FC<ChatSessionSidebarProps> = ({
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
-                                className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0"
+                                className="h-6 w-6 p-0"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <MoreVertical className="h-3 w-3" />

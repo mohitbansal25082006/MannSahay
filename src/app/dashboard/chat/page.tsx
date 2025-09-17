@@ -124,10 +124,9 @@ export default function ChatPage() {
   const [isArchiving, setIsArchiving] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
-  const [isClient, setIsClient] = useState(false); // Add this state to track client-side rendering
+  const [isClient, setIsClient] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Set isClient to true when component mounts on the client
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -186,7 +185,6 @@ export default function ChatPage() {
     }
   });
 
-  // Load messages when a session is selected
   useEffect(() => {
     if (currentSession) {
       loadSessionMessages(currentSession.id);
@@ -202,6 +200,13 @@ export default function ChatPage() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Scroll to bottom when audio player appears
+  useEffect(() => {
+    if (duration > 0) {
+      scrollToBottom();
+    }
+  }, [duration, isPlaying]);
 
   useEffect(() => {
     if (recordingError) {
@@ -371,6 +376,8 @@ export default function ChatPage() {
         const audioBuffer = await response.arrayBuffer();
         loadAudio(audioBuffer);
         play();
+        // Scroll to bottom after a short delay to ensure player renders
+        setTimeout(() => scrollToBottom(), 100);
       } else {
         console.error('Speech generation failed');
       }
@@ -399,160 +406,6 @@ export default function ChatPage() {
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b px-1 py-0">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            {/* Mobile menu button */}
-            <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="lg:hidden">
-                  <Menu className="h-4 w-4" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-80 p-0">
-                <div className="h-full">
-                  <ChatSessionSidebar 
-                    onSessionSelect={handleSessionSelect}
-                    language={language}
-                  />
-                </div>
-              </SheetContent>
-            </Sheet>
-
-            <div className="mr-6 -mt-2">
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
-                AI Chat Companion
-              </h1>
-              <p className="text-sm sm:text-base text-gray-600 hidden sm:block">
-                Share your thoughts and feelings. I'm here to listen and support you.
-              </p>
-            </div>
-          </div>
-
-          {/* Language Toggle */}
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-500 hidden sm:inline">Language:</span>
-            <Button
-              variant={language === 'en' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setLanguage('en')}
-            >
-              En
-            </Button>
-            <Button
-              variant={language === 'hi' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setLanguage('hi')}
-            >
-              हि
-            </Button>
-
-            {/* Mobile right sidebar button */}
-            <Sheet open={rightSidebarOpen} onOpenChange={setRightSidebarOpen}>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="lg:hidden">
-                  <AlertTriangle className="h-4 w-4" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-80 p-0">
-                <ScrollArea className="h-full p-4">
-                  <div className="space-y-4">
-                    {/* Crisis Support - Mobile */}
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="flex items-center text-red-600">
-                          <AlertTriangle className="h-4 w-4 mr-2" />
-                          Crisis Support
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <p className="text-sm text-gray-600">
-                          If you're in crisis, please reach out immediately:
-                        </p>
-                        {emergencyContacts.map((contact, index) => (
-                          <div key={index} className="p-3 bg-red-50 rounded-lg">
-                            <h4 className="font-medium text-sm text-red-800">
-                              {contact.name}
-                            </h4>
-                            <p className="font-mono text-sm text-red-700">
-                              {contact.number}
-                            </p>
-                            <p className="text-xs text-red-600">
-                              {contact.description}
-                            </p>
-                          </div>
-                        ))}
-                      </CardContent>
-                    </Card>
-
-                    {/* Quick Tips - Mobile */}
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="flex items-center text-green-600">
-                          <Lightbulb className="h-4 w-4 mr-2" />
-                          Quick Tips
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-3">
-                          <div className="p-3 bg-green-50 rounded-lg">
-                            <h4 className="font-medium text-sm text-green-800 mb-1">
-                              Breathing Exercise
-                            </h4>
-                            <p className="text-xs text-green-700">
-                              4-7-8 technique: Inhale 4, hold 7, exhale 8
-                            </p>
-                          </div>
-                          
-                          <div className="p-3 bg-blue-50 rounded-lg">
-                            <h4 className="font-medium text-sm text-blue-800 mb-1">
-                              Grounding
-                            </h4>
-                            <p className="text-xs text-blue-700">
-                              Name 5 things you can see, 4 you can hear, 3 you can touch
-                            </p>
-                          </div>
-                          
-                          <div className="p-3 bg-purple-50 rounded-lg">
-                            <h4 className="font-medium text-sm text-purple-800 mb-1">
-                              Affirmation
-                            </h4>
-                            <p className="text-xs text-purple-700">
-                              "This feeling is temporary. I am stronger than I know."
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* Professional Help - Mobile */}
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="flex items-center text-blue-600">
-                          <Heart className="h-4 w-4 mr-2" />
-                          Need More Support?
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-gray-600 mb-3">
-                          Consider booking a session with our professional counselors.
-                        </p>
-                        <Button className="w-full" size="sm">
-                          <Phone className="h-4 w-4 mr-2" />
-                          Book Counselor
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </ScrollArea>
-              </SheetContent>
-            </Sheet>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar - Desktop only */}
         <div className="hidden lg:block w-80 bg-white border-r">
@@ -567,24 +420,137 @@ export default function ChatPage() {
           <Card className="flex-1 flex flex-col m-0 border-0 rounded-none">
             <CardHeader className="pb-3 border-b">
               <div className="flex items-center justify-between">
-                <div className="flex items-center min-w-0">
-                  <Bot className="h-5 w-5 mr-2 text-blue-600 flex-shrink-0" />
-                  <CardTitle className="flex items-center truncate">
-                    <span className="truncate">
-                      {currentSession?.title || 'New Conversation'}
-                    </span>
-                    {currentSession?.isArchived && (
-                      <Badge variant="outline" className="ml-2 flex-shrink-0">
-                        <Archive className="h-3 w-3 mr-1" />
-                        Archived
-                      </Badge>
-                    )}
-                    <Badge variant="secondary" className="ml-2 flex-shrink-0">Online</Badge>
-                  </CardTitle>
+                <div className="flex items-center space-x-2">
+                  <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+                    <SheetTrigger asChild>
+                      <Button variant="outline" size="sm" className="lg:hidden">
+                        <Menu className="h-4 w-4" />
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="w-80 p-0">
+                      <div className="h-full">
+                        <ChatSessionSidebar 
+                          onSessionSelect={handleSessionSelect}
+                          language={language}
+                        />
+                      </div>
+                    </SheetContent>
+                  </Sheet>
+                  <div className="flex items-center min-w-0 space-x-2">
+                    <Bot className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                    <CardTitle className="flex items-center truncate text-sm sm:text-base">
+                      <span className="truncate">
+                        {currentSession?.title || 'New Conversation'}
+                      </span>
+                      {currentSession?.isArchived && (
+                        <Badge variant="outline" className="ml-1 sm:ml-2 flex-shrink-0 text-xs">
+                          <Archive className="h-3 w-3 mr-1" />
+                          Archived
+                        </Badge>
+                      )}
+                      <Badge variant="secondary" className="ml-1 sm:ml-2 flex-shrink-0 text-xs">Online</Badge>
+                    </CardTitle>
+                  </div>
                 </div>
                 
                 <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
-                  {/* Save Button */}
+                  <Sheet open={rightSidebarOpen} onOpenChange={setRightSidebarOpen}>
+                    <SheetTrigger asChild>
+                      <Button variant="outline" size="sm" className="lg:hidden">
+                        <AlertTriangle className="h-4 w-4" />
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="right" className="w-80 p-0">
+                      <ScrollArea className="h-full p-4">
+                        <div className="space-y-4">
+                          <Card>
+                            <CardHeader className="pb-3">
+                              <CardTitle className="flex items-center text-red-600">
+                                <AlertTriangle className="h-4 w-4 mr-2" />
+                                Crisis Support
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                              <p className="text-sm text-gray-600">
+                                If you're in crisis, please reach out immediately:
+                              </p>
+                              {emergencyContacts.map((contact, index) => (
+                                <div key={index} className="p-3 bg-red-50 rounded-lg">
+                                  <h4 className="font-medium text-sm text-red-800">
+                                    {contact.name}
+                                  </h4>
+                                  <p className="font-mono text-sm text-red-700">
+                                    {contact.number}
+                                  </p>
+                                  <p className="text-xs text-red-600">
+                                    {contact.description}
+                                  </p>
+                                </div>
+                              ))}
+                            </CardContent>
+                          </Card>
+
+                          <Card>
+                            <CardHeader className="pb-3">
+                              <CardTitle className="flex items-center text-green-600">
+                                <Lightbulb className="h-4 w-4 mr-2" />
+                                Quick Tips
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="space-y-3">
+                                <div className="p-3 bg-green-50 rounded-lg">
+                                  <h4 className="font-medium text-sm text-green-800 mb-1">
+                                    Breathing Exercise
+                                  </h4>
+                                  <p className="text-xs text-green-700">
+                                    4-7-8 technique: Inhale 4, hold 7, exhale 8
+                                  </p>
+                                </div>
+                                
+                                <div className="p-3 bg-blue-50 rounded-lg">
+                                  <h4 className="font-medium text-sm text-blue-800 mb-1">
+                                    Grounding
+                                  </h4>
+                                  <p className="text-xs text-blue-700">
+                                    Name 5 things you can see, 4 you can hear, 3 you can touch
+                                  </p>
+                                </div>
+                                
+                                <div className="p-3 bg-purple-50 rounded-lg">
+                                  <h4 className="font-medium text-sm text-purple-800 mb-1">
+                                    Affirmation
+                                  </h4>
+                                  <p className="text-xs text-purple-700">
+                                    "This feeling is temporary. I am stronger than I know."
+                                  </p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+
+                          <Card>
+                            <CardHeader className="pb-3">
+                              <CardTitle className="flex items-center text-blue-600">
+                                <Heart className="h-4 w-4 mr-2" />
+                                Need More Support?
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <p className="text-sm text-gray-600 mb-3">
+                                Consider booking a session with our professional counselors.
+                              </p>
+                              <Button className="w-full" size="sm">
+                                <Phone className="h-4 w-4 mr-2" />
+                                Book Counselor
+                              </Button>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      </ScrollArea>
+                    </SheetContent>
+                  </Sheet>
+
                   <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
                     <DialogTrigger asChild>
                       <Button variant="outline" size="sm" disabled={!currentSessionId} className="hidden sm:flex">
@@ -624,7 +590,24 @@ export default function ChatPage() {
                     </DialogContent>
                   </Dialog>
 
-                  {/* Archive Button */}
+                  <div className="flex items-center space-x-1">
+                    <span className="text-xs text-gray-500 hidden sm:inline">Language:</span>
+                    <Button
+                      variant={language === 'en' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setLanguage('en')}
+                    >
+                      En
+                    </Button>
+                    <Button
+                      variant={language === 'hi' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setLanguage('hi')}
+                    >
+                      हि
+                    </Button>
+                  </div>
+
                   <Dialog open={archiveDialogOpen} onOpenChange={setArchiveDialogOpen}>
                     <DialogTrigger asChild>
                       <Button 
@@ -673,7 +656,6 @@ export default function ChatPage() {
                     </DialogContent>
                   </Dialog>
 
-                  {/* Unarchive Button */}
                   {currentSession?.isArchived && (
                     <Button
                       variant="outline"
@@ -699,7 +681,6 @@ export default function ChatPage() {
             </CardHeader>
             
             <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
-              {/* Messages Area with Scrollbar */}
               <ScrollArea className="flex-1 px-4 sm:px-6 py-4" style={{ maxHeight: 'calc(100vh - 200px)' }}>
                 <div className="space-y-4">
                   {messages.length === 0 && (
@@ -712,7 +693,6 @@ export default function ChatPage() {
                         I'm here to listen and support you. How are you feeling today?
                       </p>
                       
-                      {/* Suggested Messages */}
                       <div className="flex flex-wrap justify-center gap-2">
                         {suggestedMessages.slice(0, isClient ? (window.innerWidth < 640 ? 4 : suggestedMessages.length) : 4).map((msg, index) => (
                           <Button
@@ -774,7 +754,6 @@ export default function ChatPage() {
                           )}
                         </div>
                         
-                        {/* Audio playback for assistant messages */}
                         {message.role === 'assistant' && (
                           <div className="mt-2 flex items-center space-x-2">
                             <Button
@@ -796,6 +775,38 @@ export default function ChatPage() {
                       </div>
                     </div>
                   ))}
+
+                  {/* Audio Player for Generated Speech - Appears at bottom of chat */}
+                  {(duration > 0) && (
+                    <div className="w-full p-4 bg-green-50 rounded-lg border border-green-200">
+                      <div className="flex items-center space-x-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={isPlaying ? pause : play}
+                        >
+                          {isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+                        </Button>
+                        <div className="flex-1">
+                          <div className="text-xs text-green-800 mb-1">
+                            Audio Response
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs text-green-600">{formatTime(currentTime)}</span>
+                            <input
+                              type="range"
+                              min="0"
+                              max={duration}
+                              value={currentTime}
+                              onChange={(e) => seek(parseFloat(e.target.value))}
+                              className="flex-1 h-1 bg-green-200 rounded-lg appearance-none cursor-pointer"
+                            />
+                            <span className="text-xs text-green-600">{formatTime(duration)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   
                   {isLoading && (
                     <div className="flex items-start space-x-3">
@@ -819,14 +830,13 @@ export default function ChatPage() {
                 <div ref={messagesEndRef} />
               </ScrollArea>
               
-              {/* Input Area */}
               <div className="p-4 border-t bg-white">
-                {/* Audio Recording Section */}
+                {/* Recorded Audio Section - Only for user recordings before sending */}
                 {audioBlob && (
                   <div className="mb-4 p-3 bg-blue-50 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm text-blue-800">Recorded audio</span>
-                      <audio src={audioUrl!} controls className="h-8" />
+                      <audio src={audioUrl!} controls className="h-8 max-w-[200px] sm:max-w-[300px]" />
                     </div>
                     <div className="flex space-x-2">
                       <Button
@@ -862,7 +872,6 @@ export default function ChatPage() {
                       disabled={isLoading || isRecording}
                     />
                     
-                    {/* Voice Recording Button */}
                     <Button
                       type="button"
                       variant={isRecording ? "destructive" : "outline"}
@@ -887,47 +896,13 @@ export default function ChatPage() {
                     </Button>
                   </div>
                 </form>
-
-                {/* Audio Player */}
-                {isPlaying && (
-                  <div className="mt-3 p-3 bg-green-50 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={isPlaying ? pause : play}
-                      >
-                        {isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
-                      </Button>
-                      <div className="flex-1">
-                        <div className="text-xs text-green-800 mb-1">
-                          Playing response...
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-xs text-green-600">{formatTime(currentTime)}</span>
-                          <input
-                            type="range"
-                            min="0"
-                            max={duration}
-                            value={currentTime}
-                            onChange={(e) => seek(parseFloat(e.target.value))}
-                            className="flex-1 h-1 bg-green-200 rounded-lg appearance-none cursor-pointer"
-                          />
-                          <span className="text-xs text-green-600">{formatTime(duration)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
         </div>
         
-        {/* Right Sidebar - Desktop only */}
         <div className="hidden lg:block w-80 bg-white border-l">
           <div className="h-full p-4 space-y-4 overflow-y-auto">
-            {/* Crisis Support */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center text-red-600">
@@ -955,7 +930,6 @@ export default function ChatPage() {
               </CardContent>
             </Card>
             
-            {/* Quick Tips */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center text-green-600">
@@ -995,7 +969,6 @@ export default function ChatPage() {
               </CardContent>
             </Card>
             
-            {/* Professional Help */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center text-blue-600">
