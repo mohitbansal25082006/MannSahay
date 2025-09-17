@@ -1,9 +1,10 @@
+// app/dashboard/page.tsx  (or wherever your dashboard page is)
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, Calendar, Users, BookOpen, TrendingUp, Clock } from 'lucide-react';
+import { MessageCircle, Calendar, Users, BookOpen, Clock } from 'lucide-react';
 import Link from 'next/link';
 
 async function getUserStats(userId: string) {
@@ -26,7 +27,7 @@ async function getUserStats(userId: string) {
   });
 
   const upcomingBookings = await prisma.booking.findMany({
-    where: { 
+    where: {
       userId,
       slotTime: {
         gte: new Date()
@@ -49,13 +50,48 @@ async function getUserStats(userId: string) {
 }
 
 export default async function DashboardPage() {
+  // Get the session
   const session = await getServerSession(authOptions);
-  
-  if (!session?.user?.id) {
-    return <div>Loading...</div>;
+
+  // If there's no session at all, show a sign-in CTA (don't render indefinite "Loading...")
+  if (!session?.user) {
+    return (
+      <div className="max-w-2xl mx-auto p-8 text-center">
+        <h2 className="text-2xl font-semibold mb-2">You're not signed in</h2>
+        <p className="text-gray-600 mb-4">Sign in to view your dashboard and recent activity.</p>
+        <Link href="/api/auth/signin">
+          <Button>Sign in</Button>
+        </Link>
+      </div>
+    );
   }
 
-  const stats = await getUserStats(session.user.id);
+  // session.user may not include the DB id by default — try to resolve it from the DB using email
+  let userId: string | undefined = (session.user as any).id;
+
+  if (!userId && session.user.email) {
+    const dbUser = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { id: true }
+    });
+    userId = dbUser?.id ?? undefined;
+  }
+
+  // If we still don't have a user id, render an error message (instead of Loading...)
+  if (!userId) {
+    return (
+      <div className="max-w-2xl mx-auto p-8 text-center">
+        <h2 className="text-2xl font-semibold mb-2">Account not found</h2>
+        <p className="text-gray-600 mb-4">We couldn't find your account in the database. Try signing out and signing back in.</p>
+        <Link href="/api/auth/signout">
+          <Button>Sign out</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  // Now fetch stats
+  const stats = await getUserStats(userId);
 
   const quickActions = [
     {
@@ -242,8 +278,8 @@ export default async function DashboardPage() {
                       </p>
                     </div>
                     <span className={`text-xs px-2 py-1 rounded-full ${
-                      booking.status === 'CONFIRMED' 
-                        ? 'bg-green-100 text-green-800' 
+                      booking.status === 'CONFIRMED'
+                        ? 'bg-green-100 text-green-800'
                         : 'bg-yellow-100 text-yellow-800'
                     }`}>
                       {booking.status}
