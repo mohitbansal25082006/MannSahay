@@ -18,51 +18,48 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async session({ session, token, user }) {
-      // For database strategy, we get 'user' parameter instead of 'token'
-      if (session?.user) {
-        // Generate hashed ID for privacy
-        const hashedId = crypto
-          .createHash('sha256')
-          .update(session.user.email + process.env.NEXTAUTH_SECRET!)
-          .digest('hex')
+    async session({ session, token }) {
+      // For JWT strategy, we get the user ID from the token
+      if (session?.user && token) {
+        // Add user ID to session
+        session.user.id = token.sub || token.id as string;
         
-        // Update user with hashed ID if not exists
-        await prisma.user.upsert({
-          where: { email: session.user.email! },
-          update: {
-            hashedId: hashedId,
-            name: session.user.name,
-            image: session.user.image,
-          },
-          create: {
-            email: session.user.email!,
-            name: session.user.name,
-            image: session.user.image,
-            hashedId: hashedId,
-          },
-        })
-        
-        // Add hashedId to session
-        session.user.hashedId = hashedId
-        
-        // For database strategy, we need to add the user id to session
-        if (user) {
-          session.user.id = user.id
+        // Generate hashed ID for privacy if not already set
+        if (!session.user.hashedId && session.user.email) {
+          const hashedId = crypto
+            .createHash('sha256')
+            .update(session.user.email + process.env.NEXTAUTH_SECRET!)
+            .digest('hex');
+          
+          session.user.hashedId = hashedId;
+          
+          // Update user with hashed ID if not exists
+          await prisma.user.update({
+            where: { email: session.user.email },
+            data: { hashedId }
+          }).catch(() => {
+            // Ignore if user doesn't exist yet
+          });
         }
       }
       return session
     },
-    async jwt({ token, user }) {
-      // Add user id to token for JWT strategy (though we're using database)
+    async jwt({ token, user, account }) {
+      // Add user ID to token when signing in
       if (user) {
-        token.id = user.id
+        token.id = user.id;
       }
+      
+      // Add provider info to token
+      if (account) {
+        token.provider = account.provider;
+      }
+      
       return token
     },
   },
   session: {
-    strategy: "jwt", // CHANGED FROM "database" to "jwt" - This is crucial for middleware!
+    strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   jwt: {
@@ -71,5 +68,5 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/auth/signin",
   },
-  debug: process.env.NODE_ENV === 'development', // Enable debug logs
+  debug: process.env.NODE_ENV === 'development',
 }

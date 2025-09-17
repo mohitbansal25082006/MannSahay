@@ -1,3 +1,5 @@
+// E:\mannsahay\prisma\schema.prisma
+
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
@@ -52,9 +54,15 @@ model User {
   accounts     Account[]
   sessions     Session[]
   chats        Chat[]
-  chatSessions ChatSession[] // NEW: Chat sessions for organization
+  chatSessions ChatSession[] 
   bookings     Booking[]
   posts        Post[]
+  replies      Reply[]
+  likes        Like[]
+  bookmarks    Bookmark[]
+  shares       Share[]
+  flags        Flag[]
+  notifications Notification[]
   @@map("users")
 }
 
@@ -66,14 +74,13 @@ model VerificationToken {
   @@map("verificationtokens")
 }
 
-// NEW: Chat Session model for organizing conversations
 model ChatSession {
   id          String   @id @default(cuid())
-  title       String?  // Auto-generated or user-defined title
-  isActive    Boolean  @default(true) // Current active session
+  title       String?  
+  isActive    Boolean  @default(true) 
   isArchived  Boolean  @default(false)
   language    String   @default("en")
-  riskLevel   RiskLevel @default(NONE) // Highest risk level in session
+  riskLevel   RiskLevel @default(NONE) 
   totalMessages Int    @default(0)
   lastMessageAt DateTime @default(now())
   createdAt   DateTime @default(now())
@@ -88,18 +95,17 @@ model ChatSession {
   @@map("chat_sessions")
 }
 
-// Enhanced Chat model with session relationship
 model Chat {
   id        String   @id @default(cuid())
   content   String   @db.Text
-  role      String   // 'user' or 'assistant'
+  role      String   
   timestamp DateTime @default(now())
   userId    String
-  sessionId String   // NEW: Links to ChatSession
+  sessionId String   
   language  String?  @default("en")
   riskLevel RiskLevel @default(NONE)
-  context   Json?    // NEW: Store context analysis (academic, social, etc.)
-  audioUrl  String?  // NEW: For voice messages
+  context   Json?    
+  audioUrl  String?  
   
   user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   session ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
@@ -143,23 +149,113 @@ model Post {
   isAnonymous Boolean   @default(true)
   flagged     Boolean   @default(false)
   riskLevel   RiskLevel @default(NONE)
+  category    String?   @default("general")
+  views       Int       @default(0)
   createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   authorId    String
   
-  author  User    @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  replies Reply[]
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  replies   Reply[]   @relation("PostReplies")
+  likes     Like[]
+  bookmarks Bookmark[]
+  shares    Share[]
+  flags     Flag[]
+  
   @@map("posts")
 }
 
 model Reply {
-  id        String   @id @default(cuid())
-  content   String   @db.Text
-  createdAt DateTime @default(now())
+  id        String    @id @default(cuid())
+  content   String    @db.Text
+  flagged   Boolean   @default(false)
+  riskLevel RiskLevel @default(NONE)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   postId    String
   authorId  String
+  parentId  String?   // For nested replies
   
-  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  post   Post   @relation("PostReplies", fields: [postId], references: [id], onDelete: Cascade)
+  author User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent Reply? @relation("ReplyReplies", fields: [parentId], references: [id])
+  replies Reply[] @relation("ReplyReplies")
+  likes  Like[]
+  flags  Flag[]
+  
   @@map("replies")
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId    String
+  postId    String?
+  replyId   String?
+  
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post  Post?  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  reply Reply? @relation(fields: [replyId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, postId])
+  @@unique([userId, replyId])
+  @@map("likes")
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId    String
+  postId    String
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, postId])
+  @@map("bookmarks")
+}
+
+model Share {
+  id        String   @id @default(cuid())
+  platform  String   // 'internal', 'twitter', 'facebook', 'whatsapp', etc.
+  createdAt DateTime @default(now())
+  userId    String
+  postId    String
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  @@map("shares")
+}
+
+model Flag {
+  id        String   @id @default(cuid())
+  reason    String?  // 'spam', 'harassment', 'inappropriate', 'self-harm', etc.
+  createdAt DateTime @default(now())
+  userId    String
+  postId    String?
+  replyId   String?
+  resolved  Boolean  @default(false)
+  
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post  Post?  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  reply Reply? @relation(fields: [replyId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, postId])
+  @@unique([userId, replyId])
+  @@map("flags")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  message   String   @db.Text
+  type      String   // 'flagged_content', 'reply', 'mention', etc.
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  userId    String
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@map("notifications")
 }
 
 model Resource {
