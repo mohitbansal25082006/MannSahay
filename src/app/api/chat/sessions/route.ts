@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 
-// GET: Retrieve all chat sessions for a user
+// GET: Retrieve all chat sessions for a user (active + archived)
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -21,11 +21,10 @@ export async function GET(request: NextRequest) {
       return new Response('User not found', { status: 404 });
     }
 
-    // Get all chat sessions with message counts and latest message
+    // Get all chat sessions (no isArchived filter) with message counts and latest message
     const chatSessions = await prisma.chatSession.findMany({
       where: { 
-        userId: user.id,
-        isArchived: false
+        userId: user.id
       },
       include: {
         _count: {

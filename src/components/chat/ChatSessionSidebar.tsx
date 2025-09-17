@@ -37,6 +37,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useChatSessions, ChatSession } from '@/hooks/useChatSessions';
 import { formatDistanceToNow } from 'date-fns';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ChatSessionSidebarProps {
   onSessionSelect?: (session: ChatSession) => void;
@@ -328,7 +329,7 @@ export const ChatSessionSidebar: React.FC<ChatSessionSidebarProps> = ({
                           </p>
                         )}
 
-                        {/* Metadata */}
+                        {/* Metadata and Actions */}
                         <div className="flex items-center justify-between text-xs text-gray-400">
                           <div className="flex items-center space-x-3">
                             <div className="flex items-center space-x-1">
@@ -343,41 +344,93 @@ export const ChatSessionSidebar: React.FC<ChatSessionSidebarProps> = ({
                             </div>
                           </div>
 
-                          {/* Actions Menu */}
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="h-6 w-6 p-0"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <MoreVertical className="h-3 w-3" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingSession(session);
-                                  setNewTitle(session.title || '');
-                                }}
-                              >
-                                <Edit className="h-4 w-4 mr-2" />
-                                {language === 'hi' ? 'नाम बदलें' : 'Rename'}
-                              </DropdownMenuItem>
-                              
-                              {session.isArchived ? (
+                          {/* Actions: Dropdown for active sessions, buttons for archived */}
+                          {session.isArchived ? (
+                            <TooltipProvider>
+                              <div className="flex items-center space-x-1">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="h-6 w-6 p-0"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditingSession(session);
+                                        setNewTitle(session.title || '');
+                                      }}
+                                    >
+                                      <Edit className="h-3 w-3" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    {language === 'hi' ? 'नाम बदलें' : 'Rename'}
+                                  </TooltipContent>
+                                </Tooltip>
+
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="h-6 w-6 p-0"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleUnarchiveSession(session.id);
+                                      }}
+                                    >
+                                      <ArchiveRestore className="h-3 w-3" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    {language === 'hi' ? 'अनसंग्रहीत करें' : 'Unarchive'}
+                                  </TooltipContent>
+                                </Tooltip>
+
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="h-6 w-6 p-0 text-red-600"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteSession(session.id);
+                                      }}
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    {language === 'hi' ? 'हटाएं' : 'Delete'}
+                                  </TooltipContent>
+                                </Tooltip>
+                              </div>
+                            </TooltipProvider>
+                          ) : (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-6 w-6 p-0"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <MoreVertical className="h-3 w-3" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
                                 <DropdownMenuItem
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleUnarchiveSession(session.id);
+                                    setEditingSession(session);
+                                    setNewTitle(session.title || '');
                                   }}
                                 >
-                                  <ArchiveRestore className="h-4 w-4 mr-2" />
-                                  {language === 'hi' ? 'अनसंग्रहीत करें' : 'Unarchive'}
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  {language === 'hi' ? 'नाम बदलें' : 'Rename'}
                                 </DropdownMenuItem>
-                              ) : (
+                                
                                 <DropdownMenuItem
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -387,21 +440,21 @@ export const ChatSessionSidebar: React.FC<ChatSessionSidebarProps> = ({
                                   <Archive className="h-4 w-4 mr-2" />
                                   {language === 'hi' ? 'संग्रहीत करें' : 'Archive'}
                                 </DropdownMenuItem>
-                              )}
-                              
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteSession(session.id);
-                                }}
-                                className="text-red-600 focus:text-red-600"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                {language === 'hi' ? 'हटाएं' : 'Delete'}
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                                
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteSession(session.id);
+                                  }}
+                                  className="text-red-600 focus:text-red-600"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  {language === 'hi' ? 'हटाएं' : 'Delete'}
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
                         </div>
                       </div>
                     </div>

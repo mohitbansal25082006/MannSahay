@@ -32,8 +32,8 @@ export const useChatSessions = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load all chat sessions
-  const loadSessions = useCallback(async (includeArchived = false) => {
+  // Load all chat sessions (active + archived)
+  const loadSessions = useCallback(async () => {
     if (!session?.user) return;
 
     try {
@@ -54,9 +54,7 @@ export const useChatSessions = () => {
       const archived = allSessions.filter((s: ChatSession) => s.isArchived);
 
       setSessions(active);
-      if (includeArchived) {
-        setArchivedSessions(archived);
-      }
+      setArchivedSessions(archived);
 
       // Set current active session
       const activeSession = active.find((s: ChatSession) => s.isActive);
@@ -72,33 +70,10 @@ export const useChatSessions = () => {
     }
   }, [session]);
 
-  // Load archived sessions specifically
+  // Load archived sessions (now just reloads all and filters)
   const loadArchivedSessions = useCallback(async () => {
-    if (!session?.user) return;
-
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const response = await fetch('/api/chat/sessions');
-      
-      if (!response.ok) {
-        throw new Error('Failed to load archived sessions');
-      }
-
-      const data = await response.json();
-      const allSessions = data.sessions || [];
-      const archived = allSessions.filter((s: ChatSession) => s.isArchived);
-      
-      setArchivedSessions(archived);
-
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load archived sessions');
-      console.error('Load archived sessions error:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [session]);
+    await loadSessions(); // Now loads everything, including archived
+  }, [loadSessions]);
 
   // Create new chat session
   const createSession = useCallback(async (title?: string, language: string = 'en') => {
@@ -135,49 +110,6 @@ export const useChatSessions = () => {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create session');
       console.error('Create session error:', err);
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [session]);
-
-  // Load specific session with messages
-  const loadSession = useCallback(async (sessionId: string) => {
-    if (!session?.user) return null;
-
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const response = await fetch(`/api/chat/sessions/${sessionId}`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to load chat session');
-      }
-
-      const data = await response.json();
-      const loadedSession = data.session;
-
-      // Update sessions list to mark this as active
-      setSessions(prev => prev.map(s => ({
-        ...s,
-        isActive: s.id === sessionId
-      })));
-
-      // If it's an archived session, also unarchive it
-      if (loadedSession.isArchived) {
-        await updateSession(sessionId, { isArchived: false });
-        // Move from archived to active sessions
-        setArchivedSessions(prev => prev.filter(s => s.id !== sessionId));
-        setSessions(prev => [...prev, { ...loadedSession, isArchived: false }]);
-      }
-
-      setCurrentSession(loadedSession);
-      return loadedSession;
-
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load session');
-      console.error('Load session error:', err);
       return null;
     } finally {
       setIsLoading(false);
@@ -237,6 +169,54 @@ export const useChatSessions = () => {
       setIsLoading(false);
     }
   }, [session, currentSession]);
+
+  // Load specific session with messages
+  const loadSession = useCallback(async (sessionId: string) => {
+    if (!session?.user) return null;
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const response = await fetch(`/api/chat/sessions/${sessionId}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to load chat session');
+      }
+
+      const data = await response.json();
+      const loadedSession = data.session;
+
+      // Update sessions list to mark this as active
+      setSessions(prev => prev.map(s => ({
+        ...s,
+        isActive: s.id === sessionId
+      })));
+
+      // Do not unarchive; just update the current session
+      setCurrentSession(loadedSession);
+
+      // Update archivedSessions or sessions if needed based on loadedSession.isArchived
+      if (loadedSession.isArchived) {
+        setArchivedSessions(prev => 
+          prev.map(s => s.id === sessionId ? loadedSession : s)
+        );
+      } else {
+        setSessions(prev => 
+          prev.map(s => s.id === sessionId ? loadedSession : s)
+        );
+      }
+
+      return loadedSession;
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load session');
+      console.error('Load session error:', err);
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [session]);
 
   // Delete session
   const deleteSession = useCallback(async (sessionId: string) => {
