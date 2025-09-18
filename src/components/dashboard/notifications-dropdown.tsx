@@ -10,7 +10,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Bell, Check, AlertTriangle, Info, Shield, X } from 'lucide-react';
+import { Bell, Check, AlertTriangle, Info, Shield, RefreshCw } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
@@ -24,7 +24,7 @@ interface Notification {
   createdAt: string;
 }
 
-interface NotificationsResponse {
+interface ApiResponse {
   notifications: Notification[];
   pagination: {
     total: number;
@@ -38,7 +38,9 @@ export default function NotificationsDropdown() {
   const { data: session } = useSession();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
   // Close dropdown when clicking outside
@@ -55,21 +57,34 @@ export default function NotificationsDropdown() {
     };
   }, []);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = async (showRefreshing = false) => {
     if (!session?.user?.id) return;
     
-    setLoading(true);
+    if (showRefreshing) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+    
+    setError(null);
+    
     try {
       const response = await fetch('/api/user/notifications?limit=10');
-      if (response.ok) {
-        const data: NotificationsResponse = await response.json();
-        setNotifications(data.notifications);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch notifications');
       }
+      
+      const data: ApiResponse = await response.json();
+      setNotifications(data.notifications);
     } catch (error) {
       console.error('Error fetching notifications:', error);
-      setNotifications([]); // Set empty array on error
+      setError(error instanceof Error ? error.message : 'Failed to fetch notifications');
+      toast.error('Failed to load notifications');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -101,18 +116,19 @@ export default function NotificationsDropdown() {
         body: JSON.stringify({ notificationIds, isRead: true }),
       });
       
-      if (response.ok) {
-        // Update local state
-        setNotifications(prev => 
-          prev.map(n => 
-            notificationIds.includes(n.id) ? { ...n, isRead: true } : n
-          )
-        );
-      } else {
-        console.error('Failed to mark notifications as read');
+      if (!response.ok) {
+        throw new Error('Failed to mark notifications as read');
       }
+      
+      // Update local state
+      setNotifications(prev => 
+        prev.map(n => 
+          notificationIds.includes(n.id) ? { ...n, isRead: true } : n
+        )
+      );
     } catch (error) {
       console.error('Error marking notifications as read:', error);
+      toast.error('Failed to mark notifications as read');
     }
   };
 
@@ -139,12 +155,12 @@ export default function NotificationsDropdown() {
         }),
       });
 
-      if (response.ok) {
-        setNotifications([]);
-        toast.success('All notifications cleared');
-      } else {
-        toast.error('Failed to clear notifications');
+      if (!response.ok) {
+        throw new Error('Failed to clear notifications');
       }
+
+      setNotifications([]);
+      toast.success('All notifications cleared');
     } catch (error) {
       console.error('Error clearing notifications:', error);
       toast.error('Failed to clear notifications');
@@ -181,33 +197,54 @@ export default function NotificationsDropdown() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-80 p-0">
-          <div className="flex items-center justify-between p-4 border-b">
-            <h3 className="font-medium">Notifications</h3>
-            <div className="flex space-x-2">
+          {/* Header with title and actions */}
+          <div className="flex items-center justify-between p-3 border-b">
+            <h3 className="font-medium text-sm">Notifications</h3>
+            <div className="flex items-center space-x-1">
+              {/* Refresh button */}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => fetchNotifications(true)}
+                disabled={refreshing}
+                className="h-6 w-6 p-0"
+                title="Refresh notifications"
+              >
+                <RefreshCw className={`h-3 w-3 ${refreshing ? 'animate-spin' : ''}`} />
+              </Button>
+              
+              {/* Mark all as read button - only show if there are unread notifications */}
               {unreadCount > 0 && (
                 <Button 
                   variant="ghost" 
                   size="sm" 
                   onClick={markAllAsRead}
-                  className="text-xs h-6"
+                  className="h-6 w-6 p-0"
+                  title="Mark all as read"
                 >
-                  Mark all as read
+                  <Check className="h-3 w-3" />
                 </Button>
               )}
+              
+              {/* Clear all button - only show if there are notifications */}
               {notifications.length > 0 && (
                 <Button 
                   variant="ghost" 
                   size="sm" 
                   onClick={clearAllNotifications}
-                  className="text-xs h-6"
+                  className="h-6 w-6 p-0"
+                  title="Clear all"
                 >
-                  Clear all
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m0 0l3-3m-3 3l-3-3" />
+                  </svg>
                 </Button>
               )}
             </div>
           </div>
           
-          <div className="max-h-80 overflow-y-auto">
+          {/* Notifications list */}
+          <div className="max-h-80 overflow-y-auto notification-dropdown">
             {loading ? (
               <div className="p-4 space-y-3">
                 {[...Array(3)].map((_, i) => (
@@ -217,32 +254,47 @@ export default function NotificationsDropdown() {
                   </div>
                 ))}
               </div>
+            ) : error ? (
+              <div className="p-8 text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-500 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-gray-500 text-sm">{error}</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => fetchNotifications()}
+                  className="mt-2"
+                >
+                  Try again
+                </Button>
+              </div>
             ) : notifications.length === 0 ? (
               <div className="p-8 text-center">
                 <Bell className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-500">No notifications</p>
+                <p className="text-gray-500 text-sm">No notifications</p>
               </div>
             ) : (
               <div className="divide-y">
                 {notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-4 hover:bg-gray-50 transition-colors ${
-                      notification.isRead ? 'bg-white' : 'bg-blue-50'
+                    className={`p-3 hover:bg-gray-50 transition-colors notification-item ${
+                      notification.isRead ? '' : 'notification-unread'
                     }`}
                   >
                     <div className="flex items-start">
-                      <div className="mr-3 mt-0.5">
+                      <div className="mr-3 mt-0.5 flex-shrink-0">
                         {getNotificationIcon(notification.type)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <h4 className={`text-sm font-medium ${
+                          <h4 className={`text-sm font-medium truncate ${
                             notification.isRead ? 'text-gray-700' : 'text-gray-900'
                           }`}>
                             {notification.title}
                           </h4>
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-2 flex-shrink-0">
                             <span className="text-xs text-gray-500 whitespace-nowrap">
                               {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                             </span>
@@ -252,13 +304,14 @@ export default function NotificationsDropdown() {
                                 size="sm"
                                 onClick={() => markAsRead([notification.id])}
                                 className="h-5 w-5 p-0"
+                                title="Mark as read"
                               >
                                 <Check className="h-3 w-3" />
                               </Button>
                             )}
                           </div>
                         </div>
-                        <p className={`text-sm mt-1 ${
+                        <p className={`text-sm mt-1 break-words ${
                           notification.isRead ? 'text-gray-600' : 'text-gray-800'
                         }`}>
                           {notification.message}
@@ -271,20 +324,10 @@ export default function NotificationsDropdown() {
             )}
           </div>
           
+          {/* Footer with view all link */}
           {notifications.length > 0 && (
             <div className="p-2 border-t text-center">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  // Navigate to a full notifications page if you have one
-                  // For now, just close the dropdown
-                  setIsOpen(false);
-                }}
-                className="text-xs"
-              >
-                View all notifications
-              </Button>
+              
             </div>
           )}
         </DropdownMenuContent>

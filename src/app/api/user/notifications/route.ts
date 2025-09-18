@@ -35,7 +35,6 @@ export async function GET(request: NextRequest) {
       skip: offset,
     });
 
-    // Get total count for pagination
     const totalCount = await prisma.notification.count({
       where,
     });

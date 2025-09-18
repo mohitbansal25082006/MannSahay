@@ -181,14 +181,38 @@ export async function POST(request: NextRequest) {
 
     // Notify the content author if action was taken
     if (actionTaken && authorId && authorId !== session.user.id) {
+      console.log(`Creating notification for author ${authorId} about ${contentType} moderation`);
+      
+      try {
+        await prisma.notification.create({
+          data: {
+            title: 'Content Moderation',
+            message: `Your ${contentType} has been ${moderationResult.recommendedAction === 'remove' ? 'removed' : 'flagged'} for violating community policies. Reason: ${moderationResult.explanation}`,
+            type: 'content_moderated',
+            userId: authorId,
+          },
+        });
+        console.log('Notification created successfully');
+      } catch (error) {
+        console.error('Error creating notification:', error);
+      }
+    }
+
+    // Also create a notification for the user who flagged the content
+    try {
       await prisma.notification.create({
         data: {
-          title: 'Content Moderation',
-          message: `Your ${contentType} has been ${moderationResult.recommendedAction === 'remove' ? 'removed' : 'flagged'} for violating community policies. Reason: ${moderationResult.explanation}`,
-          type: 'content_moderated',
-          userId: authorId,
+          title: moderationResult.violatesPolicy ? 'Report Reviewed' : 'Report Received',
+          message: moderationResult.violatesPolicy 
+            ? `Thank you for your report. The content you flagged has been found to violate community policies and has been ${moderationResult.recommendedAction}.`
+            : 'Thank you for your report. Our AI has reviewed the content and found no policy violations.',
+          type: 'flagged_content',
+          userId: session.user.id,
         },
       });
+      console.log('Flag notification created successfully');
+    } catch (error) {
+      console.error('Error creating flag notification:', error);
     }
 
     // Return appropriate response based on AI review
