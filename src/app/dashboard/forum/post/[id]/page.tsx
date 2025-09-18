@@ -1,3 +1,5 @@
+// E:\mannsahay\src\app\dashboard\forum\post\[id]\page.tsx
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -86,6 +88,7 @@ export default function PostPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [summary, setSummary] = useState<any>(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
+  const [deletingReplyId, setDeletingReplyId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPost();
@@ -315,6 +318,7 @@ export default function PostPage() {
           onFlag={() => handleFlagReply(reply.id)}
           onDelete={() => handleDeleteReply(reply.id)}
           isNested={isNested}
+          isDeleting={deletingReplyId === reply.id}
         />
         {reply.replies && reply.replies.length > 0 && (
           <div className="ml-8">
@@ -351,6 +355,11 @@ export default function PostPage() {
 
   const handleDeleteReply = async (replyId: string) => {
     if (!confirm('Are you sure you want to delete this reply?')) return;
+    
+    // Prevent multiple deletion attempts
+    if (deletingReplyId === replyId) return;
+    
+    setDeletingReplyId(replyId);
 
     try {
       const response = await fetch(`/api/forum/replies/${replyId}`, {
@@ -359,13 +368,22 @@ export default function PostPage() {
 
       if (response.ok) {
         toast.success('Reply deleted successfully');
-        fetchReplies();
+        fetchReplies(); // Refresh the replies list
       } else {
-        toast.error('Failed to delete reply');
+        const errorData = await response.json();
+        // If the reply was already deleted, treat it as success
+        if (errorData.alreadyDeleted) {
+          toast.success('Reply deleted successfully');
+          fetchReplies();
+        } else {
+          toast.error(errorData.error || 'Failed to delete reply');
+        }
       }
     } catch (error) {
       console.error('Error deleting reply:', error);
       toast.error('Failed to delete reply');
+    } finally {
+      setDeletingReplyId(null);
     }
   };
 
@@ -630,7 +648,7 @@ export default function PostPage() {
             </div>
           ) : (
             <div className="text-center py-4">
-              <FileText className="h-8 w-8 text-blue-400 mx-autoinky mb-2" />
+              <FileText className="h-8 w-8 text-blue-400 mx-auto mb-2" />
               <p className="text-blue-700 mb-3">No summary available for this thread</p>
               <Button 
                 onClick={fetchSummary} 

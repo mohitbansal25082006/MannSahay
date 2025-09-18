@@ -1,3 +1,5 @@
+// E:\mannsahay\src\app\api\forum\replies\[id]\route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
@@ -20,22 +22,16 @@ export async function DELETE(
     const { id: replyId } = await params;
     console.log('Reply ID:', replyId); // Log the reply ID
 
-    // Check if reply exists and user is the author or admin
+    // Check if reply exists
     const reply = await prisma.reply.findUnique({
       where: { id: replyId },
-      include: {
-        author: {
-          select: {
-            id: true,
-            isAdmin: true
-          }
-        }
-      }
     });
 
     if (!reply) {
       console.log('Reply not found for ID:', replyId);
-      return NextResponse.json({ error: 'Reply not found' }, { status: 404 });
+      // If the reply doesn't exist, it might have already been deleted
+      // Return success to prevent UI errors
+      return NextResponse.json({ success: true, alreadyDeleted: true });
     }
 
     // Get the current user to check admin status
@@ -44,7 +40,7 @@ export async function DELETE(
       select: { isAdmin: true }
     });
 
-    const isAuthor = reply.author.id === session.user.id;
+    const isAuthor = reply.authorId === session.user.id;
     const isAdmin = currentUser?.isAdmin || false;
 
     if (!isAuthor && !isAdmin) {

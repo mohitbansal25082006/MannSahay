@@ -53,6 +53,7 @@ interface ReplyItemProps {
   onEdit?: () => void;
   onReply?: () => void;
   isNested?: boolean;
+  isDeleting?: boolean; // Add this prop
 }
 
 export default function ReplyItem({
@@ -65,7 +66,8 @@ export default function ReplyItem({
   onDelete,
   onEdit,
   onReply,
-  isNested = false
+  isNested = false,
+  isDeleting = false // Add this prop with default value
 }: ReplyItemProps) {
   const { data: session } = useSession();
   const [showActions, setShowActions] = useState(false);
@@ -74,12 +76,18 @@ export default function ReplyItem({
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replies, setReplies] = useState<any[]>([]);
   const [loadingReplies, setLoadingReplies] = useState(false);
+  const [localIsDeleting, setLocalIsDeleting] = useState(false); // Local state for this component
   
   const isAuthor = currentUserId === reply.author.id;
 
   useEffect(() => {
     checkAdminStatus();
   }, []);
+
+  useEffect(() => {
+    // Update local state when prop changes
+    setLocalIsDeleting(isDeleting);
+  }, [isDeleting]);
 
   const checkAdminStatus = async () => {
     if (session?.user?.id) {
@@ -135,7 +143,12 @@ export default function ReplyItem({
 
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this reply?')) return;
-
+    
+    // Prevent multiple deletion attempts
+    if (localIsDeleting) return;
+    
+    setLocalIsDeleting(true);
+    
     try {
       const response = await fetch(`/api/forum/replies/${reply.id}`, {
         method: 'DELETE',
@@ -145,11 +158,20 @@ export default function ReplyItem({
         toast.success('Reply deleted successfully');
         if (onDelete) onDelete();
       } else {
-        toast.error('Failed to delete reply');
+        const errorData = await response.json();
+        // If the reply was already deleted, treat it as success
+        if (errorData.alreadyDeleted) {
+          toast.success('Reply deleted successfully');
+          if (onDelete) onDelete();
+        } else {
+          toast.error(errorData.error || 'Failed to delete reply');
+        }
       }
     } catch (error) {
       console.error('Error deleting reply:', error);
       toast.error('Failed to delete reply');
+    } finally {
+      setLocalIsDeleting(false);
     }
   };
 
@@ -318,10 +340,11 @@ export default function ReplyItem({
                       </button>
                       <button
                         onClick={handleDelete}
-                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 disabled:opacity-50"
+                        disabled={localIsDeleting}
                       >
                         <Trash2 className="h-4 w-4 inline mr-2" />
-                        Delete
+                        {localIsDeleting ? 'Deleting...' : 'Delete'}
                       </button>
                     </>
                   )}
@@ -369,6 +392,7 @@ export default function ReplyItem({
               onEdit={() => {}} // Implement this
               onReply={() => {}} // Implement this
               isNested={true}
+              isDeleting={false} // Pass false for nested replies since we're not tracking them
             />
           ))}
         </div>
