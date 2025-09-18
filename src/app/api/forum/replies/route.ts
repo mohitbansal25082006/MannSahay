@@ -1,9 +1,14 @@
-// src/app/api/forum/replies/route.ts
+// E:\mannsahay\src\app\api\forum\replies\route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { assessRiskLevel } from '@/lib/openai';
+import { moderateContent } from '@/lib/ai-moderation';
+
+// Import the ModerationStatus enum from Prisma
+import { ModerationStatus } from '@prisma/client';
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,15 +37,43 @@ export async function POST(request: NextRequest) {
     const riskLevel = assessRiskLevel(content);
     const flagged = riskLevel === 'MEDIUM' || riskLevel === 'HIGH';
 
+    // Moderate content using AI
+    const moderationResult = await moderateContent(content);
+    
+    // Determine initial moderation status
+    let moderationStatus: ModerationStatus = ModerationStatus.APPROVED;
+    let isHidden = false;
+    let moderationNote = '';
+    
+    if (moderationResult.violatesPolicy) {
+      if (moderationResult.recommendedAction === 'remove') {
+        moderationStatus = ModerationStatus.REJECTED;
+        isHidden = true;
+        moderationNote = `Automatically removed by AI: ${moderationResult.explanation}`;
+      } else if (moderationResult.recommendedAction === 'hide') {
+        moderationStatus = ModerationStatus.UNDER_REVIEW;
+        isHidden = true;
+        moderationNote = `Hidden pending review: ${moderationResult.explanation}`;
+      } else if (moderationResult.recommendedAction === 'flag') {
+        moderationStatus = ModerationStatus.UNDER_REVIEW;
+        moderationNote = `Flagged for review: ${moderationResult.explanation}`;
+      }
+    }
+
     // Create the reply
     const reply = await prisma.reply.create({
       data: {
         content,
-        flagged,
+        flagged: flagged || moderationResult.violatesPolicy,
         riskLevel,
         postId,
         authorId: session.user.id,
         parentId,
+        moderationStatus,
+        moderationReason: moderationResult.violatesPolicy ? moderationResult.violationTypes.join(', ') : null,
+        moderationNote,
+        moderatedAt: moderationResult.violatesPolicy ? new Date() : null,
+        isHidden,
       },
       include: {
         author: {
@@ -59,8 +92,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // If flagged, create notification for counselors
-    if (flagged) {
+    // If flagged or requires review, create notification for counselors
+    if (flagged || moderationStatus === ModerationStatus.UNDER_REVIEW) {
       const counselors = await prisma.user.findMany({
         where: { isAdmin: true },
       });
@@ -68,8 +101,8 @@ export async function POST(request: NextRequest) {
       for (const counselor of counselors) {
         await prisma.notification.create({
           data: {
-            title: 'Flagged Reply',
-            message: `A new reply has been flagged for review. Risk level: ${riskLevel}`,
+            title: moderationResult.violatesPolicy ? 'Policy Violation Detected' : 'Flagged Reply',
+            message: `A reply has been ${moderationResult.violatesPolicy ? 'automatically flagged for policy violations' : 'flagged for review'}. Risk level: ${riskLevel}. Action: ${moderationResult.recommendedAction}`,
             type: 'flagged_content',
             userId: counselor.id,
           },

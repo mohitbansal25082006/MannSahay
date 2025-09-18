@@ -1,8 +1,14 @@
+// E:\mannsahay\src\app\api\forum\posts\route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { assessRiskLevel } from '@/lib/openai';
+import { moderateContent, summarizeContent } from '@/lib/ai-moderation';
+
+// Import the ModerationStatus enum from Prisma
+import { ModerationStatus } from '@prisma/client';
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,16 +54,49 @@ export async function POST(request: NextRequest) {
     const riskLevel = assessRiskLevel(content);
     const flagged = riskLevel === 'MEDIUM' || riskLevel === 'HIGH';
 
+    // Moderate content using AI
+    const moderationResult = await moderateContent(content);
+    
+    // Generate summary for the post
+    const summaryResult = await summarizeContent(content);
+
+    // Determine initial moderation status
+    let moderationStatus: ModerationStatus = ModerationStatus.APPROVED;
+    let isHidden = false;
+    let moderationNote = '';
+    
+    if (moderationResult.violatesPolicy) {
+      if (moderationResult.recommendedAction === 'remove') {
+        moderationStatus = ModerationStatus.REJECTED;
+        isHidden = true;
+        moderationNote = `Automatically removed by AI: ${moderationResult.explanation}`;
+      } else if (moderationResult.recommendedAction === 'hide') {
+        moderationStatus = ModerationStatus.UNDER_REVIEW;
+        isHidden = true;
+        moderationNote = `Hidden pending review: ${moderationResult.explanation}`;
+      } else if (moderationResult.recommendedAction === 'flag') {
+        moderationStatus = ModerationStatus.UNDER_REVIEW;
+        moderationNote = `Flagged for review: ${moderationResult.explanation}`;
+      }
+    }
+
     // Create the post
     const post = await prisma.post.create({
       data: {
         title,
         content,
         isAnonymous,
-        flagged,
+        flagged: flagged || moderationResult.violatesPolicy,
         riskLevel,
         category,
         authorId: user.id,
+        moderationStatus,
+        moderationReason: moderationResult.violatesPolicy ? moderationResult.violationTypes.join(', ') : null,
+        moderationNote,
+        moderatedAt: moderationResult.violatesPolicy ? new Date() : null,
+        isHidden,
+        summary: summaryResult.summary,
+        summaryGeneratedAt: new Date(),
       },
       include: {
         author: {
@@ -78,8 +117,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // If flagged, create notification for counselors
-    if (flagged) {
+    // If flagged or requires review, create notification for counselors
+    if (flagged || moderationStatus === ModerationStatus.UNDER_REVIEW) {
       const counselors = await prisma.user.findMany({
         where: { isAdmin: true },
       });
@@ -87,8 +126,8 @@ export async function POST(request: NextRequest) {
       for (const counselor of counselors) {
         await prisma.notification.create({
           data: {
-            title: 'Flagged Post',
-            message: `A new post has been flagged for review. Risk level: ${riskLevel}`,
+            title: moderationResult.violatesPolicy ? 'Policy Violation Detected' : 'Flagged Post',
+            message: `A post has been ${moderationResult.violatesPolicy ? 'automatically flagged for policy violations' : 'flagged for review'}. Risk level: ${riskLevel}. Action: ${moderationResult.recommendedAction}`,
             type: 'flagged_content',
             userId: counselor.id,
           },
@@ -106,6 +145,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// Keep the existing GET function as is
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -117,8 +157,10 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    // Build where clause
-    const where: any = {};
+    // Build where clause - exclude hidden posts for regular users
+    const where: any = {
+      isHidden: false, // Only show non-hidden posts by default
+    };
     
     if (category !== 'all') {
       where.category = category;

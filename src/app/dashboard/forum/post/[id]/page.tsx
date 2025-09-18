@@ -16,7 +16,13 @@ import {
   Trash2,
   ArrowLeft,
   MessageCircle,
-  Eye
+  Eye,
+  FileText,
+  RefreshCw,
+  Bot,
+  Lightbulb,
+  MessageSquare,
+  TrendingUp
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useSession } from 'next-auth/react';
@@ -78,6 +84,8 @@ export default function PostPage() {
   const [showActions, setShowActions] = useState(false);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [summary, setSummary] = useState<any>(null);
+  const [loadingSummary, setLoadingSummary] = useState(false);
 
   useEffect(() => {
     fetchPost();
@@ -141,6 +149,24 @@ export default function PostPage() {
       }
     } catch (error) {
       console.error('Error fetching replies:', error);
+    }
+  };
+
+  const fetchSummary = async () => {
+    setLoadingSummary(true);
+    try {
+      const response = await fetch(`/api/forum/posts/${id}/summarize`);
+      if (response.ok) {
+        const data = await response.json();
+        setSummary(data);
+      } else {
+        toast.error('Failed to generate summary');
+      }
+    } catch (error) {
+      console.error('Error fetching summary:', error);
+      toast.error('Failed to generate summary');
+    } finally {
+      setLoadingSummary(false);
     }
   };
 
@@ -345,10 +371,10 @@ export default function PostPage() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 forum-gradient min-h-screen">
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
-          <Card>
+          <div className="forum-card card-hover mb-8 fade-in">
             <CardHeader>
               <div className="h-6 bg-gray-200 rounded w-3/4"></div>
             </CardHeader>
@@ -359,7 +385,7 @@ export default function PostPage() {
                 <div className="h-4 bg-gray-200 rounded w-4/6"></div>
               </div>
             </CardContent>
-          </Card>
+          </div>
         </div>
       </div>
     );
@@ -367,7 +393,7 @@ export default function PostPage() {
 
   if (!post) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 forum-gradient min-h-screen text-center">
         <h2 className="text-2xl font-semibold mb-4">Post not found</h2>
         <Button onClick={() => router.push('/dashboard/forum')}>
           Back to Forum
@@ -379,7 +405,7 @@ export default function PostPage() {
   const isAuthor = session?.user?.id === post.author.id;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 forum-gradient min-h-screen">
       <Button 
         variant="ghost" 
         onClick={() => router.back()}
@@ -390,7 +416,7 @@ export default function PostPage() {
       </Button>
 
       {/* Post */}
-      <Card className="mb-8">
+      <div className="forum-card card-hover mb-8 fade-in">
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="flex items-center space-x-3">
@@ -522,17 +548,113 @@ export default function PostPage() {
             </Button>
           </div>
         </CardContent>
-      </Card>
+      </div>
+
+      {/* AI Summary Section */}
+      <div className="summary-card card-hover mb-6 fade-in">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center text-blue-800">
+            <Bot className="h-5 w-5 mr-2" />
+            AI Thread Summary
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={fetchSummary}
+              disabled={loadingSummary}
+              className="ml-auto text-blue-600 hover:text-blue-800 hover:bg-blue-100"
+            >
+              <RefreshCw className={`h-4 w-4 ${loadingSummary ? 'animate-spin' : ''}`} />
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loadingSummary ? (
+            <div className="flex items-center justify-center py-4">
+              <RefreshCw className="h-6 w-6 animate-spin text-blue-500 mr-2" />
+              <span className="text-blue-700">Generating summary...</span>
+            </div>
+          ) : summary ? (
+            <div className="space-y-3">
+              <div className="p-3 bg-white rounded-md border border-blue-200">
+                <p className="text-blue-800">{summary.summary}</p>
+              </div>
+              
+              {summary.keyPoints && summary.keyPoints.length > 0 && (
+                <div>
+                  <h4 className="font-medium text-blue-800 mb-2 flex items-center">
+                    <Lightbulb className="h-4 w-4 mr-2" />
+                    Key Points
+                  </h4>
+                  <ul className="space-y-1">
+                    {summary.keyPoints.map((point: string, index: number) => (
+                      <li key={index} className="text-blue-700 text-sm flex items-start">
+                        <span className="text-blue-500 mr-2">•</span>
+                        {point}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              <div className="flex items-center space-x-4 pt-2">
+                {summary.sentiment && (
+                  <div className="flex items-center">
+                    <TrendingUp className="h-4 w-4 text-blue-600 mr-1" />
+                    <span className="text-sm text-blue-700">
+                      Sentiment: <Badge variant="outline" className="ml-1 text-blue-700 border-blue-300">
+                        {summary.sentiment}
+                      </Badge>
+                    </span>
+                  </div>
+                )}
+                
+                {summary.topics && summary.topics.length > 0 && (
+                  <div className="flex items-center">
+                    <MessageSquare className="h-4 w-4 text-blue-600 mr-1" />
+                    <span className="text-sm text-blue-700">
+                      Topics: {summary.topics.slice(0, 3).map((topic: string) => (
+                        <Badge key={topic} variant="outline" className="ml-1 text-blue-700 border-blue-300">
+                          {topic}
+                        </Badge>
+                      ))}
+                    </span>
+                  </div>
+                )}
+                
+                {summary.isCached && (
+                  <div className="text-xs text-blue-500 italic">
+                    Cached from {new Date(summary.generatedAt).toLocaleString()}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-4">
+              <FileText className="h-8 w-8 text-blue-400 mx-autoinky mb-2" />
+              <p className="text-blue-700 mb-3">No summary available for this thread</p>
+              <Button 
+                onClick={fetchSummary} 
+                variant="outline" 
+                className="text-blue-700 border-blue-300 hover:bg-blue-100"
+              >
+                Generate AI Summary
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </div>
 
       {/* Reply Form */}
-      <CreateReplyForm 
-        postId={id || ''} 
-        onReplyCreated={fetchReplies}
-        placeholder="Share your thoughts on this post..."
-      />
+      <div className="forum-card card-hover mb-6 fade-in">
+        <CreateReplyForm 
+          postId={id || ''} 
+          onReplyCreated={fetchReplies}
+          placeholder="Share your thoughts on this post..."
+        />
+      </div>
 
       {/* Replies Section */}
-      <div className="mt-8">
+      <div className="mt-8 fade-in">
         <h2 className="text-xl font-semibold mb-4">
           Replies ({replies.length})
         </h2>
@@ -542,7 +664,7 @@ export default function PostPage() {
             {renderReplies(replies)}
           </div>
         ) : (
-          <Card>
+          <div className="forum-card card-hover">
             <CardContent className="pt-6 text-center">
               <div className="py-8">
                 <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
@@ -554,7 +676,7 @@ export default function PostPage() {
                 </p>
               </div>
             </CardContent>
-          </Card>
+          </div>
         )}
       </div>
     </div>

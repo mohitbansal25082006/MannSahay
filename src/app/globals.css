@@ -159,3 +159,117 @@
 html {
   scroll-behavior: smooth;
 }
+
+/* Add these styles to your globals.css or create a new CSS file */
+
+/* Beautiful gradient backgrounds */
+.forum-gradient {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.card-hover {
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Beautiful badges */
+.badge-gradient {
+  background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+  color: white;
+  border: none;
+}
+
+.badge-gradient-green {
+  background: linear-gradient(45deg, #11998e 0%, #38ef7d 100%);
+  color: white;
+  border: none;
+}
+
+.badge-gradient-red {
+  background: linear-gradient(45deg, #eb3349 0%, #f45c43 100%);
+  color: white;
+  border: none;
+}
+
+/* Beautiful buttons */
+.btn-gradient {
+  background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
+  color: white;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-gradient:hover {
+  background: linear-gradient(45deg, #2575fc 0%, #6a11cb 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Beautiful forum cards */
+.forum-card {
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid #e2e8f0;
+  background: white;
+}
+
+.forum-card:hover {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  transform: translateY(-3px);
+}
+
+/* Beautiful summary cards */
+.summary-card {
+  border-radius: 12px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+}
+
+.summary-card .card-header {
+  background: rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Beautiful moderation cards */
+.moderation-card {
+  border-radius: 12px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  border: none;
+}
+
+.moderation-card .card-header {
+  background: rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Beautiful animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+/* Beautiful loading skeletons */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

@@ -25,7 +25,11 @@ import {
   User,
   MessageSquare,
   Heart,
-  ArrowUpRight
+  ArrowUpRight,
+  Shield,
+  Bot,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 import CreatePostForm from '@/components/forum/create-post-form';
 import PostItem from '@/components/forum/post-item';
@@ -78,10 +82,22 @@ interface ForumStats {
   trendingPosts: Post[];
 }
 
+interface ModerationStats {
+  totalPosts: number;
+  moderatedPosts: number;
+  autoRemovedPosts: number;
+  pendingReviewPosts: number;
+  totalReplies: number;
+  moderatedReplies: number;
+  autoRemovedReplies: number;
+  pendingReviewReplies: number;
+}
+
 export default function ForumPage() {
   const { data: session } = useSession();
   const [posts, setPosts] = useState<Post[]>([]);
   const [forumStats, setForumStats] = useState<ForumStats | null>(null);
+  const [moderationStats, setModerationStats] = useState<ModerationStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -119,12 +135,23 @@ export default function ForumPage() {
   const fetchForumStats = async () => {
     setStatsLoading(true);
     try {
-      const response = await fetch('/api/forum/stats');
-      if (response.ok) {
-        const data = await response.json();
+      const [forumResponse, moderationResponse] = await Promise.all([
+        fetch('/api/forum/stats'),
+        fetch('/api/forum/moderation-stats')
+      ]);
+      
+      if (forumResponse.ok) {
+        const data = await forumResponse.json();
         setForumStats(data);
       } else {
         toast.error('Failed to fetch forum statistics');
+      }
+      
+      if (moderationResponse.ok) {
+        const data = await moderationResponse.json();
+        setModerationStats(data);
+      } else {
+        toast.error('Failed to fetch moderation statistics');
       }
     } catch (error) {
       console.error('Error fetching forum stats:', error);
@@ -153,7 +180,6 @@ export default function ForumPage() {
         const data = await response.json();
         setLikedPosts(prev => ({ ...prev, [postId]: data.liked }));
         
-        // Update post like count
         setPosts(prev => prev.map(post => 
           post.id === postId 
             ? { 
@@ -234,7 +260,6 @@ export default function ForumPage() {
       if (response.ok) {
         setPosts(prev => prev.filter(post => post.id !== postId));
         toast.success('Post deleted successfully');
-        // Refresh stats after deletion
         fetchForumStats();
       } else {
         toast.error('Failed to delete post');
@@ -272,8 +297,8 @@ export default function ForumPage() {
   ];
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="mb-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 forum-gradient min-h-screen">
+      <div className="mb-8 fade-in">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Peer Support Forum
         </h1>
@@ -284,14 +309,14 @@ export default function ForumPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          {/* Create Post Form */}
-          <CreatePostForm onPostCreated={() => {
-            fetchPosts();
-            fetchForumStats();
-          }} />
+          <div className="forum-card card-hover">
+            <CreatePostForm onPostCreated={() => {
+              fetchPosts();
+              fetchForumStats();
+            }} />
+          </div>
 
-          {/* Search and Filters */}
-          <Card>
+          <div className="forum-card card-hover">
             <CardContent className="pt-6">
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative flex-1">
@@ -350,44 +375,44 @@ export default function ForumPage() {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </div>
 
-          {/* Posts List */}
           {loading ? (
             <div className="space-y-4">
               {[...Array(3)].map((_, i) => (
-                <Card key={i} className="animate-pulse">
+                <div key={i} className="forum-card animate-pulse">
                   <CardHeader>
-                    <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-6 bg-gray-200 rounded w-3/4 skeleton"></div>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      <div className="h-4 bg-gray-200 rounded"></div>
-                      <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                      <div className="h-4 bg-gray-200 rounded w-4/6"></div>
+                      <div className="h-4 bg-gray-200 rounded skeleton"></div>
+                      <div className="h-4 bg-gray-200 rounded w-5/6 skeleton"></div>
+                      <div className="h-4 bg-gray-200 rounded w-4/6 skeleton"></div>
                     </div>
                   </CardContent>
-                </Card>
+                </div>
               ))}
             </div>
           ) : filteredPosts.length > 0 ? (
             <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 gap-4' : 'space-y-4'}>
               {filteredPosts.map((post) => (
-                <PostItem
-                  key={post.id}
-                  post={post}
-                  currentUserId={session?.user?.id}
-                  isLiked={likedPosts[post.id]}
-                  isBookmarked={bookmarkedPosts[post.id]}
-                  onLike={() => handleLike(post.id)}
-                  onBookmark={() => handleBookmark(post.id)}
-                  onFlag={() => handleFlag(post.id)}
-                  onDelete={() => handleDelete(post.id)}
-                />
+                <div key={post.id} className="forum-card card-hover fade-in">
+                  <PostItem
+                    post={post}
+                    currentUserId={session?.user?.id}
+                    isLiked={likedPosts[post.id]}
+                    isBookmarked={bookmarkedPosts[post.id]}
+                    onLike={() => handleLike(post.id)}
+                    onBookmark={() => handleBookmark(post.id)}
+                    onFlag={() => handleFlag(post.id)}
+                    onDelete={() => handleDelete(post.id)}
+                  />
+                </div>
               ))}
             </div>
           ) : (
-            <Card>
+            <div className="forum-card card-hover">
               <CardContent className="pt-6 text-center">
                 <div className="py-12">
                   <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
@@ -407,14 +432,12 @@ export default function ForumPage() {
                   </Button>
                 </div>
               </CardContent>
-            </Card>
+            </div>
           )}
         </div>
 
-        {/* Sidebar */}
         <div className="space-y-6">
-          {/* Forum Stats */}
-          <Card>
+          <div className="forum-card card-hover">
             <CardHeader>
               <CardTitle className="flex items-center">
                 <TrendingUp className="h-5 w-5 mr-2" />
@@ -450,11 +473,102 @@ export default function ForumPage() {
                 <p className="text-sm text-gray-500">Failed to load statistics</p>
               )}
             </CardContent>
-          </Card>
+          </div>
 
-          {/* Trending Posts */}
+          {moderationStats && (
+            <div className="moderation-card card-hover">
+              <CardHeader>
+                <CardTitle className="flex items-center text-white">
+                  <Shield className="h-5 w-5 mr-2" />
+                  Moderation Stats
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {statsLoading ? (
+                  <div className="space-y-4">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="animate-pulse">
+                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                        <div className="h-6 bg-gray-200 rounded w-1/2"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Posts</h4>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-600">Total Moderated</span>
+                          <Badge variant="outline">
+                            {moderationStats.moderatedPosts} / {moderationStats.totalPosts}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-600 flex items-center">
+                            <XCircle className="h-3 w-3 mr-1 text-red-500" />
+                            Auto Removed
+                          </span>
+                          <Badge variant="destructive" className="text-xs">
+                            {moderationStats.autoRemovedPosts}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-600 flex items-center">
+                            <Clock className="h-3 w-3 mr-1 text-yellow-500" />
+                            Pending Review
+                          </span>
+                          <Badge variant="outline" className="text-xs border-yellow-300 text-yellow-700">
+                            {moderationStats.pendingReviewPosts}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Replies</h4>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-600">Total Moderated</span>
+                          <Badge variant="outline">
+                            {moderationStats.moderatedReplies} / {moderationStats.totalReplies}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-600 flex items-center">
+                            <XCircle className="h-3 w-3 mr-1 text-red-500" />
+                            Auto Removed
+                          </span>
+                          <Badge variant="destructive" className="text-xs">
+                            {moderationStats.autoRemovedReplies}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-600 flex items-center">
+                            <Clock className="h-3 w-3 mr-1 text-yellow-500" />
+                            Pending Review
+                          </span>
+                          <Badge variant="outline" className="text-xs border-yellow-300 text-yellow-700">
+                            {moderationStats.pendingReviewReplies}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="pt-2 border-t border-gray-100">
+                      <div className="flex items-center text-xs text-green-600">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        <span>AI-powered moderation active</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </div>
+          )}
+
           {forumStats?.trendingPosts && forumStats.trendingPosts.length > 0 && (
-            <Card>
+            <div className="forum-card card-hover">
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <TrendingUp className="h-5 w-5 mr-2" />
@@ -484,11 +598,10 @@ export default function ForumPage() {
                   ))}
                 </div>
               </CardContent>
-            </Card>
+            </div>
           )}
 
-          {/* Popular Categories */}
-          <Card>
+          <div className="forum-card card-hover">
             <CardHeader>
               <CardTitle className="flex items-center">
                 <BookOpen className="h-5 w-5 mr-2" />
@@ -528,11 +641,10 @@ export default function ForumPage() {
                 <p className="text-sm text-gray-500">Failed to load categories</p>
               )}
             </CardContent>
-          </Card>
+          </div>
 
-          {/* Most Active Users */}
           {forumStats?.mostActiveUsers && forumStats.mostActiveUsers.length > 0 && (
-            <Card>
+            <div className="forum-card card-hover">
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Users className="h-5 w-5 mr-2" />
@@ -563,11 +675,10 @@ export default function ForumPage() {
                   ))}
                 </div>
               </CardContent>
-            </Card>
+            </div>
           )}
 
-          {/* Community Guidelines */}
-          <Card>
+          <div className="forum-card card-hover">
             <CardHeader>
               <CardTitle>Community Guidelines</CardTitle>
             </CardHeader>
@@ -595,7 +706,7 @@ export default function ForumPage() {
                 </li>
               </ul>
             </CardContent>
-          </Card>
+          </div>
         </div>
       </div>
     </div>

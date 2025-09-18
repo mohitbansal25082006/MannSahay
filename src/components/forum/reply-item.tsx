@@ -1,3 +1,5 @@
+// E:\mannsahay\src\components\forum\reply-item.tsx
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -11,7 +13,9 @@ import {
   MoreHorizontal,
   Edit,
   Trash2,
-  Reply
+  Reply,
+  AlertTriangle,
+  Bot
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useSession } from 'next-auth/react';
@@ -26,6 +30,10 @@ interface ReplyItemProps {
     flagged: boolean;
     riskLevel: 'NONE' | 'LOW' | 'MEDIUM' | 'HIGH';
     createdAt: string;
+    moderationStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'UNDER_REVIEW';
+    moderationReason?: string;
+    moderationNote?: string;
+    isHidden?: boolean;
     author: {
       id: string;
       name?: string;
@@ -159,7 +167,8 @@ export default function ReplyItem({
       });
 
       if (response.ok) {
-        toast.success('Reply has been flagged for review');
+        const data = await response.json();
+        toast.success(data.message || 'Reply has been flagged for review');
       } else {
         toast.error('Failed to flag reply');
       }
@@ -186,6 +195,20 @@ export default function ReplyItem({
     }
   };
 
+  const getModerationStatusColor = (status?: string) => {
+    switch (status) {
+      case 'APPROVED': return 'bg-green-100 text-green-800';
+      case 'REJECTED': return 'bg-red-100 text-red-800';
+      case 'UNDER_REVIEW': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Don't render the reply if it's hidden and user is not admin or author
+  if (reply.isHidden && !isAdmin && !isAuthor) {
+    return null;
+  }
+
   if (isEditing) {
     return (
       <EditReplyForm
@@ -201,7 +224,7 @@ export default function ReplyItem({
 
   return (
     <div className={`${isNested ? 'ml-8' : ''}`}>
-      <Card className={`${isNested ? 'mt-2' : 'mt-4'} border-l-4 ${reply.flagged ? 'border-l-red-500' : 'border-l-gray-200'}`}>
+      <Card className={`${isNested ? 'mt-2' : 'mt-4'} border-l-4 ${reply.flagged ? 'border-l-red-500' : 'border-l-gray-200'} ${reply.isHidden ? 'opacity-75' : ''}`}>
         <CardContent className="pt-4">
           <div className="flex items-start justify-between">
             <div className="flex items-start space-x-3">
@@ -224,10 +247,26 @@ export default function ReplyItem({
                   <Badge className={`text-xs ${getRiskColor(reply.riskLevel)}`}>
                     {reply.riskLevel}
                   </Badge>
+                  {reply.moderationStatus && reply.moderationStatus !== 'APPROVED' && (
+                    <Badge className={`text-xs ${getModerationStatusColor(reply.moderationStatus)}`}>
+                      {reply.moderationStatus === 'REJECTED' ? 'Removed' : reply.moderationStatus}
+                    </Badge>
+                  )}
                 </div>
                 <p className="text-xs text-gray-500 mb-2">
                   {formatDistanceToNow(new Date(reply.createdAt), { addSuffix: true })}
                 </p>
+                
+                {reply.isHidden && (
+                  <div className="mb-2 p-2 bg-yellow-50 rounded-md border border-yellow-200 flex items-center">
+                    <AlertTriangle className="h-3 w-3 text-yellow-600 mr-2" />
+                    <span className="text-xs text-yellow-700">
+                      This reply has been {reply.moderationStatus === 'REJECTED' ? 'removed' : 'hidden'} by our moderation system.
+                      {reply.moderationNote && ` Reason: ${reply.moderationNote}`}
+                    </span>
+                  </div>
+                )}
+                
                 <p className="text-gray-700">{reply.content}</p>
                 
                 <div className="flex items-center space-x-3 mt-3">

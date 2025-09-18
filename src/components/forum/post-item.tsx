@@ -1,3 +1,5 @@
+// E:\mannsahay\src\components\forum\post-item.tsx
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -16,7 +18,10 @@ import {
   Edit,
   Trash2,
   Eye,
-  MapPin
+  Shield,
+  AlertTriangle,
+  FileText,
+  Bot
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useSession } from 'next-auth/react';
@@ -32,6 +37,11 @@ interface PostItemProps {
     category: string;
     views: number;
     createdAt: string;
+    moderationStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'UNDER_REVIEW';
+    moderationReason?: string;
+    moderationNote?: string;
+    isHidden?: boolean;
+    summary?: string;
     author: {
       id: string;
       name?: string;
@@ -68,6 +78,7 @@ export default function PostItem({
   const { data: session } = useSession();
   const [showActions, setShowActions] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
   
   const isAuthor = currentUserId === post.author.id;
 
@@ -117,6 +128,15 @@ export default function PostItem({
     }
   };
 
+  const getModerationStatusColor = (status?: string) => {
+    switch (status) {
+      case 'APPROVED': return 'bg-green-100 text-green-800';
+      case 'REJECTED': return 'bg-red-100 text-red-800';
+      case 'UNDER_REVIEW': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   const handleShare = async () => {
     if (navigator.share) {
       try {
@@ -135,8 +155,13 @@ export default function PostItem({
     }
   };
 
+  // Don't render the post if it's hidden and user is not admin or author
+  if (post.isHidden && !isAdmin && !isAuthor) {
+    return null;
+  }
+
   return (
-    <Card className="mb-4 overflow-hidden transition-all hover:shadow-md">
+    <Card className={`mb-4 overflow-hidden transition-all hover:shadow-md ${post.isHidden ? 'border-l-4 border-l-red-500 opacity-75' : ''}`}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
@@ -167,6 +192,11 @@ export default function PostItem({
                 <Badge className={`text-xs ${getRiskColor(post.riskLevel)}`}>
                   {post.riskLevel}
                 </Badge>
+                {post.moderationStatus && post.moderationStatus !== 'APPROVED' && (
+                  <Badge className={`text-xs ${getModerationStatusColor(post.moderationStatus)}`}>
+                    {post.moderationStatus === 'REJECTED' ? 'Removed' : post.moderationStatus}
+                  </Badge>
+                )}
               </div>
               <div className="flex items-center space-x-2 text-xs text-gray-500">
                 <span>{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}</span>
@@ -197,9 +227,9 @@ export default function PostItem({
                         handleEdit();
                         setShowActions(false);
                       }}
-                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
-                      <Edit className="h-4 w-4 mr-2" />
+                      <Edit className="h-4 w-4 inline mr-2" />
                       Edit
                     </button>
                     <button
@@ -207,9 +237,9 @@ export default function PostItem({
                         onDelete?.();
                         setShowActions(false);
                       }}
-                      className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                     >
-                      <Trash2 className="h-4 w-4 mr-2" />
+                      <Trash2 className="h-4 w-4 inline mr-2" />
                       Delete
                     </button>
                   </>
@@ -219,9 +249,9 @@ export default function PostItem({
                     onFlag?.();
                     setShowActions(false);
                   }}
-                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 >
-                  <Flag className="h-4 w-4 mr-2" />
+                  <Flag className="h-4 w-4 inline mr-2" />
                   Report
                 </button>
               </div>
@@ -233,10 +263,31 @@ export default function PostItem({
           <Badge className={`text-xs ${getCategoryColor(post.category)}`}>
             {post.category}
           </Badge>
+          {post.summary && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setShowSummary(!showSummary)}
+              className="text-xs h-6 px-2"
+            >
+              <FileText className="h-3 w-3 mr-1" />
+              Summary
+            </Button>
+          )}
         </div>
       </CardHeader>
       
       <CardContent className="pt-0">
+        {post.isHidden && (
+          <div className="mb-3 p-2 bg-yellow-50 rounded-md border border-yellow-200 flex items-center">
+            <AlertTriangle className="h-4 w-4 text-yellow-600 mr-2" />
+            <span className="text-sm text-yellow-700">
+              This content has been {post.moderationStatus === 'REJECTED' ? 'removed' : 'hidden'} by our moderation system.
+              {post.moderationNote && ` Reason: ${post.moderationNote}`}
+            </span>
+          </div>
+        )}
+        
         <Link href={`/dashboard/forum/post/${post.id}`}>
           <div className="cursor-pointer">
             {post.title && (
@@ -245,6 +296,16 @@ export default function PostItem({
             <p className="text-gray-700 mb-4 line-clamp-3">{post.content}</p>
           </div>
         </Link>
+        
+        {showSummary && post.summary && (
+          <div className="mb-4 p-3 bg-blue-50 rounded-md border border-blue-200">
+            <div className="flex items-center mb-2">
+              <Bot className="h-4 w-4 text-blue-600 mr-2" />
+              <span className="text-sm font-medium text-blue-800">AI Summary</span>
+            </div>
+            <p className="text-sm text-blue-700">{post.summary}</p>
+          </div>
+        )}
         
         <div className="flex items-center justify-between pt-3 border-t border-gray-100">
           <div className="flex items-center space-x-4">
