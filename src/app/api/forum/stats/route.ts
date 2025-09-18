@@ -1,10 +1,14 @@
+// E:\mannsahay\src\app\api\forum\stats\route.ts
+
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 
 export async function GET() {
   try {
-    // Get total posts count
-    const totalPosts = await prisma.post.count();
+    // Get total posts count (excluding hidden posts)
+    const totalPosts = await prisma.post.count({
+      where: { isHidden: false }
+    });
 
     // Get active users count (users who have posted or replied in the last 30 days)
     const thirtyDaysAgo = new Date();
@@ -18,7 +22,8 @@ export async function GET() {
               some: {
                 createdAt: {
                   gte: thirtyDaysAgo
-                }
+                },
+                isHidden: false
               }
             }
           },
@@ -27,7 +32,8 @@ export async function GET() {
               some: {
                 createdAt: {
                   gte: thirtyDaysAgo
-                }
+                },
+                isHidden: false
               }
             }
           }
@@ -35,7 +41,7 @@ export async function GET() {
       }
     });
 
-    // Get today's posts count
+    // Get today's posts count (excluding hidden posts)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
@@ -46,13 +52,15 @@ export async function GET() {
         createdAt: {
           gte: today,
           lt: tomorrow
-        }
+        },
+        isHidden: false
       }
     });
 
-    // Get posts by category
+    // Get posts by category (excluding hidden posts)
     const postsByCategory = await prisma.post.groupBy({
       by: ['category'],
+      where: { isHidden: false },
       _count: {
         category: true
       },
@@ -63,14 +71,15 @@ export async function GET() {
       }
     });
 
-    // Get most active users (users with most posts in the last 30 days)
+    // Get most active users (users with most non-hidden posts in the last 30 days)
     const mostActiveUsers = await prisma.user.findMany({
       where: {
         posts: {
           some: {
             createdAt: {
               gte: thirtyDaysAgo
-            }
+            },
+            isHidden: false
           }
         }
       },
@@ -84,7 +93,8 @@ export async function GET() {
               where: {
                 createdAt: {
                   gte: thirtyDaysAgo
-                }
+                },
+                isHidden: false
               }
             }
           }
@@ -98,7 +108,7 @@ export async function GET() {
       take: 5
     });
 
-    // Get trending posts (most liked posts in the last 7 days)
+    // Get trending posts (most liked non-hidden posts in the last 7 days)
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -106,7 +116,8 @@ export async function GET() {
       where: {
         createdAt: {
           gte: sevenDaysAgo
-        }
+        },
+        isHidden: false
       },
       include: {
         author: {

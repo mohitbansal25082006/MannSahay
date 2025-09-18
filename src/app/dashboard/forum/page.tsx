@@ -93,6 +93,127 @@ interface ModerationStats {
   pendingReviewReplies: number;
 }
 
+function CommunityGuidelines() {
+  return (
+    <div className="forum-card card-hover">
+      <CardHeader>
+        <CardTitle className="flex items-center">
+          <Shield className="h-5 w-5 mr-2" />
+          Community Guidelines
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div>
+            <h4 className="font-medium text-green-700 mb-2 flex items-center">
+              <span className="text-green-500 mr-2">✓</span>
+              Be Respectful and Supportive
+            </h4>
+            <p className="text-sm text-gray-600 ml-6">
+              Treat everyone with respect and kindness. We're here to support each other through difficult times.
+            </p>
+          </div>
+          
+          <div>
+            <h4 className="font-medium text-green-700 mb-2 flex items-center">
+              <span className="text-green-500 mr-2">✓</span>
+              Protect Privacy
+            </h4>
+            <p className="text-sm text-gray-600 ml-6">
+              Never share personal information about yourself or others. This includes contact details, addresses, or private conversations.
+            </p>
+          </div>
+          
+          <div>
+            <h4 className="font-medium text-green-700 mb-2 flex items-center">
+              <span className="text-green-500 mr-2">✓</span>
+              Share Responsibly
+            </h4>
+            <p className="text-sm text-gray-600 ml-6">
+              Share accurate information and be mindful of how your words might affect others. If you're sharing resources, make sure they're from reliable sources.
+            </p>
+          </div>
+          
+          <div>
+            <h4 className="font-medium text-green-700 mb-2 flex items-center">
+              <span className="text-green-500 mr-2">✓</span>
+              Be Honest and Authentic
+            </h4>
+            <p className="text-sm text-gray-600 ml-6">
+              Share your genuine thoughts and feelings. Authentic conversations help build trust and meaningful connections.
+            </p>
+          </div>
+          
+          <div className="pt-2 border-t border-gray-100">
+            <h4 className="font-medium text-red-700 mb-2 flex items-center">
+              <span className="text-red-500 mr-2">✗</span>
+              No Harassment or Hate Speech
+            </h4>
+            <p className="text-sm text-gray-600 ml-6">
+              Bullying, harassment, hate speech, or discrimination based on race, gender, religion, or any other characteristic is strictly prohibited.
+            </p>
+          </div>
+          
+          <div>
+            <h4 className="font-medium text-red-700 mb-2 flex items-center">
+              <span className="text-red-500 mr-2">✗</span>
+              No Self-Harm Promotion
+            </h4>
+            <p className="text-sm text-gray-600 ml-6">
+              While we encourage open discussion about mental health, content that promotes or glorifies self-harm, suicide, or violence is not allowed.
+            </p>
+          </div>
+          
+          <div>
+            <h4 className="font-medium text-red-700 mb-2 flex items-center">
+              <span className="text-red-500 mr-2">✗</span>
+              No Spam or Misinformation
+            </h4>
+            <p className="text-sm text-gray-600 ml-6">
+              Don't post spam, advertisements, or false information that could harm others. Always verify information before sharing.
+            </p>
+          </div>
+          
+          <div>
+            <h4 className="font-medium text-red-700 mb-2 flex items-center">
+              <span className="text-red-500 mr-2">✗</span>
+              No Explicit Content
+            </h4>
+            <p className="text-sm text-gray-600 ml-6">
+              Explicit, violent, or sexually suggestive content is not appropriate for this supportive community forum.
+            </p>
+          </div>
+          
+          <div className="mt-4 p-3 bg-blue-50 rounded-md border border-blue-200">
+            <h4 className="font-medium text-blue-800 mb-1 flex items-center">
+              <Bot className="h-4 w-4 mr-2" />
+              AI-Powered Moderation
+            </h4>
+            <p className="text-sm text-blue-700">
+              Our community is monitored by AI to ensure these guidelines are followed. Content that violates these guidelines may be removed automatically, and repeat violations may result in account suspension.
+            </p>
+          </div>
+          
+          <div className="text-center pt-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                const contactSection = document.getElementById('contact-section');
+                if (contactSection) {
+                  contactSection.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+            >
+              Report a Guidelines Violation
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </div>
+  );
+}
+
 export default function ForumPage() {
   const { data: session } = useSession();
   const [posts, setPosts] = useState<Post[]>([]);
@@ -239,7 +360,13 @@ export default function ForumPage() {
       });
 
       if (response.ok) {
-        toast.success('Post has been flagged for review');
+        const data = await response.json();
+        toast.success(data.message);
+        
+        // If action was taken, refresh the posts list
+        if (data.actionTaken) {
+          fetchPosts();
+        }
       } else {
         toast.error('Failed to flag post');
       }
@@ -678,35 +805,7 @@ export default function ForumPage() {
             </div>
           )}
 
-          <div className="forum-card card-hover">
-            <CardHeader>
-              <CardTitle>Community Guidelines</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  Be respectful and supportive
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  Protect everyone's privacy
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  Share responsibly
-                </li>
-                <li className="flex items-start">
-                  <span className="text-red-500 mr-2">✗</span>
-                  No harassment or hate speech
-                </li>
-                <li className="flex items-start">
-                  <span className="text-red-500 mr-2">✗</span>
-                  No sharing of personal information
-                </li>
-              </ul>
-            </CardContent>
-          </div>
+          <CommunityGuidelines />
         </div>
       </div>
     </div>

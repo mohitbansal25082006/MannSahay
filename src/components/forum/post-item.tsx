@@ -1,5 +1,3 @@
-// E:\mannsahay\src\components\forum\post-item.tsx
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -25,6 +23,7 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useSession } from 'next-auth/react';
+import { toast } from 'sonner';
 
 interface PostItemProps {
   post: {
@@ -63,6 +62,7 @@ interface PostItemProps {
   onDelete?: () => void;
   onEdit?: () => void;
   isDeleting?: boolean;
+  onFlagSuccess?: () => void;
 }
 
 export default function PostItem({
@@ -75,7 +75,8 @@ export default function PostItem({
   onFlag,
   onDelete,
   onEdit,
-  isDeleting = false
+  isDeleting = false,
+  onFlagSuccess
 }: PostItemProps) {
   const { data: session } = useSession();
   const [showActions, setShowActions] = useState(false);
@@ -110,7 +111,76 @@ export default function PostItem({
       window.location.href = `/dashboard/forum/post/${post.id}/edit`;
     }
   };
-  
+
+  const handleFlag = async () => {
+    const reason = prompt('Please provide a reason for flagging this post:');
+    if (!reason) return;
+
+    try {
+      console.log('Attempting to flag post:', post.id, 'with reason:', reason);
+      
+      const response = await fetch('/api/forum/flag', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          postId: post.id, 
+          reason: reason 
+        }),
+      });
+
+      console.log('Flag response status:', response.status);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Flag response data:', data);
+        toast.success(data.message);
+        
+        // If action was taken, refresh the posts list
+        if (data.actionTaken && onFlagSuccess) {
+          onFlagSuccess();
+        }
+      } else {
+        // Check if response has content before trying to parse it
+        const contentType = response.headers.get('content-type');
+        console.log('Response content-type:', contentType);
+        
+        if (contentType && contentType.includes('application/json')) {
+          try {
+            const errorData = await response.json();
+            console.error('Flag error response:', errorData);
+            
+            // Handle different flag error cases
+            if (errorData.alreadyFlagged) {
+              toast.error('You have already flagged this content');
+            } else if (errorData.recentFlag) {
+              toast.error('You have recently flagged this content. Please wait 24 hours before flagging the same content again.');
+            } else {
+              toast.error(errorData.error || 'Failed to flag post');
+            }
+          } catch (jsonError) {
+            console.error('Error parsing JSON response:', jsonError);
+            toast.error('Failed to flag post: Invalid response from server');
+          }
+        } else {
+          // If response is not JSON, get the text
+          try {
+            const errorText = await response.text();
+            console.error('Flag error text:', errorText);
+            toast.error('Failed to flag post: ' + errorText);
+          } catch (textError) {
+            console.error('Error getting response text:', textError);
+            toast.error('Failed to flag post: Unknown error');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error flagging post:', error);
+      toast.error('Failed to flag post');
+    }
+  };
+
   const getRiskColor = (riskLevel: string) => {
     switch (riskLevel) {
       case 'HIGH': return 'bg-red-100 text-red-800';
@@ -149,13 +219,31 @@ export default function PostItem({
         });
       } catch (err) {
         console.error('Error sharing:', err);
+        toast.error('Failed to share post');
       }
     } else {
       // Fallback - copy to clipboard
-      navigator.clipboard.writeText(`${window.location.origin}/dashboard/forum/post/${post.id}`);
-      alert('Link copied to clipboard!');
+      try {
+        await navigator.clipboard.writeText(`${window.location.origin}/dashboard/forum/post/${post.id}`);
+        toast.success('Link copied to clipboard!');
+      } catch (err) {
+        console.error('Error copying to clipboard:', err);
+        toast.error('Failed to copy link');
+      }
     }
   };
+
+  // Close actions dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowActions(false);
+    };
+
+    if (showActions) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showActions]);
 
   // Don't render the post if it's hidden and user is not admin or author
   if (post.isHidden && !isAdmin && !isAuthor) {
@@ -215,7 +303,10 @@ export default function PostItem({
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => setShowActions(!showActions)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowActions(!showActions);
+              }}
             >
               <MoreHorizontal className="h-4 w-4" />
             </Button>
@@ -225,7 +316,8 @@ export default function PostItem({
                 {(isAuthor || isAdmin) && (
                   <>
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         handleEdit();
                         setShowActions(false);
                       }}
@@ -235,7 +327,8 @@ export default function PostItem({
                       Edit
                     </button>
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         onDelete?.();
                         setShowActions(false);
                       }}
@@ -248,8 +341,9 @@ export default function PostItem({
                   </>
                 )}
                 <button
-                  onClick={() => {
-                    onFlag?.();
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleFlag();
                     setShowActions(false);
                   }}
                   className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -281,6 +375,21 @@ export default function PostItem({
       </CardHeader>
       
       <CardContent className="pt-0">
+        {/* Show flagged status to the author even if the post is hidden */}
+        {post.flagged && isAuthor && (
+          <div className="mb-3 p-3 bg-yellow-50 rounded-md border border-yellow-200 flex items-start">
+            <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2 mt-0.5" />
+            <div>
+              <span className="text-sm font-medium text-yellow-800">
+                Your post has been flagged
+              </span>
+              <p className="text-xs text-yellow-700 mt-1">
+                {post.moderationNote || 'Our moderators are reviewing this content for compliance with community guidelines.'}
+              </p>
+            </div>
+          </div>
+        )}
+        
         {post.isHidden && (
           <div className="mb-3 p-2 bg-yellow-50 rounded-md border border-yellow-200 flex items-center">
             <AlertTriangle className="h-4 w-4 text-yellow-600 mr-2" />
@@ -294,7 +403,7 @@ export default function PostItem({
         <Link href={`/dashboard/forum/post/${post.id}`}>
           <div className="cursor-pointer">
             {post.title && (
-              <h3 className="font-semibold text-lg mb-2">{post.title}</h3>
+              <h3 className="font-semibold text-lg mb-2 hover:text-blue-600 transition-colors">{post.title}</h3>
             )}
             <p className="text-gray-700 mb-4 line-clamp-3">{post.content}</p>
           </div>
@@ -316,14 +425,18 @@ export default function PostItem({
               variant="ghost"
               size="sm"
               onClick={onLike}
-              className={`flex items-center space-x-1 ${isLiked ? 'text-red-500' : 'text-gray-500'}`}
+              className={`flex items-center space-x-1 transition-colors ${
+                isLiked 
+                  ? 'text-red-500 hover:text-red-600' 
+                  : 'text-gray-500 hover:text-red-500'
+              }`}
             >
               <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
               <span>{post._count.likes}</span>
             </Button>
             
             <Link href={`/dashboard/forum/post/${post.id}`}>
-              <Button variant="ghost" size="sm" className="flex items-center space-x-1 text-gray-500">
+              <Button variant="ghost" size="sm" className="flex items-center space-x-1 text-gray-500 hover:text-blue-500 transition-colors">
                 <MessageCircle className="h-4 w-4" />
                 <span>{post._count.replies}</span>
               </Button>
@@ -333,14 +446,23 @@ export default function PostItem({
               variant="ghost"
               size="sm"
               onClick={onBookmark}
-              className={`flex items-center space-x-1 ${isBookmarked ? 'text-blue-500' : 'text-gray-500'}`}
+              className={`flex items-center space-x-1 transition-colors ${
+                isBookmarked 
+                  ? 'text-blue-500 hover:text-blue-600' 
+                  : 'text-gray-500 hover:text-blue-500'
+              }`}
             >
               <Bookmark className={`h-4 w-4 ${isBookmarked ? 'fill-current' : ''}`} />
               <span>{post._count.bookmarks}</span>
             </Button>
           </div>
           
-          <Button variant="ghost" size="sm" onClick={handleShare} className="text-gray-500">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleShare} 
+            className="text-gray-500 hover:text-blue-500 transition-colors"
+          >
             <Share2 className="h-4 w-4" />
           </Button>
         </div>

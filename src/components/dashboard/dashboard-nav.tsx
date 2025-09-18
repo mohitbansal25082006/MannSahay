@@ -1,3 +1,5 @@
+// E:\mannsahay\src\components\dashboard\dashboard-nav.tsx
+
 'use client';
 
 import { useState } from 'react';
@@ -24,6 +26,7 @@ import {
   X,
   BarChart3
 } from 'lucide-react';
+import NotificationsDropdown from './notifications-dropdown';
 
 const navItems = [
   {
@@ -100,6 +103,9 @@ export default function DashboardNav() {
 
           {/* User Menu */}
           <div className="flex items-center space-x-4">
+            {/* Notifications Dropdown */}
+            <NotificationsDropdown />
+            
             {/* Mobile menu button */}
             <div className="sm:hidden">
               <Button

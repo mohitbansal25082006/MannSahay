@@ -273,3 +273,75 @@ html {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* Add these styles to your globals.css */
+
+/* Notification dropdown styles */
+.notification-dropdown {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  transition: background-color 0.2s ease;
+}
+
+.notification-item:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.notification-unread {
+  background-color: rgba(59, 130, 246, 0.05);
+  border-left: 3px solid #3b82f6;
+}
+
+/* Badge for notification count */
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 0;
+}
+
+/* Animation for notification dropdown */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notification-dropdown-content {
+  animation: slideDown 0.2s ease-out;
+}
+
+/* Custom scrollbar for notifications dropdown */
+.notification-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.notification-dropdown::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.notification-dropdown::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 10px;
+}
+
+.notification-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}

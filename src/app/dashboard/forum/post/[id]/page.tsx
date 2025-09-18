@@ -1,5 +1,3 @@
-// E:\mannsahay\src\app\dashboard\forum\post\[id]\page.tsx
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -239,13 +237,84 @@ export default function PostPage() {
       });
 
       if (response.ok) {
-        toast.success('Post has been flagged for review');
+        const data = await response.json();
+        toast.success(data.message);
+        
+        // If action was taken, refresh the post data
+        if (data.actionTaken) {
+          fetchPost();
+        }
       } else {
         toast.error('Failed to flag post');
       }
     } catch (error) {
       console.error('Error flagging post:', error);
       toast.error('Failed to flag post');
+    }
+  };
+
+  const handleFlagReply = async (replyId: string) => {
+    const reason = prompt('Please provide a reason for flagging this reply:');
+    if (!reason) return;
+
+    try {
+      console.log('Attempting to flag reply:', replyId, 'with reason:', reason);
+      
+      const response = await fetch('/api/forum/flag', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ replyId, reason }),
+      });
+
+      console.log('Flag response status:', response.status);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Flag response data:', data);
+        toast.success(data.message);
+        
+        // If action was taken, refresh the replies
+        if (data.actionTaken) {
+          fetchReplies();
+        }
+      } else {
+        const contentType = response.headers.get('content-type');
+        console.log('Response content-type:', contentType);
+        
+        if (contentType && contentType.includes('application/json')) {
+          try {
+            const errorData = await response.json();
+            console.error('Flag error response:', errorData);
+            
+            // Handle different flag error cases
+            if (errorData.alreadyFlagged) {
+              toast.error('You have already flagged this content');
+            } else if (errorData.recentFlag) {
+              toast.error('You have recently flagged this content. Please wait 24 hours before flagging the same content again.');
+            } else {
+              toast.error(errorData.error || 'Failed to flag reply');
+            }
+          } catch (jsonError) {
+            console.error('Error parsing JSON response:', jsonError);
+            toast.error('Failed to flag reply: Invalid response from server');
+          }
+        } else {
+          // If response is not JSON, get the text
+          try {
+            const errorText = await response.text();
+            console.error('Flag error text:', errorText);
+            toast.error('Failed to flag reply: ' + errorText);
+          } catch (textError) {
+            console.error('Error getting response text:', textError);
+            toast.error('Failed to flag reply: Unknown error');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error flagging reply:', error);
+      toast.error('Failed to flag reply');
     }
   };
 
@@ -310,13 +379,13 @@ export default function PostPage() {
     return replyList.map(reply => (
       <div key={reply.id}>
         <ReplyItem
-          key={reply.id}
           reply={reply}
           postId={id || ''}
           currentUserId={session?.user?.id}
           onReply={() => setReplyingTo(reply.id)}
           onFlag={() => handleFlagReply(reply.id)}
           onDelete={() => handleDeleteReply(reply.id)}
+          onFlagSuccess={fetchReplies}
           isNested={isNested}
           isDeleting={deletingReplyId === reply.id}
         />
@@ -327,30 +396,6 @@ export default function PostPage() {
         )}
       </div>
     ));
-  };
-
-  const handleFlagReply = async (replyId: string) => {
-    const reason = prompt('Please provide a reason for flagging this reply:');
-    if (!reason) return;
-
-    try {
-      const response = await fetch('/api/forum/flag', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ replyId, reason }),
-      });
-
-      if (response.ok) {
-        toast.success('Reply has been flagged for review');
-      } else {
-        toast.error('Failed to flag reply');
-      }
-    } catch (error) {
-      console.error('Error flagging reply:', error);
-      toast.error('Failed to flag reply');
-    }
   };
 
   const handleDeleteReply = async (replyId: string) => {

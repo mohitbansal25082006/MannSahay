@@ -1,5 +1,3 @@
-// E:\mannsahay\src\components\forum\reply-item.tsx
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -53,7 +51,8 @@ interface ReplyItemProps {
   onEdit?: () => void;
   onReply?: () => void;
   isNested?: boolean;
-  isDeleting?: boolean; // Add this prop
+  isDeleting?: boolean;
+  onFlagSuccess?: () => void;
 }
 
 export default function ReplyItem({
@@ -67,7 +66,8 @@ export default function ReplyItem({
   onEdit,
   onReply,
   isNested = false,
-  isDeleting = false // Add this prop with default value
+  isDeleting = false,
+  onFlagSuccess,
 }: ReplyItemProps) {
   const { data: session } = useSession();
   const [showActions, setShowActions] = useState(false);
@@ -76,7 +76,7 @@ export default function ReplyItem({
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replies, setReplies] = useState<any[]>([]);
   const [loadingReplies, setLoadingReplies] = useState(false);
-  const [localIsDeleting, setLocalIsDeleting] = useState(false); // Local state for this component
+  const [localIsDeleting, setLocalIsDeleting] = useState(false);
   
   const isAuthor = currentUserId === reply.author.id;
 
@@ -85,7 +85,6 @@ export default function ReplyItem({
   }, []);
 
   useEffect(() => {
-    // Update local state when prop changes
     setLocalIsDeleting(isDeleting);
   }, [isDeleting]);
 
@@ -144,7 +143,6 @@ export default function ReplyItem({
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this reply?')) return;
     
-    // Prevent multiple deletion attempts
     if (localIsDeleting) return;
     
     setLocalIsDeleting(true);
@@ -159,7 +157,6 @@ export default function ReplyItem({
         if (onDelete) onDelete();
       } else {
         const errorData = await response.json();
-        // If the reply was already deleted, treat it as success
         if (errorData.alreadyDeleted) {
           toast.success('Reply deleted successfully');
           if (onDelete) onDelete();
@@ -180,19 +177,63 @@ export default function ReplyItem({
     if (!reason) return;
 
     try {
+      console.log('Attempting to flag reply:', reply.id, 'with reason:', reason);
+      
       const response = await fetch('/api/forum/flag', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ replyId: reply.id, reason }),
+        body: JSON.stringify({ 
+          replyId: reply.id, 
+          reason: reason 
+        }),
       });
+
+      console.log('Flag response status:', response.status);
 
       if (response.ok) {
         const data = await response.json();
+        console.log('Flag response data:', data);
         toast.success(data.message || 'Reply has been flagged for review');
+        
+        // If action was taken, refresh the replies
+        if (data.actionTaken && onFlagSuccess) {
+          onFlagSuccess();
+        }
       } else {
-        toast.error('Failed to flag reply');
+        // Check if response has content before trying to parse it
+        const contentType = response.headers.get('content-type');
+        console.log('Response content-type:', contentType);
+        
+        if (contentType && contentType.includes('application/json')) {
+          try {
+            const errorData = await response.json();
+            console.error('Flag error response:', errorData);
+            
+            // Handle different flag error cases
+            if (errorData.alreadyFlagged) {
+              toast.error('You have already flagged this content');
+            } else if (errorData.recentFlag) {
+              toast.error('You have recently flagged this content. Please wait 24 hours before flagging the same content again.');
+            } else {
+              toast.error(errorData.error || 'Failed to flag reply');
+            }
+          } catch (jsonError) {
+            console.error('Error parsing JSON response:', jsonError);
+            toast.error('Failed to flag reply: Invalid response from server');
+          }
+        } else {
+          // If response is not JSON, get the text
+          try {
+            const errorText = await response.text();
+            console.error('Flag error text:', errorText);
+            toast.error('Failed to flag reply: ' + errorText);
+          } catch (textError) {
+            console.error('Error getting response text:', textError);
+            toast.error('Failed to flag reply: Unknown error');
+          }
+        }
       }
     } catch (error) {
       console.error('Error flagging reply:', error);
@@ -223,6 +264,79 @@ export default function ReplyItem({
       case 'REJECTED': return 'bg-red-100 text-red-800';
       case 'UNDER_REVIEW': return 'bg-yellow-100 text-yellow-800';
       default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Helper functions for nested replies
+  const handleFlagReply = async (replyId: string) => {
+    const reason = prompt('Please provide a reason for flagging this reply:');
+    if (!reason) return;
+
+    try {
+      const response = await fetch('/api/forum/flag', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          replyId: replyId, 
+          reason: reason 
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        toast.success(data.message || 'Reply has been flagged for review');
+        
+        if (data.actionTaken) {
+          fetchReplies();
+        }
+      } else {
+        const contentType = response.headers.get('content-type');
+        
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          
+          if (errorData.alreadyFlagged) {
+            toast.error('You have already flagged this content');
+          } else if (errorData.recentFlag) {
+            toast.error('You have recently flagged this content. Please wait 24 hours before flagging the same content again.');
+          } else {
+            toast.error(errorData.error || 'Failed to flag reply');
+          }
+        } else {
+          toast.error('Failed to flag reply');
+        }
+      }
+    } catch (error) {
+      console.error('Error flagging reply:', error);
+      toast.error('Failed to flag reply');
+    }
+  };
+
+  const handleDeleteReply = async (replyId: string) => {
+    if (!confirm('Are you sure you want to delete this reply?')) return;
+    
+    try {
+      const response = await fetch(`/api/forum/replies/${replyId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        toast.success('Reply deleted successfully');
+        fetchReplies();
+      } else {
+        const errorData = await response.json();
+        if (errorData.alreadyDeleted) {
+          toast.success('Reply deleted successfully');
+          fetchReplies();
+        } else {
+          toast.error(errorData.error || 'Failed to delete reply');
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting reply:', error);
+      toast.error('Failed to delete reply');
     }
   };
 
@@ -278,6 +392,21 @@ export default function ReplyItem({
                 <p className="text-xs text-gray-500 mb-2">
                   {formatDistanceToNow(new Date(reply.createdAt), { addSuffix: true })}
                 </p>
+                
+                {/* Show flagged status to the author even if the reply is hidden */}
+                {reply.flagged && isAuthor && (
+                  <div className="mb-2 p-2 bg-yellow-50 rounded-md border border-yellow-200 flex items-start">
+                    <AlertTriangle className="h-4 w-4 text-yellow-600 mr-2 mt-0.5" />
+                    <div>
+                      <span className="text-sm font-medium text-yellow-800">
+                        Your reply has been flagged
+                      </span>
+                      <p className="text-xs text-yellow-700 mt-1">
+                        {reply.moderationNote || 'Our moderators are reviewing this content for compliance with community guidelines.'}
+                      </p>
+                    </div>
+                  </div>
+                )}
                 
                 {reply.isHidden && (
                   <div className="mb-2 p-2 bg-yellow-50 rounded-md border border-yellow-200 flex items-center">
@@ -385,14 +514,15 @@ export default function ReplyItem({
               reply={nestedReply}
               postId={postId}
               currentUserId={currentUserId}
-              isLiked={false} // You would need to track this separately
-              onLike={() => {}} // Implement this
+              isLiked={false}
+              onLike={() => {}}
               onFlag={() => handleFlagReply(nestedReply.id)}
               onDelete={() => handleDeleteReply(nestedReply.id)}
-              onEdit={() => {}} // Implement this
-              onReply={() => {}} // Implement this
+              onEdit={() => {}}
+              onReply={() => {}}
               isNested={true}
-              isDeleting={false} // Pass false for nested replies since we're not tracking them
+              isDeleting={false}
+              onFlagSuccess={fetchReplies}
             />
           ))}
         </div>
@@ -406,13 +536,4 @@ export default function ReplyItem({
       )}
     </div>
   );
-}
-
-// Helper functions for nested replies
-function handleFlagReply(replyId: string) {
-  // Implementation similar to handleFlag
-}
-
-function handleDeleteReply(replyId: string) {
-  // Implementation similar to handleDelete
 }

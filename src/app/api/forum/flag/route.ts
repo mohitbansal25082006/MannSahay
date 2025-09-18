@@ -1,5 +1,3 @@
-// E:\mannsahay\src\app\api\forum\flag\route.ts
-
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
@@ -13,17 +11,41 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
+    console.log('Session data:', session);
+
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      console.error('Unauthorized access attempt - no user ID in session');
+      return NextResponse.json({ error: 'Unauthorized: Please sign in to flag content' }, { status: 401 });
     }
 
-    const { postId, replyId, reason } = await request.json();
+    console.log('User ID from session:', session.user.id);
 
+    let body;
+    try {
+      body = await request.json();
+    } catch (parseError) {
+      console.error('Error parsing request body:', parseError);
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    }
+
+    const { postId, replyId, reason } = body;
+
+    // Debug: Log the received data
+    console.log('Flag request received:', { postId, replyId, reason, userId: session.user.id });
+
+    // Validate input
     if (!postId && !replyId) {
+      console.error('Missing postId and replyId');
       return NextResponse.json({ error: 'postId or replyId is required' }, { status: 400 });
     }
 
+    if (!reason || reason.trim() === '') {
+      console.error('Missing or empty reason');
+      return NextResponse.json({ error: 'A reason is required to flag content' }, { status: 400 });
+    }
+
     // Check if already flagged
+    console.log('Checking for existing flag:', { userId: session.user.id, postId, replyId });
     const existingFlag = await prisma.flag.findFirst({
       where: {
         userId: session.user.id,
@@ -33,39 +55,51 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingFlag) {
-      return NextResponse.json({ error: 'You have already flagged this content' }, { status: 400 });
+      console.log('Existing flag found:', existingFlag);
+      return NextResponse.json({ 
+        error: 'You have already flagged this content. Our AI has reviewed this content and found no policy violations.',
+        alreadyFlagged: true,
+        userMessage: 'You have already flagged this content'
+      }, { status: 400 });
+    } else {
+      console.log('No existing flag found, proceeding to create new flag');
     }
 
     // Get the content being flagged
     let content = '';
     let contentType = '';
+    let authorId = '';
     
     if (postId) {
       const post = await prisma.post.findUnique({
         where: { id: postId },
-        select: { content: true }
+        select: { content: true, authorId: true }
       });
       if (!post) {
+        console.error('Post not found:', postId);
         return NextResponse.json({ error: 'Post not found' }, { status: 404 });
       }
       content = post.content;
       contentType = 'post';
+      authorId = post.authorId;
     } else if (replyId) {
       const reply = await prisma.reply.findUnique({
         where: { id: replyId },
-        select: { content: true }
+        select: { content: true, author: { select: { id: true } } }
       });
       if (!reply) {
+        console.error('Reply not found:', replyId);
         return NextResponse.json({ error: 'Reply not found' }, { status: 404 });
       }
       content = reply.content;
       contentType = 'reply';
+      authorId = reply.author.id;
     }
 
     // Create flag with PENDING AI review status
     const flag = await prisma.flag.create({
       data: {
-        reason,
+        reason: reason.trim(),
         userId: session.user.id,
         postId,
         replyId,
@@ -88,7 +122,12 @@ export async function POST(request: NextRequest) {
     });
 
     // Take action based on AI review
+    let actionTaken = false;
+    let notificationMessage = '';
+    
     if (moderationResult.violatesPolicy) {
+      actionTaken = true;
+      
       if (postId) {
         await prisma.post.update({
           where: { id: postId },
@@ -118,6 +157,10 @@ export async function POST(request: NextRequest) {
           },
         });
       }
+      
+      notificationMessage = `A ${contentType} has been flagged by a user and found to violate policies. Reason: ${reason}. AI Action: ${moderationResult.recommendedAction}`;
+    } else {
+      notificationMessage = `A ${contentType} has been flagged by a user and reviewed by AI. No policy violations found. Reason: ${reason}.`;
     }
 
     // Notify counselors
@@ -129,20 +172,41 @@ export async function POST(request: NextRequest) {
       await prisma.notification.create({
         data: {
           title: moderationResult.violatesPolicy ? 'Policy Violation Confirmed' : 'Content Flagged',
-          message: `A ${contentType} has been flagged by a user and ${moderationResult.violatesPolicy ? 'found to violate policies' : 'reviewed by AI'}. Reason: ${reason}. AI Action: ${moderationResult.recommendedAction}`,
+          message: notificationMessage,
           type: 'flagged_content',
           userId: counselor.id,
         },
       });
     }
 
-    return NextResponse.json({ 
-      flag, 
-      moderationResult,
-      message: moderationResult.violatesPolicy 
-        ? `This content has been ${moderationResult.recommendedAction === 'remove' ? 'removed' : 'flagged'} for violating community policies.` 
-        : 'Thank you for your report. Our AI has reviewed this content and found no policy violations.'
-    }, { status: 201 });
+    // Notify the content author if action was taken
+    if (actionTaken && authorId && authorId !== session.user.id) {
+      await prisma.notification.create({
+        data: {
+          title: 'Content Moderation',
+          message: `Your ${contentType} has been ${moderationResult.recommendedAction === 'remove' ? 'removed' : 'flagged'} for violating community policies. Reason: ${moderationResult.explanation}`,
+          type: 'content_moderated',
+          userId: authorId,
+        },
+      });
+    }
+
+    // Return appropriate response based on AI review
+    if (moderationResult.violatesPolicy) {
+      return NextResponse.json({ 
+        flag, 
+        moderationResult,
+        message: `This content has been ${moderationResult.recommendedAction === 'remove' ? 'removed' : 'flagged'} for violating community policies.`,
+        actionTaken: true
+      }, { status: 201 });
+    } else {
+      return NextResponse.json({ 
+        flag, 
+        moderationResult,
+        message: 'Thank you for your report. Our AI has reviewed this content and found no policy violations.',
+        actionTaken: false
+      }, { status: 201 });
+    }
   } catch (error) {
     console.error('Flag error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
