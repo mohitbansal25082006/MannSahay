@@ -601,8 +601,6 @@ export default function ForumPage() {
           <div className="forum-card card-hover">
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Settings className="h-5 w-5 mr-2" />
-                Your Preferences
               </CardTitle>
             </CardHeader>
             <CardContent>

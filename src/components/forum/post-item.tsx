@@ -404,10 +404,6 @@ export default function PostItem({
                     {post.moderationStatus === 'REJECTED' ? 'Removed' : post.moderationStatus}
                   </Badge>
                 )}
-                <Badge variant="outline" className="text-xs flex items-center">
-                  <Languages className="h-3 w-3 mr-1" />
-                  {getLanguageName(post.language)}
-                </Badge>
               </div>
               <div className="flex items-center space-x-2 text-xs text-gray-500">
                 <span>{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}</span>
