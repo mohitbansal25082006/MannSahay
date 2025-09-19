@@ -58,23 +58,27 @@ You are a content moderation AI for a mental health support forum for Indian stu
 Content: "${content}"
 
 Please analyze this content and determine if it violates any of these policies:
-1. Harassment or bullying
-2. Hate speech or discrimination
-3. Self-harm or suicide promotion
-4. Spam or misleading information
-5. Sharing personal information of others
-6. Explicit or inappropriate content
-7. Promotion of violence
+1. Harassment or bullying (e.g., targeting individuals with insults or threats)
+2. Hate speech or discrimination (e.g., derogatory remarks based on race, religion, caste, gender, or other identities)
+3. Self-harm or suicide promotion (e.g., encouraging harmful behavior, distinct from discussing mental health struggles)
+4. Spam or misleading information (e.g., irrelevant or deceptive content)
+5. Sharing personal information of others (e.g., exposing private details without consent)
+6. Explicit or inappropriate content (e.g., graphic or sexual content)
+7. Promotion of violence (e.g., advocating for physical harm)
 
 Respond with a JSON object containing:
 - violatesPolicy: boolean (true if any policy is violated)
-- violationTypes: array of strings (which policies were violated)
-- severity: string (low, medium, high, or critical)
-- confidence: number (0-1, how confident you are in this assessment)
-- explanation: string (explain your reasoning)
-- recommendedAction: string (none, flag, hide, or remove)
+- violationTypes: array of strings (which policies were violated, using the following identifiers: ${Object.values(POLICY_VIOLATIONS).join(', ')})
+- severity: string (one of ${Object.values(SEVERITY_LEVELS).join(', ')}, based on the impact and risk of the violation)
+- confidence: number (0-1, your confidence in this assessment)
+- explanation: string (provide a detailed, user-friendly explanation in 2-4 sentences, specifying: 
+  - Which part of the content triggered the violation (quote or describe specific phrases if applicable).
+  - How it violates the specific policy/policies.
+  - Suggestions for revising the content to comply with policies, if applicable.
+  - If no violation, explain why the content is acceptable, considering the mental health context.)
+- recommendedAction: string (one of none, flag, hide, or remove)
 
-Consider the context of a mental health support forum - be sensitive to discussions about mental health while still enforcing policies.
+Consider the context of a mental health support forum. Be sensitive to discussions about mental health struggles (e.g., sharing feelings of sadness or anxiety is acceptable unless it promotes harmful behavior). Ensure the explanation is clear, constructive, and empathetic to help users understand and improve their content.
 `;
 
     const response = await openai.chat.completions.create({
@@ -104,7 +108,7 @@ Consider the context of a mental health support forum - be sensitive to discussi
       violationTypes: [],
       severity: 'low',
       confidence: 0,
-      explanation: 'Error during moderation analysis',
+      explanation: 'An error occurred during moderation analysis. Please try again or contact support.',
       recommendedAction: 'none',
     };
   }

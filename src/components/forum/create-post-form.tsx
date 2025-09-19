@@ -1,4 +1,3 @@
-// E:\mannsahay\src\components\forum\create-post-form.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -24,6 +23,7 @@ import {
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
+import { ModerationNotification } from '@/components/moderation/moderation-notification'; // Added import
 
 const categories = [
   { value: 'general', label: 'General' },
@@ -310,6 +310,22 @@ export default function CreatePostForm({ onPostCreated }: CreatePostFormProps) {
         }
         return;
       }
+
+      // Check if post was auto-removed
+      if (data.wasRemoved) {
+        // Show specific notification for removed post
+        toast.error(
+          <ModerationNotification 
+            title="Your post has been removed"
+            message="Your post violated our community policies and has been automatically removed."
+            details={data.moderationNote || "Please review our community guidelines before posting again."}
+          />,
+          { duration: 10000 }
+        );
+      } else {
+        // Regular success message
+        toast.success('Post created successfully!');
+      }
       
       // Reset form
       setTitle('');
@@ -323,8 +339,6 @@ export default function CreatePostForm({ onPostCreated }: CreatePostFormProps) {
       setToneAnalysis(null);
       setShowSuggestions(false);
       setShowToneAnalysis(false);
-      
-      toast.success('Post created successfully!');
       
       if (onPostCreated) {
         onPostCreated();

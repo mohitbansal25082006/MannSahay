@@ -163,7 +163,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json(post, { status: 201 });
+    return NextResponse.json({
+      post,
+      moderationStatus,
+      moderationNote: moderationNote || (moderationResult.violatesPolicy ? moderationResult.explanation : ''),
+      isHidden,
+      wasRemoved: moderationStatus === ModerationStatus.REJECTED && isHidden,
+      violationTypes: moderationResult.violatesPolicy ? moderationResult.violationTypes : []
+    }, { status: 201 });
   } catch (error) {
     console.error('Create post error:', error);
     return NextResponse.json({ 
