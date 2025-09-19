@@ -29,6 +29,7 @@ import { useSession } from 'next-auth/react';
 import CreateReplyForm from '@/components/forum/create-reply-form';
 import ReplyItem from '@/components/forum/reply-item';
 import { toast } from 'sonner';
+import BookmarkButton from '@/components/forum/bookmark-button';
 
 interface Post {
   id: string;
@@ -213,9 +214,20 @@ export default function PostPage() {
       if (response.ok) {
         const data = await response.json();
         setIsBookmarked(data.bookmarked);
+        
+        // Update the post bookmark count
+        setPost(prev => prev ? {
+          ...prev,
+          _count: {
+            ...prev._count,
+            bookmarks: data.bookmarked ? prev._count.bookmarks + 1 : prev._count.bookmarks - 1
+          }
+        } : null);
+        
         toast.success(data.bookmarked ? 'Post bookmarked' : 'Bookmark removed');
       } else {
-        toast.error('Failed to bookmark post');
+        const errorData = await response.json();
+        toast.error(errorData.error || 'Failed to bookmark post');
       }
     } catch (error) {
       console.error('Error bookmarking post:', error);
@@ -245,7 +257,21 @@ export default function PostPage() {
           fetchPost();
         }
       } else {
-        toast.error('Failed to flag post');
+        const contentType = response.headers.get('content-type');
+        
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          
+          if (errorData.alreadyFlagged) {
+            toast.error('You have already flagged this content');
+          } else if (errorData.recentFlag) {
+            toast.error('You have recently flagged this content. Please wait 24 hours before flagging the same content again.');
+          } else {
+            toast.error(errorData.error || 'Failed to flag post');
+          }
+        } else {
+          toast.error('Failed to flag post');
+        }
       }
     } catch (error) {
       console.error('Error flagging post:', error);
@@ -348,11 +374,17 @@ export default function PostPage() {
         });
       } catch (err) {
         console.error('Error sharing:', err);
+        toast.error('Failed to share post');
       }
     } else {
       // Fallback - copy to clipboard
-      navigator.clipboard.writeText(window.location.href);
-      toast.success('Link copied to clipboard!');
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success('Link copied to clipboard!');
+      } catch (err) {
+        console.error('Error copying to clipboard:', err);
+        toast.error('Failed to copy link');
+      }
     }
   };
 
