@@ -3,18 +3,14 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { 
   Save, 
-  Plus, 
-  X,
   Settings,
   Heart,
-  BookOpen,
-  Users,
-  Globe
+  Globe,
+  X
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
@@ -34,7 +30,6 @@ export default function UserPreferences({ onLanguageChange }: UserPreferencesPro
   const { data: session } = useSession();
   const [preferredLanguage, setPreferredLanguage] = useState('en');
   const [interests, setInterests] = useState<string[]>([]);
-  const [customInterest, setCustomInterest] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -97,13 +92,6 @@ export default function UserPreferences({ onLanguageChange }: UserPreferencesPro
     setInterests(interests.filter(i => i !== interest));
   };
 
-  const handleAddCustomInterest = () => {
-    if (customInterest.trim()) {
-      addInterest(customInterest.trim());
-      setCustomInterest('');
-    }
-  };
-
   const handleLanguageChange = (language: string) => {
     setPreferredLanguage(language);
     // Notify parent component immediately when language changes
@@ -163,23 +151,6 @@ export default function UserPreferences({ onLanguageChange }: UserPreferencesPro
                   {interest}
                 </Badge>
               ))}
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Input
-                value={customInterest}
-                onChange={(e) => setCustomInterest(e.target.value)}
-                placeholder="Add a custom interest"
-                className="flex-1"
-              />
-              <Button 
-                type="button" 
-                size="sm"
-                onClick={handleAddCustomInterest}
-                disabled={!customInterest.trim()}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
             </div>
             
             {interests.length > 0 && (
