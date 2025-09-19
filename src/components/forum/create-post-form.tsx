@@ -1,3 +1,4 @@
+// E:\mannsahay\src\components\forum\create-post-form.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -9,11 +10,19 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Send, Eye, EyeOff, AlertTriangle, Plus, Lightbulb, SpellCheck } from 'lucide-react';
+import { 
+  Send, 
+  Eye, 
+  EyeOff, 
+  AlertTriangle,
+  Plus,
+  Lightbulb,
+  SpellCheck,
+  Languages,
+  Globe
+} from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
-import LanguageSelector from '@/components/ui/language-selector';
-import TranslationToggle from '@/components/ui/translation-toggle';
 
 const categories = [
   { value: 'general', label: 'General' },
@@ -23,20 +32,40 @@ const categories = [
   { value: 'lifestyle', label: 'Lifestyle' },
 ];
 
-export default function CreatePostForm({ onPostCreated }: { onPostCreated?: () => void }) {
+const languages = [
+  { code: 'en', name: 'English' },
+  { code: 'hi', name: 'हिन्दी (Hindi)' },
+  { code: 'ta', name: 'தமிழ் (Tamil)' },
+  { code: 'bn', name: 'বাংলা (Bengali)' },
+  { code: 'te', name: 'తెలుగు (Telugu)' },
+  { code: 'mr', name: 'मराठी (Marathi)' },
+  { code: 'gu', name: 'ગુજરાતી (Gujarati)' },
+  { code: 'kn', name: 'ಕನ್ನಡ (Kannada)' },
+  { code: 'ml', name: 'മലയാളം (Malayalam)' },
+  { code: 'pa', name: 'ਪੰਜਾਬੀ (Punjabi)' },
+];
+
+interface CreatePostFormProps {
+  onPostCreated?: () => void;
+}
+
+export default function CreatePostForm({ onPostCreated }: CreatePostFormProps) {
   const { data: session, status } = useSession();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(true);
   const [category, setCategory] = useState('general');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [language, setLanguage] = useState('en');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [suggestions, setSuggestions] = useState<any>(null);
   const [toneAnalysis, setToneAnalysis] = useState<any>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showToneAnalysis, setShowToneAnalysis] = useState(false);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [isLoadingToneAnalysis, setIsLoadingToneAnalysis] = useState(false);
+  const [translatedTitle, setTranslatedTitle] = useState('');
+  const [translatedContent, setTranslatedContent] = useState('');
+  const [isTranslating, setIsTranslating] = useState(false);
 
   const fetchSuggestions = async () => {
     if (!content.trim()) return;
@@ -90,6 +119,52 @@ export default function CreatePostForm({ onPostCreated }: { onPostCreated?: () =
     }
   };
 
+  const translateContent = async () => {
+    if (language === 'en') {
+      toast.info('Content is already in English');
+      return;
+    }
+
+    setIsTranslating(true);
+    try {
+      // Translate title if it exists
+      const titlePromise = title 
+        ? fetch('/api/forum/translate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              text: title, 
+              targetLanguage: 'en',
+              sourceLanguage: language 
+            })
+          }).then(res => res.ok ? res.json() : Promise.resolve(null))
+        : Promise.resolve(null);
+
+      // Translate content
+      const contentPromise = fetch('/api/forum/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          text: content, 
+          targetLanguage: 'en',
+          sourceLanguage: language 
+        })
+      }).then(res => res.ok ? res.json() : Promise.resolve(null));
+
+      const [titleResult, contentResult] = await Promise.all([titlePromise, contentPromise]);
+
+      if (titleResult?.translation) setTranslatedTitle(titleResult.translation);
+      if (contentResult?.translation) setTranslatedContent(contentResult.translation);
+      
+      toast.success('Content translated to English');
+    } catch (error) {
+      console.error('Error translating content:', error);
+      toast.error('Failed to translate content');
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
   const applySuggestion = () => {
     if (suggestions?.suggestedText) {
       setContent(suggestions.suggestedText);
@@ -113,17 +188,21 @@ export default function CreatePostForm({ onPostCreated }: { onPostCreated?: () =
     setIsSubmitting(true);
     
     try {
+      // If content is not in English, translate it before posting
+      const finalTitle = language === 'en' ? title : (translatedTitle || title);
+      const finalContent = language === 'en' ? content : (translatedContent || content);
+      
       const response = await fetch('/api/forum/posts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          title,
-          content,
+          title: finalTitle,
+          content: finalContent,
           isAnonymous,
           category,
-          language,
+          language, // Include the original language
         }),
       });
 
@@ -132,6 +211,9 @@ export default function CreatePostForm({ onPostCreated }: { onPostCreated?: () =
       if (!response.ok) {
         if (data.error) {
           toast.error(data.error);
+          if (data.debug) {
+            console.error('Debug info:', data.debug);
+          }
         } else {
           toast.error('Failed to create post. Please try again.');
         }
@@ -144,6 +226,8 @@ export default function CreatePostForm({ onPostCreated }: { onPostCreated?: () =
       setIsAnonymous(true);
       setCategory('general');
       setLanguage('en');
+      setTranslatedTitle('');
+      setTranslatedContent('');
       setSuggestions(null);
       setToneAnalysis(null);
       setShowSuggestions(false);
@@ -162,6 +246,7 @@ export default function CreatePostForm({ onPostCreated }: { onPostCreated?: () =
     }
   };
 
+  // If user is not authenticated, show a sign-in prompt
   if (status !== 'authenticated') {
     return (
       <Card className="mb-6">
@@ -251,8 +336,13 @@ export default function CreatePostForm({ onPostCreated }: { onPostCreated?: () =
                     <Lightbulb className="h-4 w-4 mr-1" />
                     Writing Suggestions
                   </h4>
-                  <Button size="sm" onClick={applySuggestion} className="text-xs">
-                    Apply All
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setShowSuggestions(false)}
+                    className="h-6 w-6 p-0"
+                  >
+                    ×
                   </Button>
                 </div>
                 
@@ -293,6 +383,13 @@ export default function CreatePostForm({ onPostCreated }: { onPostCreated?: () =
                   <div className="mt-2 p-2 bg-white rounded border border-blue-200">
                     <p className="text-xs font-medium text-blue-700 mb-1">Suggested Text:</p>
                     <p className="text-xs text-blue-800">{suggestions.suggestedText}</p>
+                    <Button 
+                      size="sm" 
+                      onClick={applySuggestion}
+                      className="mt-2 text-xs"
+                    >
+                      Apply Suggestion
+                    </Button>
                   </div>
                 )}
               </div>
@@ -301,10 +398,20 @@ export default function CreatePostForm({ onPostCreated }: { onPostCreated?: () =
             {/* Tone Analysis */}
             {showToneAnalysis && toneAnalysis && (
               <div className="p-3 bg-purple-50 rounded-md border border-purple-200">
-                <h4 className="font-medium text-purple-800 mb-2 flex items-center">
-                  <AlertTriangle className="h-4 w-4 mr-1" />
-                  Tone Analysis
-                </h4>
+                <div className="flex justify-between items-start mb-2">
+                  <h4 className="font-medium text-purple-800 flex items-center">
+                    <AlertTriangle className="h-4 w-4 mr-1" />
+                    Tone Analysis
+                  </h4>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setShowToneAnalysis(false)}
+                    className="h-6 w-6 p-0"
+                  >
+                    ×
+                  </Button>
+                </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <div>
@@ -344,7 +451,7 @@ export default function CreatePostForm({ onPostCreated }: { onPostCreated?: () =
               </div>
             )}
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="category">Category</Label>
                 <Select value={category} onValueChange={setCategory}>
@@ -363,10 +470,21 @@ export default function CreatePostForm({ onPostCreated }: { onPostCreated?: () =
               
               <div>
                 <Label htmlFor="language">Language</Label>
-                <LanguageSelector value={language} onValueChange={setLanguage} />
+                <Select value={language} onValueChange={setLanguage}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select a language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {languages.map((lang) => (
+                      <SelectItem key={lang.code} value={lang.code}>
+                        {lang.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
-              <div className="flex items-center space-x-2 pt-5">
+              <div className="flex items-center space-x-2 pt-5 md:col-span-2">
                 <Switch
                   id="anonymous"
                   checked={isAnonymous}
@@ -382,6 +500,46 @@ export default function CreatePostForm({ onPostCreated }: { onPostCreated?: () =
                 </Label>
               </div>
             </div>
+            
+            {/* Translation Preview */}
+            {language !== 'en' && (translatedTitle || translatedContent) && (
+              <div className="p-3 bg-green-50 rounded-md border border-green-200">
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="font-medium text-green-800 flex items-center">
+                    <Languages className="h-4 w-4 mr-1" />
+                    English Translation Preview
+                  </h4>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={translateContent}
+                    disabled={isTranslating}
+                    className="text-xs"
+                  >
+                    {isTranslating ? 'Translating...' : 'Refresh Translation'}
+                  </Button>
+                </div>
+                
+                {translatedTitle && (
+                  <div className="mb-2">
+                    <p className="text-sm font-medium text-green-700">Title:</p>
+                    <p className="text-sm text-green-800">{translatedTitle}</p>
+                  </div>
+                )}
+                
+                {translatedContent && (
+                  <div>
+                    <p className="text-sm font-medium text-green-700">Content:</p>
+                    <p className="text-sm text-green-800 whitespace-pre-line">{translatedContent}</p>
+                  </div>
+                )}
+                
+                <p className="text-xs text-green-600 mt-2">
+                  This is how your post will appear to English speakers. The original language will still be preserved.
+                </p>
+              </div>
+            )}
             
             <div className="flex items-center justify-between pt-2">
               <div className="flex items-center text-sm text-gray-500">

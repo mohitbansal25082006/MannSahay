@@ -22,7 +22,10 @@ import {
   Bot,
   Lightbulb,
   MessageSquare,
-  TrendingUp
+  TrendingUp,
+  Languages,
+  SpellCheck, // Changed from Spellcheck to SpellCheck
+  AlertTriangle
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useSession } from 'next-auth/react';
@@ -30,6 +33,7 @@ import CreateReplyForm from '@/components/forum/create-reply-form';
 import ReplyItem from '@/components/forum/reply-item';
 import { toast } from 'sonner';
 import BookmarkButton from '@/components/forum/bookmark-button';
+import TranslationToggle from '@/components/ui/translation-toggle';
 
 interface Post {
   id: string;
@@ -41,6 +45,7 @@ interface Post {
   category: string;
   views: number;
   createdAt: string;
+  language: string;
   author: {
     id: string;
     name?: string;
@@ -60,6 +65,7 @@ interface Reply {
   flagged: boolean;
   riskLevel: 'NONE' | 'LOW' | 'MEDIUM' | 'HIGH';
   createdAt: string;
+  language: string;
   author: {
     id: string;
     name?: string;
@@ -88,11 +94,27 @@ export default function PostPage() {
   const [summary, setSummary] = useState<any>(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [deletingReplyId, setDeletingReplyId] = useState<string | null>(null);
+  
+  // Translation states
+  const [translatedTitle, setTranslatedTitle] = useState('');
+  const [translatedContent, setTranslatedContent] = useState('');
+  const [isTranslated, setIsTranslated] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [userLanguage, setUserLanguage] = useState('en');
+  
+  // Writing suggestions and tone analysis states
+  const [suggestions, setSuggestions] = useState<any>(null);
+  const [toneAnalysis, setToneAnalysis] = useState<any>(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showToneAnalysis, setShowToneAnalysis] = useState(false);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [isLoadingToneAnalysis, setIsLoadingToneAnalysis] = useState(false);
 
   useEffect(() => {
     fetchPost();
     fetchReplies();
     checkAdminStatus();
+    fetchUserLanguage();
     
     // Increment view count
     fetch(`/api/forum/posts/${id}/view`, { method: 'POST' }).catch(console.error);
@@ -108,6 +130,20 @@ export default function PostPage() {
         }
       } catch (error) {
         console.error('Error checking admin status:', error);
+      }
+    }
+  };
+
+  const fetchUserLanguage = async () => {
+    if (session?.user?.id) {
+      try {
+        const response = await fetch(`/api/user/preferences?userId=${session.user.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setUserLanguage(data.preferredLanguage || 'en');
+        }
+      } catch (error) {
+        console.error('Error fetching user language:', error);
       }
     }
   };
@@ -169,6 +205,111 @@ export default function PostPage() {
       toast.error('Failed to generate summary');
     } finally {
       setLoadingSummary(false);
+    }
+  };
+
+  const fetchSuggestions = async () => {
+    if (!post) return;
+    
+    setIsLoadingSuggestions(true);
+    try {
+      const response = await fetch('/api/forum/suggestions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          text: post.content, 
+          language: post.language 
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSuggestions(data);
+        setShowSuggestions(true);
+      } else {
+        toast.error('Failed to get writing suggestions');
+      }
+    } catch (error) {
+      console.error('Error fetching suggestions:', error);
+      toast.error('Failed to get writing suggestions');
+    } finally {
+      setIsLoadingSuggestions(false);
+    }
+  };
+
+  const fetchToneAnalysis = async () => {
+    if (!post) return;
+    
+    setIsLoadingToneAnalysis(true);
+    try {
+      const response = await fetch('/api/forum/tone-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          text: post.content, 
+          language: post.language 
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setToneAnalysis(data);
+        setShowToneAnalysis(true);
+      } else {
+        toast.error('Failed to analyze tone');
+      }
+    } catch (error) {
+      console.error('Error analyzing tone:', error);
+      toast.error('Failed to analyze tone');
+    } finally {
+      setIsLoadingToneAnalysis(false);
+    }
+  };
+
+  const handleTranslate = async () => {
+    if (isTranslated) {
+      // If already translated, toggle back to original
+      setIsTranslated(false);
+      return;
+    }
+
+    setIsTranslating(true);
+    try {
+      // Translate title if it exists
+      const titlePromise = post?.title 
+        ? fetch('/api/forum/translate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              text: post.title, 
+              targetLanguage: userLanguage,
+              sourceLanguage: post.language 
+            })
+          }).then(res => res.ok ? res.json() : Promise.resolve(null))
+        : Promise.resolve(null);
+
+      // Translate content
+      const contentPromise = fetch('/api/forum/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          text: post?.content || '', 
+          targetLanguage: userLanguage,
+          sourceLanguage: post?.language 
+        })
+      }).then(res => res.ok ? res.json() : Promise.resolve(null));
+
+      const [titleResult, contentResult] = await Promise.all([titlePromise, contentPromise]);
+
+      if (titleResult?.translation) setTranslatedTitle(titleResult.translation);
+      if (contentResult?.translation) setTranslatedContent(contentResult.translation);
+      
+      setIsTranslated(true);
+    } catch (error) {
+      console.error('Error translating content:', error);
+      toast.error('Failed to translate content');
+    } finally {
+      setIsTranslating(false);
     }
   };
 
@@ -407,6 +548,22 @@ export default function PostPage() {
     }
   };
 
+  const getLanguageName = (code: string) => {
+    const languages: Record<string, string> = {
+      'en': 'English',
+      'hi': 'हिन्दी (Hindi)',
+      'ta': 'தமிழ் (Tamil)',
+      'bn': 'বাংলা (Bengali)',
+      'te': 'తెలుగు (Telugu)',
+      'mr': 'मराठी (Marathi)',
+      'gu': 'ગુજરાતી (Gujarati)',
+      'kn': 'ಕನ್ನಡ (Kannada)',
+      'ml': 'മലയാളം (Malayalam)',
+      'pa': 'ਪੰਜਾਬੀ (Punjabi)',
+    };
+    return languages[code] || code.toUpperCase();
+  };
+
   const renderReplies = (replyList: Reply[], isNested = false) => {
     return replyList.map(reply => (
       <div key={reply.id}>
@@ -542,6 +699,9 @@ export default function PostPage() {
                   <Badge className={`text-xs ${getRiskColor(post.riskLevel)}`}>
                     {post.riskLevel}
                   </Badge>
+                  <Badge variant="outline" className="text-xs">
+                    {getLanguageName(post.language)}
+                  </Badge>
                 </div>
                 <div className="flex items-center space-x-2 text-sm text-gray-500">
                   <span>{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}</span>
@@ -599,15 +759,159 @@ export default function PostPage() {
             <Badge className={`text-xs ${getCategoryColor(post.category)}`}>
               {post.category}
             </Badge>
+            
+            <div className="flex space-x-2 ml-auto">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={fetchSuggestions}
+                disabled={isLoadingSuggestions || !post.content}
+                className="text-xs h-7 px-2"
+              >
+                <SpellCheck className="h-3 w-3 mr-1" />
+                {isLoadingSuggestions ? 'Checking...' : 'Check Writing'}
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={fetchToneAnalysis}
+                disabled={isLoadingToneAnalysis || !post.content}
+                className="text-xs h-7 px-2"
+              >
+                <AlertTriangle className="h-3 w-3 mr-1" />
+                {isLoadingToneAnalysis ? 'Analyzing...' : 'Analyze Tone'}
+              </Button>
+            </div>
           </div>
         </CardHeader>
         
         <CardContent>
+          {/* Writing Suggestions */}
+          {showSuggestions && suggestions && (
+            <div className="mb-4 p-3 bg-blue-50 rounded-md border border-blue-200">
+              <div className="flex justify-between items-start mb-2">
+                <h4 className="font-medium text-blue-800 flex items-center">
+                  <SpellCheck className="h-4 w-4 mr-1" />
+                  Writing Suggestions
+                </h4>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setShowSuggestions(false)}
+                  className="h-6 w-6 p-0"
+                >
+                  ×
+                </Button>
+              </div>
+              
+              {suggestions.grammar && suggestions.grammar.length > 0 && (
+                <div className="mb-2">
+                  <p className="text-sm font-medium text-blue-700">Grammar:</p>
+                  <ul className="text-xs text-blue-600 list-disc pl-5">
+                    {suggestions.grammar.map((item: string, index: number) => (
+                      <li key={index}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {suggestions.clarity && suggestions.clarity.length > 0 && (
+                <div className="mb-2">
+                  <p className="text-sm font-medium text-blue-700">Clarity:</p>
+                  <ul className="text-xs text-blue-600 list-disc pl-5">
+                    {suggestions.clarity.map((item: string, index: number) => (
+                      <li key={index}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {suggestions.tone && suggestions.tone.length > 0 && (
+                <div className="mb-2">
+                  <p className="text-sm font-medium text-blue-700">Tone:</p>
+                  <ul className="text-xs text-blue-600 list-disc pl-5">
+                    {suggestions.tone.map((item: string, index: number) => (
+                      <li key={index}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {suggestions.suggestedText && (
+                <div className="mt-2 p-2 bg-white rounded border border-blue-200">
+                  <p className="text-xs font-medium text-blue-700 mb-1">Suggested Text:</p>
+                  <p className="text-xs text-blue-800">{suggestions.suggestedText}</p>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Tone Analysis */}
+          {showToneAnalysis && toneAnalysis && (
+            <div className="mb-4 p-3 bg-purple-50 rounded-md border border-purple-200">
+              <div className="flex justify-between items-start mb-2">
+                <h4 className="font-medium text-purple-800 flex items-center">
+                  <AlertTriangle className="h-4 w-4 mr-1" />
+                  Tone Analysis
+                </h4>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setShowToneAnalysis(false)}
+                  className="h-6 w-6 p-0"
+                >
+                  ×
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div>
+                  <p className="text-sm font-medium text-purple-700">Overall Tone:</p>
+                  <p className="text-xs text-purple-800">{toneAnalysis.overallTone}</p>
+                </div>
+                
+                <div>
+                  <p className="text-sm font-medium text-purple-700">Respectfulness:</p>
+                  <p className="text-xs text-purple-800">{toneAnalysis.respectfulness}</p>
+                </div>
+              </div>
+              
+              {toneAnalysis.emotions && toneAnalysis.emotions.length > 0 && (
+                <div className="mt-2">
+                  <p className="text-sm font-medium text-purple-700">Detected Emotions:</p>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {toneAnalysis.emotions.map((emotion: string, index: number) => (
+                      <Badge key={index} variant="outline" className="text-xs border-purple-300 text-purple-700">
+                        {emotion}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {toneAnalysis.suggestions && toneAnalysis.suggestions.length > 0 && (
+                <div className="mt-2">
+                  <p className="text-sm font-medium text-purple-700">Suggestions:</p>
+                  <ul className="text-xs text-purple-600 list-disc pl-5">
+                    {toneAnalysis.suggestions.map((item: string, index: number) => (
+                      <li key={index}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+          
           {post.title && (
-            <h1 className="text-2xl font-bold mb-4">{post.title}</h1>
+            <h1 className="text-2xl font-bold mb-4">
+              {isTranslated && translatedTitle ? translatedTitle : post.title}
+            </h1>
           )}
           <div className="prose max-w-none mb-6">
-            <p className="text-gray-700 whitespace-pre-line">{post.content}</p>
+            <p className="text-gray-700 whitespace-pre-line">
+              {isTranslated && translatedContent ? translatedContent : post.content}
+            </p>
           </div>
           
           <div className="flex items-center justify-between pt-3 border-t border-gray-100">
@@ -636,6 +940,12 @@ export default function PostPage() {
                 <Bookmark className={`h-4 w-4 ${isBookmarked ? 'fill-current' : ''}`} />
                 <span>{post._count.bookmarks}</span>
               </Button>
+              
+              <TranslationToggle
+                onTranslate={handleTranslate}
+                isTranslated={isTranslated}
+                isLoading={isTranslating}
+              />
             </div>
             
             <Button variant="ghost" size="sm" onClick={handleShare} className="text-gray-500">

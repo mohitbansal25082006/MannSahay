@@ -1,3 +1,4 @@
+// E:\mannsahay\src\components\dashboard\user-preferences.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -27,7 +28,11 @@ const interestOptions = [
   'Anxiety', 'Depression', 'Loneliness', 'Family Issues'
 ];
 
-export default function UserPreferences() {
+interface UserPreferencesProps {
+  onLanguageChange?: (language: string) => void;
+}
+
+export default function UserPreferences({ onLanguageChange }: UserPreferencesProps) {
   const { data: session } = useSession();
   const [preferredLanguage, setPreferredLanguage] = useState('en');
   const [interests, setInterests] = useState<string[]>([]);
@@ -67,6 +72,10 @@ export default function UserPreferences() {
       
       if (response.ok) {
         toast.success('Preferences saved successfully');
+        // Notify parent component of language change
+        if (onLanguageChange) {
+          onLanguageChange(preferredLanguage);
+        }
       } else {
         toast.error('Failed to save preferences');
       }
@@ -95,6 +104,14 @@ export default function UserPreferences() {
     }
   };
 
+  const handleLanguageChange = (language: string) => {
+    setPreferredLanguage(language);
+    // Notify parent component immediately when language changes
+    if (onLanguageChange) {
+      onLanguageChange(language);
+    }
+  };
+
   return (
     <Card className="mb-6">
       <CardHeader>
@@ -112,7 +129,7 @@ export default function UserPreferences() {
             </Label>
             <LanguageSelector 
               value={preferredLanguage} 
-              onValueChange={setPreferredLanguage} 
+              onValueChange={handleLanguageChange} 
               className="w-full"
             />
             <p className="text-xs text-gray-500 mt-1">

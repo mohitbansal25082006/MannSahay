@@ -32,7 +32,9 @@ import {
   CheckCircle,
   XCircle,
   Bookmark,
-  Settings
+  Settings,
+  Languages,
+  Globe
 } from 'lucide-react';
 import CreatePostForm from '@/components/forum/create-post-form';
 import PostItem from '@/components/forum/post-item';
@@ -237,6 +239,33 @@ export default function ForumPage() {
   const [viewMode, setViewMode] = useState('list');
   const [likedPosts, setLikedPosts] = useState<Record<string, boolean>>({});
   const [bookmarkedPosts, setBookmarkedPosts] = useState<Record<string, boolean>>({});
+  const [userLanguage, setUserLanguage] = useState('en');
+
+  useEffect(() => {
+    fetchUserLanguage();
+    fetchPosts();
+    fetchForumStats();
+  }, [category, sort]);
+
+  const fetchUserLanguage = async () => {
+    if (session?.user?.id) {
+      try {
+        const response = await fetch(`/api/user/preferences?userId=${session.user.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setUserLanguage(data.preferredLanguage || 'en');
+        }
+      } catch (error) {
+        console.error('Error fetching user language:', error);
+      }
+    }
+  };
+
+  const handleLanguageChange = (language: string) => {
+    setUserLanguage(language);
+    // Refresh posts when language changes to get recommendations in the new language
+    fetchPosts();
+  };
 
   const fetchPosts = async () => {
     setLoading(true);
@@ -291,11 +320,6 @@ export default function ForumPage() {
       setStatsLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchPosts();
-    fetchForumStats();
-  }, [category, sort]);
 
   const handleLike = async (postId: string) => {
     try {
@@ -583,7 +607,7 @@ export default function ForumPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <UserPreferences />
+              <UserPreferences onLanguageChange={handleLanguageChange} />
             </CardContent>
           </div>
 
@@ -650,11 +674,10 @@ export default function ForumPage() {
                             <MessageSquare className="h-3 w-3 mr-1" />
                             {post._count.replies}
                           </div>
-                          {post.language && post.language !== 'en' && (
-                            <Badge variant="outline" className="ml-2 text-xs">
-                              {getLanguageName(post.language)}
-                            </Badge>
-                          )}
+                          <Badge variant="outline" className="ml-2 text-xs flex items-center">
+                            <Globe className="h-3 w-3 mr-1" />
+                            {getLanguageName(post.language)}
+                          </Badge>
                         </div>
                       </Link>
                     </div>
