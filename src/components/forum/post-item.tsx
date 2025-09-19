@@ -1,3 +1,4 @@
+// E:\mannsahay\src\components\forum\post-item.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -91,6 +92,7 @@ export default function PostItem({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showToneAnalysis, setShowToneAnalysis] = useState(false);
   const [bookmarkedPosts, setBookmarkedPosts] = useState<{ [key: string]: boolean }>({});
+  const [translatedTitle, setTranslatedTitle] = useState('');
   const [translatedContent, setTranslatedContent] = useState('');
   const [isTranslated, setIsTranslated] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
@@ -141,33 +143,49 @@ export default function PostItem({
       return;
     }
 
-    // Check if we already have a translation
-    if (post.translatedContent && post.translatedContent[userLanguage]) {
-      setTranslatedContent(post.translatedContent[userLanguage]);
-      setIsTranslated(true);
-      return;
-    }
-
-    // If not, translate using API
     setIsTranslating(true);
     try {
-      const response = await fetch('/api/forum/translate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          text: post.content, 
-          targetLanguage: userLanguage,
-          sourceLanguage: post.language 
-        }),
-      });
+      // Translate both title and content
+      const translationPromises = [];
       
-      if (response.ok) {
-        const data = await response.json();
-        setTranslatedContent(data.translation);
-        setIsTranslated(true);
-      } else {
-        toast.error('Failed to translate content');
+      if (post.title) {
+        translationPromises.push(
+          fetch('/api/forum/translate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              text: post.title, 
+              targetLanguage: userLanguage,
+              sourceLanguage: post.language 
+            }),
+          }).then(res => res.ok ? res.json() : Promise.resolve(null))
+        );
       }
+      
+      translationPromises.push(
+        fetch('/api/forum/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            text: post.content, 
+            targetLanguage: userLanguage,
+            sourceLanguage: post.language 
+          }),
+        }).then(res => res.ok ? res.json() : Promise.resolve(null))
+      );
+
+      const results = await Promise.all(translationPromises);
+      
+      // Process results
+      if (post.title && results[0]?.translation) {
+        setTranslatedTitle(results[0].translation);
+      }
+      
+      if (results[post.title ? 1 : 0]?.translation) {
+        setTranslatedContent(results[post.title ? 1 : 0].translation);
+      }
+      
+      setIsTranslated(true);
     } catch (error) {
       console.error('Error translating content:', error);
       toast.error('Failed to translate content');
@@ -528,7 +546,9 @@ export default function PostItem({
         <Link href={`/dashboard/forum/post/${post.id}`}>
           <div className="cursor-pointer">
             {post.title && (
-              <h3 className="font-semibold text-lg mb-2 hover:text-blue-600 transition-colors">{post.title}</h3>
+              <h3 className="font-semibold text-lg mb-2 hover:text-blue-600 transition-colors">
+                {isTranslated && translatedTitle ? translatedTitle : post.title}
+              </h3>
             )}
             <p className="text-gray-700 mb-4 line-clamp-3">
               {isTranslated && translatedContent ? translatedContent : post.content}

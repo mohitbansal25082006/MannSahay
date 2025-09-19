@@ -19,7 +19,8 @@ import {
   Lightbulb,
   SpellCheck,
   Languages,
-  Globe
+  Globe,
+  Loader2
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
@@ -66,6 +67,32 @@ export default function CreatePostForm({ onPostCreated }: CreatePostFormProps) {
   const [translatedTitle, setTranslatedTitle] = useState('');
   const [translatedContent, setTranslatedContent] = useState('');
   const [isTranslating, setIsTranslating] = useState(false);
+  const [userLanguage, setUserLanguage] = useState('en');
+
+  useEffect(() => {
+    // Get user's preferred language
+    if (session?.user?.id) {
+      fetchUserLanguage();
+    }
+  }, [session?.user?.id]);
+
+  const fetchUserLanguage = async () => {
+    if (session?.user?.id) {
+      try {
+        const response = await fetch(`/api/user/preferences?userId=${session.user.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setUserLanguage(data.preferredLanguage || 'en');
+          // Set the language to user's preferred language if it's not English
+          if (data.preferredLanguage && data.preferredLanguage !== 'en') {
+            setLanguage(data.preferredLanguage);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user language:', error);
+      }
+    }
+  };
 
   const fetchSuggestions = async () => {
     if (!content.trim()) return;
@@ -127,36 +154,47 @@ export default function CreatePostForm({ onPostCreated }: CreatePostFormProps) {
 
     setIsTranslating(true);
     try {
-      // Translate title if it exists
-      const titlePromise = title 
-        ? fetch('/api/forum/translate', {
+      // Translate both title and content
+      const translationPromises = [];
+      
+      if (title) {
+        translationPromises.push(
+          fetch('/api/forum/translate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
               text: title, 
               targetLanguage: 'en',
               sourceLanguage: language 
-            })
+            }),
           }).then(res => res.ok ? res.json() : Promise.resolve(null))
-        : Promise.resolve(null);
-
-      // Translate content
-      const contentPromise = fetch('/api/forum/translate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          text: content, 
-          targetLanguage: 'en',
-          sourceLanguage: language 
-        })
-      }).then(res => res.ok ? res.json() : Promise.resolve(null));
-
-      const [titleResult, contentResult] = await Promise.all([titlePromise, contentPromise]);
-
-      if (titleResult?.translation) setTranslatedTitle(titleResult.translation);
-      if (contentResult?.translation) setTranslatedContent(contentResult.translation);
+        );
+      }
       
-      toast.success('Content translated to English');
+      translationPromises.push(
+        fetch('/api/forum/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            text: content, 
+            targetLanguage: 'en',
+            sourceLanguage: language 
+          }),
+        }).then(res => res.ok ? res.json() : Promise.resolve(null))
+      );
+
+      const results = await Promise.all(translationPromises);
+      
+      // Process results
+      if (title && results[0]?.translation) {
+        setTranslatedTitle(results[0].translation);
+      }
+      
+      if (results[title ? 1 : 0]?.translation) {
+        setTranslatedContent(results[title ? 1 : 0].translation);
+      }
+      
+      toast.success('Content translated to English for preview');
     } catch (error) {
       console.error('Error translating content:', error);
       toast.error('Failed to translate content');
@@ -188,9 +226,62 @@ export default function CreatePostForm({ onPostCreated }: CreatePostFormProps) {
     setIsSubmitting(true);
     
     try {
-      // If content is not in English, translate it before posting
-      const finalTitle = language === 'en' ? title : (translatedTitle || title);
-      const finalContent = language === 'en' ? content : (translatedContent || content);
+      let finalTitle = title;
+      let finalContent = content;
+      
+      // If the selected language is not English, translate the content
+      if (language !== 'en') {
+        setIsTranslating(true);
+        
+        try {
+          // Translate both title and content to the selected language
+          const translationPromises = [];
+          
+          if (title) {
+            translationPromises.push(
+              fetch('/api/forum/translate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                  text: title, 
+                  targetLanguage: language,
+                  sourceLanguage: 'en' 
+                }),
+              }).then(res => res.ok ? res.json() : Promise.resolve(null))
+            );
+          }
+          
+          translationPromises.push(
+            fetch('/api/forum/translate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                text: content, 
+                targetLanguage: language,
+                sourceLanguage: 'en' 
+              }),
+            }).then(res => res.ok ? res.json() : Promise.resolve(null))
+          );
+
+          const results = await Promise.all(translationPromises);
+          
+          // Update final title and content with translations
+          if (title && results[0]?.translation) {
+            finalTitle = results[0].translation;
+          }
+          
+          if (results[title ? 1 : 0]?.translation) {
+            finalContent = results[title ? 1 : 0].translation;
+          }
+          
+          toast.success(`Content translated to ${languages.find(l => l.code === language)?.name || language}`);
+        } catch (error) {
+          console.error('Error translating content:', error);
+          toast.error('Failed to translate content. Posting in original language.');
+        } finally {
+          setIsTranslating(false);
+        }
+      }
       
       const response = await fetch('/api/forum/posts', {
         method: 'POST',
@@ -202,7 +293,7 @@ export default function CreatePostForm({ onPostCreated }: CreatePostFormProps) {
           content: finalContent,
           isAnonymous,
           category,
-          language, // Include the original language
+          language,
         }),
       });
 
@@ -225,7 +316,7 @@ export default function CreatePostForm({ onPostCreated }: CreatePostFormProps) {
       setContent('');
       setIsAnonymous(true);
       setCategory('general');
-      setLanguage('en');
+      setLanguage(userLanguage === 'en' ? 'en' : userLanguage);
       setTranslatedTitle('');
       setTranslatedContent('');
       setSuggestions(null);
@@ -507,7 +598,7 @@ export default function CreatePostForm({ onPostCreated }: CreatePostFormProps) {
                 <div className="flex justify-between items-center mb-2">
                   <h4 className="font-medium text-green-800 flex items-center">
                     <Languages className="h-4 w-4 mr-1" />
-                    English Translation Preview
+                    {languages.find(l => l.code === language)?.name || language} Translation Preview
                   </h4>
                   <Button
                     type="button"
@@ -517,7 +608,17 @@ export default function CreatePostForm({ onPostCreated }: CreatePostFormProps) {
                     disabled={isTranslating}
                     className="text-xs"
                   >
-                    {isTranslating ? 'Translating...' : 'Refresh Translation'}
+                    {isTranslating ? (
+                      <>
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                        Translating...
+                      </>
+                    ) : (
+                      <>
+                        <Languages className="h-3 w-3 mr-1" />
+                        Refresh Translation
+                      </>
+                    )}
                   </Button>
                 </div>
                 
@@ -536,8 +637,25 @@ export default function CreatePostForm({ onPostCreated }: CreatePostFormProps) {
                 )}
                 
                 <p className="text-xs text-green-600 mt-2">
-                  This is how your post will appear to English speakers. The original language will still be preserved.
+                  This is how your post will appear after translation. The original English text will be preserved.
                 </p>
+              </div>
+            )}
+            
+            {/* Translation Info */}
+            {language !== 'en' && (
+              <div className="p-3 bg-blue-50 rounded-md border border-blue-200">
+                <div className="flex items-center mb-2">
+                  <Globe className="h-4 w-4 text-blue-600 mr-2" />
+                  <h4 className="font-medium text-blue-800">Translation Information</h4>
+                </div>
+                <p className="text-sm text-blue-700 mb-2">
+                  When you create this post, your English content will be automatically translated to {languages.find(l => l.code === language)?.name || language}.
+                </p>
+                <div className="flex items-center text-xs text-blue-600">
+                  <Languages className="h-3 w-3 mr-1" />
+                  The translation will be displayed to users who prefer {languages.find(l => l.code === language)?.name || language}, while the original English will be preserved.
+                </div>
               </div>
             )}
             
@@ -548,7 +666,12 @@ export default function CreatePostForm({ onPostCreated }: CreatePostFormProps) {
               </div>
               
               <Button type="submit" disabled={isSubmitting || !content.trim()}>
-                {isSubmitting ? 'Posting...' : (
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Posting...
+                  </>
+                ) : (
                   <>
                     <Send className="h-4 w-4 mr-2" />
                     Post
