@@ -13,13 +13,15 @@ import {
   Trash2,
   Reply,
   AlertTriangle,
-  Bot
+  Bot,
+  Languages
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useSession } from 'next-auth/react';
 import EditReplyForm from './edit-reply-form';
 import CreateReplyForm from './create-reply-form';
 import { toast } from 'sonner';
+import TranslationToggle from '@/components/ui/translation-toggle';
 
 interface ReplyItemProps {
   reply: {
@@ -32,6 +34,7 @@ interface ReplyItemProps {
     moderationReason?: string;
     moderationNote?: string;
     isHidden?: boolean;
+    language: string;
     author: {
       id: string;
       name?: string;
@@ -78,10 +81,17 @@ export default function ReplyItem({
   const [loadingReplies, setLoadingReplies] = useState(false);
   const [localIsDeleting, setLocalIsDeleting] = useState(false);
   
+  // Translation states
+  const [translatedContent, setTranslatedContent] = useState('');
+  const [isTranslated, setIsTranslated] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [userLanguage, setUserLanguage] = useState('en');
+  
   const isAuthor = currentUserId === reply.author.id;
 
   useEffect(() => {
     checkAdminStatus();
+    fetchUserLanguage();
   }, []);
 
   useEffect(() => {
@@ -100,6 +110,70 @@ export default function ReplyItem({
         console.error('Error checking admin status:', error);
       }
     }
+  };
+
+  const fetchUserLanguage = async () => {
+    if (session?.user?.id) {
+      try {
+        const response = await fetch(`/api/user/preferences?userId=${session.user.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setUserLanguage(data.preferredLanguage || 'en');
+        }
+      } catch (error) {
+        console.error('Error fetching user language:', error);
+      }
+    }
+  };
+
+  const handleTranslate = async () => {
+    if (isTranslated) {
+      // If already translated, toggle back to original
+      setIsTranslated(false);
+      return;
+    }
+
+    setIsTranslating(true);
+    try {
+      const response = await fetch('/api/forum/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          text: reply.content, 
+          targetLanguage: userLanguage,
+          sourceLanguage: reply.language 
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setTranslatedContent(data.translation);
+        setIsTranslated(true);
+      } else {
+        toast.error('Failed to translate content');
+      }
+    } catch (error) {
+      console.error('Error translating content:', error);
+      toast.error('Failed to translate content');
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
+  const getLanguageName = (code: string) => {
+    const languages: Record<string, string> = {
+      'en': 'English',
+      'hi': 'हिन्दी (Hindi)',
+      'ta': 'தமிழ் (Tamil)',
+      'bn': 'বাংলা (Bengali)',
+      'te': 'తెలుగు (Telugu)',
+      'mr': 'मराठी (Marathi)',
+      'gu': 'ગુજરાતી (Gujarati)',
+      'kn': 'ಕನ್ನಡ (Kannada)',
+      'ml': 'മലയാളം (Malayalam)',
+      'pa': 'ਪੰਜਾਬੀ (Punjabi)',
+    };
+    return languages[code] || code.toUpperCase();
   };
 
   const fetchReplies = async () => {
@@ -388,6 +462,10 @@ export default function ReplyItem({
                       {reply.moderationStatus === 'REJECTED' ? 'Removed' : reply.moderationStatus}
                     </Badge>
                   )}
+                  <Badge variant="outline" className="text-xs flex items-center">
+                    <Languages className="h-3 w-3 mr-1" />
+                    {getLanguageName(reply.language)}
+                  </Badge>
                 </div>
                 <p className="text-xs text-gray-500 mb-2">
                   {formatDistanceToNow(new Date(reply.createdAt), { addSuffix: true })}
@@ -418,7 +496,9 @@ export default function ReplyItem({
                   </div>
                 )}
                 
-                <p className="text-gray-700">{reply.content}</p>
+                <p className="text-gray-700">
+                  {isTranslated && translatedContent ? translatedContent : reply.content}
+                </p>
                 
                 <div className="flex items-center space-x-3 mt-3">
                   <Button
@@ -440,6 +520,12 @@ export default function ReplyItem({
                     <Reply className="h-4 w-4" />
                     <span>Reply</span>
                   </Button>
+                  
+                  <TranslationToggle
+                    onTranslate={handleTranslate}
+                    isTranslated={isTranslated}
+                    isLoading={isTranslating}
+                  />
                 </div>
               </div>
             </div>

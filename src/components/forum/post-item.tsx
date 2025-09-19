@@ -1,4 +1,3 @@
-// E:\mannsahay\src\components\forum\post-item.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -207,7 +206,7 @@ export default function PostItem({
       'ml': 'മലയാളം (Malayalam)',
       'pa': 'ਪੰਜਾਬੀ (Punjabi)',
     };
-    return languages[code] || code;
+    return languages[code] || code.toUpperCase();
   };
 
   const handleEdit = () => {
@@ -405,7 +404,8 @@ export default function PostItem({
                     {post.moderationStatus === 'REJECTED' ? 'Removed' : post.moderationStatus}
                   </Badge>
                 )}
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="outline" className="text-xs flex items-center">
+                  <Languages className="h-3 w-3 mr-1" />
                   {getLanguageName(post.language)}
                 </Badge>
               </div>

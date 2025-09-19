@@ -1,5 +1,3 @@
-// E:\mannsahay\src\app\api\forum\replies\route.ts
-
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
@@ -37,8 +35,8 @@ export async function POST(request: NextRequest) {
     const riskLevel = assessRiskLevel(content);
     const flagged = riskLevel === 'MEDIUM' || riskLevel === 'HIGH';
 
-    // Moderate content using AI
-    const moderationResult = await moderateContent(content);
+    // Moderate content using AI with language parameter
+    const moderationResult = await moderateContent(content, language);
     
     // Generate writing suggestions and tone analysis
     let writingSuggestions = null;

@@ -10,6 +10,35 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  hashedId      String?   @unique
+  language      String?   @default("en")
+  isAdmin       Boolean   @default(false)
+  preferredLanguage String? @default("en")
+  interests     String[]  @default([])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  accounts     Account[]
+  sessions     Session[]
+  chats        Chat[]
+  chatSessions ChatSession[] 
+  bookings     Booking[]
+  posts        Post[]
+  replies      Reply[]
+  likes        Like[]
+  bookmarks    Bookmark[]
+  shares       Share[]
+  flags        Flag[]
+  notifications Notification[]
+  @@map("users")
+}
+
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -35,33 +64,6 @@ model Session {
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@map("sessions")
-}
-
-model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  hashedId      String?   @unique
-  language      String?   @default("en")
-  isAdmin       Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
-  accounts     Account[]
-  sessions     Session[]
-  chats        Chat[]
-  chatSessions ChatSession[] 
-  bookings     Booking[]
-  posts        Post[]
-  replies      Reply[]
-  likes        Like[]
-  bookmarks    Bookmark[]
-  shares       Share[]
-  flags        Flag[]
-  notifications Notification[]
-  @@map("users")
 }
 
 model VerificationToken {
@@ -156,10 +158,14 @@ model Post {
   moderationReason String?
   moderationNote String?
   moderatedAt DateTime?
-  moderatedBy String? // User ID of moderator
-  summary String? // AI-generated summary
+  moderatedBy String?
+  summary String?
   summaryGeneratedAt DateTime?
-  isHidden Boolean @default(false) // For auto-hiding violating content
+  isHidden Boolean @default(false)
+  language String @default("en")
+  translatedContent Json?
+  writingSuggestions Json?
+  toneAnalysis Json?
   
   author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
   replies   Reply[]   @relation("PostReplies")
@@ -180,13 +186,17 @@ model Reply {
   updatedAt DateTime  @updatedAt
   postId    String
   authorId  String
-  parentId  String?   // For nested replies
+  parentId  String?
   moderationStatus ModerationStatus @default(PENDING)
   moderationReason String?
   moderationNote String?
   moderatedAt DateTime?
-  moderatedBy String? // User ID of moderator
-  isHidden Boolean @default(false) // For auto-hiding violating content
+  moderatedBy String?
+  isHidden Boolean @default(false)
+  language String @default("en")
+  translatedContent Json?
+  writingSuggestions Json?
+  toneAnalysis Json?
   
   post   Post   @relation("PostReplies", fields: [postId], references: [id], onDelete: Cascade)
   author User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
@@ -229,7 +239,7 @@ model Bookmark {
 
 model Share {
   id        String   @id @default(cuid())
-  platform  String   // 'internal', 'twitter', 'facebook', 'whatsapp', etc.
+  platform  String
   createdAt DateTime @default(now())
   userId    String
   postId    String
@@ -241,16 +251,16 @@ model Share {
 
 model Flag {
   id        String   @id @default(cuid())
-  reason    String?  // 'spam', 'harassment', 'inappropriate', 'self-harm', etc.
+  reason    String?
   createdAt DateTime @default(now())
   userId    String
   postId    String?
   replyId   String?
   resolved  Boolean  @default(false)
   aiReviewStatus AiReviewStatus @default(PENDING)
-  aiReviewResult String? // JSON result from AI review
+  aiReviewResult String?
   aiReviewedAt DateTime?
-  aiConfidence Float? // Confidence score from AI (0-1)
+  aiConfidence Float?
   
   user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   post  Post?  @relation(fields: [postId], references: [id], onDelete: Cascade)
@@ -265,7 +275,7 @@ model Notification {
   id        String   @id @default(cuid())
   title     String
   message   String   @db.Text
-  type      String   // 'flagged_content', 'reply', 'mention', etc.
+  type      String
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
   userId    String

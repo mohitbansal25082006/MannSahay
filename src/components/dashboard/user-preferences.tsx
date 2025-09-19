@@ -1,4 +1,3 @@
-// E:\mannsahay\src\components\dashboard\user-preferences.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -7,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { 
   Save, 
   Plus, 
@@ -51,7 +49,8 @@ export default function UserPreferences({ onLanguageChange }: UserPreferencesPro
       if (response.ok) {
         const data = await response.json();
         setPreferredLanguage(data.preferredLanguage || 'en');
-        setInterests(data.interests || []);
+        // Ensure interests is an array
+        setInterests(Array.isArray(data.interests) ? data.interests : []);
       }
     } catch (error) {
       console.error('Error fetching user preferences:', error);
@@ -66,7 +65,7 @@ export default function UserPreferences({ onLanguageChange }: UserPreferencesPro
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           preferredLanguage,
-          interests
+          interests: interests // This is already an array
         }),
       });
       
@@ -77,7 +76,8 @@ export default function UserPreferences({ onLanguageChange }: UserPreferencesPro
           onLanguageChange(preferredLanguage);
         }
       } else {
-        toast.error('Failed to save preferences');
+        const errorData = await response.json();
+        toast.error(errorData.error || 'Failed to save preferences');
       }
     } catch (error) {
       console.error('Error saving preferences:', error);

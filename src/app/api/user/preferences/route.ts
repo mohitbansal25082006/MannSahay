@@ -26,7 +26,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    return NextResponse.json(user);
+    // Ensure interests is an array
+    return NextResponse.json({
+      preferredLanguage: user.preferredLanguage || 'en',
+      interests: Array.isArray(user.interests) ? user.interests : []
+    });
   } catch (error) {
     console.error('Get user preferences error:', error);
     return NextResponse.json({ error: 'Failed to get user preferences' }, { status: 500 });
@@ -43,15 +47,23 @@ export async function POST(request: NextRequest) {
 
     const { preferredLanguage, interests } = await request.json();
 
+    // Validate that interests is an array
+    if (interests && !Array.isArray(interests)) {
+      return NextResponse.json({ error: 'Interests must be an array' }, { status: 400 });
+    }
+
     const user = await prisma.user.update({
       where: { id: session.user.id },
       data: {
         preferredLanguage,
-        interests,
+        interests: interests || [] // Ensure it's an array
       }
     });
 
-    return NextResponse.json(user);
+    return NextResponse.json({
+      preferredLanguage: user.preferredLanguage || 'en',
+      interests: Array.isArray(user.interests) ? user.interests : []
+    });
   } catch (error) {
     console.error('Update user preferences error:', error);
     return NextResponse.json({ error: 'Failed to update user preferences' }, { status: 500 });

@@ -1,5 +1,3 @@
-// E:\mannsahay\src\lib\ai-moderation.ts
-
 import { openai } from './openai';
 
 // Policy violations that should result in content removal
@@ -48,10 +46,14 @@ export interface ContentSummary {
 /**
  * Analyzes content for policy violations using AI
  */
-export async function moderateContent(content: string): Promise<ModerationResult> {
+export async function moderateContent(content: string, language: string = 'en'): Promise<ModerationResult> {
   try {
+    const languagePrompt = language !== 'en' 
+      ? `The content is in ${language}. Analyze it in its original language and provide your response in English.`
+      : '';
+    
     const prompt = `
-You are a content moderation AI for a mental health support forum for Indian students. Your task is to analyze the following content for policy violations.
+You are a content moderation AI for a mental health support forum for Indian students. Your task is to analyze the following content for policy violations. ${languagePrompt}
 
 Content: "${content}"
 
@@ -87,7 +89,6 @@ Consider the context of a mental health support forum - be sensitive to discussi
 
     const result = JSON.parse(response.choices[0].message.content || '{}');
     
-    // Normalize the result
     return {
       violatesPolicy: result.violatesPolicy || false,
       violationTypes: result.violationTypes || [],
@@ -98,7 +99,6 @@ Consider the context of a mental health support forum - be sensitive to discussi
     };
   } catch (error) {
     console.error('Content moderation error:', error);
-    // Return a safe default if there's an error
     return {
       violatesPolicy: false,
       violationTypes: [],
@@ -185,7 +185,6 @@ Respond with a JSON object containing:
 
     const result = JSON.parse(response.choices[0].message.content || '{}');
     
-    // Normalize the result
     return {
       summary: result.summary || '',
       keyPoints: result.keyPoints || [],
@@ -194,7 +193,6 @@ Respond with a JSON object containing:
     };
   } catch (error) {
     console.error('Content summarization error:', error);
-    // Return a safe default if there's an error
     return {
       summary: 'Unable to generate summary',
       keyPoints: [],
@@ -209,11 +207,16 @@ Respond with a JSON object containing:
  */
 export async function reviewFlaggedContent(
   content: string, 
-  flagReason: string
+  flagReason: string,
+  language: string = 'en'
 ): Promise<ModerationResult> {
   try {
+    const languagePrompt = language !== 'en' 
+      ? `The content is in ${language}. Analyze it in its original language and provide your response in English.`
+      : '';
+    
     const prompt = `
-You are reviewing content that has been flagged by a user in a mental health support forum for Indian students. The user provided this reason for flagging: "${flagReason}"
+You are reviewing content that has been flagged by a user in a mental health support forum for Indian students. The user provided this reason for flagging: "${flagReason}" ${languagePrompt}
 
 Please analyze the following content to determine if it violates community policies:
 
@@ -251,7 +254,6 @@ Consider the context of a mental health support forum - be sensitive to discussi
 
     const result = JSON.parse(response.choices[0].message.content || '{}');
     
-    // Normalize the result
     return {
       violatesPolicy: result.violatesPolicy || false,
       violationTypes: result.violationTypes || [],
@@ -262,7 +264,6 @@ Consider the context of a mental health support forum - be sensitive to discussi
     };
   } catch (error) {
     console.error('Flag review error:', error);
-    // Return a safe default if there's an error
     return {
       violatesPolicy: false,
       violationTypes: [],

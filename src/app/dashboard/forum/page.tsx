@@ -1,4 +1,3 @@
-// E:\mannsahay\src\app\dashboard\forum\page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
