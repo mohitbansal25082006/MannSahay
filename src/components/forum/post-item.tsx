@@ -6,12 +6,11 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  MessageCircle, 
-  Heart, 
-  Bookmark, 
-  Share2, 
-  Flag, 
+import {
+  MessageCircle,
+  Heart,
+  Share2,
+  Flag,
   MoreHorizontal,
   Edit,
   Trash2,
@@ -19,11 +18,12 @@ import {
   Shield,
   AlertTriangle,
   FileText,
-  Bot
+  Bot,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
+import BookmarkButton from './bookmark-button';
 
 interface PostItemProps {
   post: {
@@ -76,13 +76,14 @@ export default function PostItem({
   onDelete,
   onEdit,
   isDeleting = false,
-  onFlagSuccess
+  onFlagSuccess,
 }: PostItemProps) {
   const { data: session } = useSession();
   const [showActions, setShowActions] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
-  
+  const [bookmarkedPosts, setBookmarkedPosts] = useState<{ [key: string]: boolean }>({});
+
   const isAuthor = currentUserId === post.author.id;
 
   useEffect(() => {
@@ -118,15 +119,15 @@ export default function PostItem({
 
     try {
       console.log('Attempting to flag post:', post.id, 'with reason:', reason);
-      
+
       const response = await fetch('/api/forum/flag', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          postId: post.id, 
-          reason: reason 
+        body: JSON.stringify({
+          postId: post.id,
+          reason: reason,
         }),
       });
 
@@ -136,7 +137,7 @@ export default function PostItem({
         const data = await response.json();
         console.log('Flag response data:', data);
         toast.success(data.message);
-        
+
         // If action was taken, refresh the posts list
         if (data.actionTaken && onFlagSuccess) {
           onFlagSuccess();
@@ -145,12 +146,12 @@ export default function PostItem({
         // Check if response has content before trying to parse it
         const contentType = response.headers.get('content-type');
         console.log('Response content-type:', contentType);
-        
+
         if (contentType && contentType.includes('application/json')) {
           try {
             const errorData = await response.json();
             console.error('Flag error response:', errorData);
-            
+
             // Handle different flag error cases
             if (errorData.alreadyFlagged) {
               toast.error('You have already flagged this content');
@@ -183,29 +184,42 @@ export default function PostItem({
 
   const getRiskColor = (riskLevel: string) => {
     switch (riskLevel) {
-      case 'HIGH': return 'bg-red-100 text-red-800';
-      case 'MEDIUM': return 'bg-yellow-100 text-yellow-800';
-      case 'LOW': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'HIGH':
+        return 'bg-red-100 text-red-800';
+      case 'MEDIUM':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'LOW':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case 'academic': return 'bg-purple-100 text-purple-800';
-      case 'relationships': return 'bg-pink-100 text-pink-800';
-      case 'mental-health': return 'bg-green-100 text-green-800';
-      case 'lifestyle': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'academic':
+        return 'bg-purple-100 text-purple-800';
+      case 'relationships':
+        return 'bg-pink-100 text-pink-800';
+      case 'mental-health':
+        return 'bg-green-100 text-green-800';
+      case 'lifestyle':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getModerationStatusColor = (status?: string) => {
     switch (status) {
-      case 'APPROVED': return 'bg-green-100 text-green-800';
-      case 'REJECTED': return 'bg-red-100 text-red-800';
-      case 'UNDER_REVIEW': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'APPROVED':
+        return 'bg-green-100 text-green-800';
+      case 'REJECTED':
+        return 'bg-red-100 text-red-800';
+      case 'UNDER_REVIEW':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -251,21 +265,21 @@ export default function PostItem({
   }
 
   return (
-    <Card className={`mb-4 overflow-hidden transition-all hover:shadow-md ${post.isHidden ? 'border-l-4 border-l-red-500 opacity-75' : ''}`}>
+    <Card
+      className={`mb-4 overflow-hidden transition-all hover:shadow-md ${
+        post.isHidden ? 'border-l-4 border-l-red-500 opacity-75' : ''
+      }`}
+    >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
             <Avatar className="h-10 w-10">
               {post.isAnonymous ? (
-                <AvatarFallback className="bg-gray-200">
-                  A
-                </AvatarFallback>
+                <AvatarFallback className="bg-gray-200">A</AvatarFallback>
               ) : (
                 <>
                   <AvatarImage src={post.author.image || ''} alt={post.author.name || ''} />
-                  <AvatarFallback>
-                    {post.author.name?.charAt(0).toUpperCase() || 'U'}
-                  </AvatarFallback>
+                  <AvatarFallback>{post.author.name?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
                 </>
               )}
             </Avatar>
@@ -279,9 +293,7 @@ export default function PostItem({
                     Flagged
                   </Badge>
                 )}
-                <Badge className={`text-xs ${getRiskColor(post.riskLevel)}`}>
-                  {post.riskLevel}
-                </Badge>
+                <Badge className={`text-xs ${getRiskColor(post.riskLevel)}`}>{post.riskLevel}</Badge>
                 {post.moderationStatus && post.moderationStatus !== 'APPROVED' && (
                   <Badge className={`text-xs ${getModerationStatusColor(post.moderationStatus)}`}>
                     {post.moderationStatus === 'REJECTED' ? 'Removed' : post.moderationStatus}
@@ -298,10 +310,10 @@ export default function PostItem({
               </div>
             </div>
           </div>
-          
+
           <div className="relative">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               onClick={(e) => {
                 e.stopPropagation();
@@ -310,7 +322,7 @@ export default function PostItem({
             >
               <MoreHorizontal className="h-4 w-4" />
             </Button>
-            
+
             {showActions && (
               <div className="absolute right-0 z-10 mt-1 w-48 bg-white rounded-md shadow-lg py-1 border border-gray-200">
                 {(isAuthor || isAdmin) && (
@@ -355,15 +367,13 @@ export default function PostItem({
             )}
           </div>
         </div>
-        
+
         <div className="flex items-center space-x-2 mt-2">
-          <Badge className={`text-xs ${getCategoryColor(post.category)}`}>
-            {post.category}
-          </Badge>
+          <Badge className={`text-xs ${getCategoryColor(post.category)}`}>{post.category}</Badge>
           {post.summary && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setShowSummary(!showSummary)}
               className="text-xs h-6 px-2"
             >
@@ -373,23 +383,21 @@ export default function PostItem({
           )}
         </div>
       </CardHeader>
-      
+
       <CardContent className="pt-0">
         {/* Show flagged status to the author even if the post is hidden */}
         {post.flagged && isAuthor && (
           <div className="mb-3 p-3 bg-yellow-50 rounded-md border border-yellow-200 flex items-start">
             <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2 mt-0.5" />
             <div>
-              <span className="text-sm font-medium text-yellow-800">
-                Your post has been flagged
-              </span>
+              <span className="text-sm font-medium text-yellow-800">Your post has been flagged</span>
               <p className="text-xs text-yellow-700 mt-1">
                 {post.moderationNote || 'Our moderators are reviewing this content for compliance with community guidelines.'}
               </p>
             </div>
           </div>
         )}
-        
+
         {post.isHidden && (
           <div className="mb-3 p-2 bg-yellow-50 rounded-md border border-yellow-200 flex items-center">
             <AlertTriangle className="h-4 w-4 text-yellow-600 mr-2" />
@@ -399,7 +407,7 @@ export default function PostItem({
             </span>
           </div>
         )}
-        
+
         <Link href={`/dashboard/forum/post/${post.id}`}>
           <div className="cursor-pointer">
             {post.title && (
@@ -408,7 +416,7 @@ export default function PostItem({
             <p className="text-gray-700 mb-4 line-clamp-3">{post.content}</p>
           </div>
         </Link>
-        
+
         {showSummary && post.summary && (
           <div className="mb-4 p-3 bg-blue-50 rounded-md border border-blue-200">
             <div className="flex items-center mb-2">
@@ -418,7 +426,7 @@ export default function PostItem({
             <p className="text-sm text-blue-700">{post.summary}</p>
           </div>
         )}
-        
+
         <div className="flex items-center justify-between pt-3 border-t border-gray-100">
           <div className="flex items-center space-x-4">
             <Button
@@ -426,41 +434,39 @@ export default function PostItem({
               size="sm"
               onClick={onLike}
               className={`flex items-center space-x-1 transition-colors ${
-                isLiked 
-                  ? 'text-red-500 hover:text-red-600' 
-                  : 'text-gray-500 hover:text-red-500'
+                isLiked ? 'text-red-500 hover:text-red-600' : 'text-gray-500 hover:text-red-500'
               }`}
             >
               <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
               <span>{post._count.likes}</span>
             </Button>
-            
+
             <Link href={`/dashboard/forum/post/${post.id}`}>
-              <Button variant="ghost" size="sm" className="flex items-center space-x-1 text-gray-500 hover:text-blue-500 transition-colors">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex items-center space-x-1 text-gray-500 hover:text-blue-500 transition-colors"
+              >
                 <MessageCircle className="h-4 w-4" />
                 <span>{post._count.replies}</span>
               </Button>
             </Link>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onBookmark}
-              className={`flex items-center space-x-1 transition-colors ${
-                isBookmarked 
-                  ? 'text-blue-500 hover:text-blue-600' 
-                  : 'text-gray-500 hover:text-blue-500'
-              }`}
-            >
-              <Bookmark className={`h-4 w-4 ${isBookmarked ? 'fill-current' : ''}`} />
-              <span>{post._count.bookmarks}</span>
-            </Button>
+
+            <BookmarkButton
+              postId={post.id}
+              initialBookmarked={isBookmarked}
+              onBookmarkChange={(bookmarked) => {
+                setBookmarkedPosts((prev) => ({ ...prev, [post.id]: bookmarked }));
+              }}
+              showCount={true}
+              count={post._count.bookmarks}
+            />
           </div>
-          
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={handleShare} 
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleShare}
             className="text-gray-500 hover:text-blue-500 transition-colors"
           >
             <Share2 className="h-4 w-4" />

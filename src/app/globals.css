@@ -345,3 +345,60 @@ html {
 .notification-dropdown::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
+
+/* Add these styles to your globals.css */
+
+/* Bookmark page styles */
+.bookmark-card {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.bookmark-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.bookmark-icon {
+  transition: all 0.2s ease;
+}
+
+.bookmark-icon:hover {
+  transform: scale(1.1);
+}
+
+/* Bulk selection styles */
+.bulk-select-checkbox {
+  transition: all 0.2s ease;
+}
+
+.bulk-select-checkbox:checked {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+/* Bookmark badge */
+.bookmark-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background-color: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Empty state animation */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.bookmark-empty-icon {
+  animation: float 3s ease-in-out infinite;
+}

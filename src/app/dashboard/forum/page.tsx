@@ -29,7 +29,8 @@ import {
   Shield,
   Bot,
   CheckCircle,
-  XCircle
+  XCircle,
+  Bookmark
 } from 'lucide-react';
 import CreatePostForm from '@/components/forum/create-post-form';
 import PostItem from '@/components/forum/post-item';
@@ -195,18 +196,7 @@ function CommunityGuidelines() {
           </div>
           
           <div className="text-center pt-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => {
-                const contactSection = document.getElementById('contact-section');
-                if (contactSection) {
-                  contactSection.scrollIntoView({ behavior: 'smooth' });
-                }
-              }}
-            >
-              Report a Guidelines Violation
-            </Button>
+            
           </div>
         </div>
       </CardContent>
@@ -804,6 +794,26 @@ export default function ForumPage() {
               </CardContent>
             </div>
           )}
+
+          <div className="forum-card card-hover">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Bookmark className="h-5 w-5 mr-2" />
+                Quick Links
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Link
+                  href="/dashboard/forum/bookmarks"
+                  className="flex items-center p-2 rounded-md hover:bg-gray-50 transition-colors"
+                >
+                  <Bookmark className="h-4 w-4 mr-2 text-blue-500" />
+                  <span className="text-sm">Your Bookmarks</span>
+                </Link>
+              </div>
+            </CardContent>
+          </div>
 
           <CommunityGuidelines />
         </div>
