@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
+import { 
   MessageCircle,
   Heart,
   Share2,
@@ -19,11 +19,13 @@ import {
   AlertTriangle,
   FileText,
   Bot,
+  Languages
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 import BookmarkButton from './bookmark-button';
+import TranslationToggle from '@/components/ui/translation-toggle';
 
 interface PostItemProps {
   post: {
@@ -41,6 +43,10 @@ interface PostItemProps {
     moderationNote?: string;
     isHidden?: boolean;
     summary?: string;
+    language: string;
+    translatedContent?: any;
+    writingSuggestions?: any;
+    toneAnalysis?: any;
     author: {
       id: string;
       name?: string;
@@ -82,12 +88,22 @@ export default function PostItem({
   const [showActions, setShowActions] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showToneAnalysis, setShowToneAnalysis] = useState(false);
   const [bookmarkedPosts, setBookmarkedPosts] = useState<{ [key: string]: boolean }>({});
+  const [translatedContent, setTranslatedContent] = useState('');
+  const [isTranslated, setIsTranslated] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [userLanguage, setUserLanguage] = useState('en');
 
   const isAuthor = currentUserId === post.author.id;
 
   useEffect(() => {
     checkAdminStatus();
+    // Get user's preferred language
+    if (session?.user?.id) {
+      fetchUserLanguage();
+    }
   }, [session?.user?.id]);
 
   const checkAdminStatus = async () => {
@@ -102,6 +118,78 @@ export default function PostItem({
         console.error('Error checking admin status:', error);
       }
     }
+  };
+
+  const fetchUserLanguage = async () => {
+    if (session?.user?.id) {
+      try {
+        const response = await fetch(`/api/user/preferences?userId=${session.user.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setUserLanguage(data.preferredLanguage || 'en');
+        }
+      } catch (error) {
+        console.error('Error fetching user language:', error);
+      }
+    }
+  };
+
+  const handleTranslate = async () => {
+    if (isTranslated) {
+      // If already translated, toggle back to original
+      setIsTranslated(false);
+      return;
+    }
+
+    // Check if we already have a translation
+    if (post.translatedContent && post.translatedContent[userLanguage]) {
+      setTranslatedContent(post.translatedContent[userLanguage]);
+      setIsTranslated(true);
+      return;
+    }
+
+    // If not, translate using API
+    setIsTranslating(true);
+    try {
+      const response = await fetch('/api/forum/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          text: post.content, 
+          targetLanguage: userLanguage,
+          sourceLanguage: post.language 
+        }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setTranslatedContent(data.translation);
+        setIsTranslated(true);
+      } else {
+        toast.error('Failed to translate content');
+      }
+    } catch (error) {
+      console.error('Error translating content:', error);
+      toast.error('Failed to translate content');
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
+  const getLanguageName = (code: string) => {
+    const languages: Record<string, string> = {
+      'en': 'English',
+      'hi': 'हिन्दी (Hindi)',
+      'ta': 'தமிழ் (Tamil)',
+      'bn': 'বাংলা (Bengali)',
+      'te': 'తెలుగు (Telugu)',
+      'mr': 'मराठी (Marathi)',
+      'gu': 'ગુજરાતી (Gujarati)',
+      'kn': 'ಕನ್ನಡ (Kannada)',
+      'ml': 'മലയാളം (Malayalam)',
+      'pa': 'ਪੰਜਾਬੀ (Punjabi)',
+    };
+    return languages[code] || code;
   };
 
   const handleEdit = () => {
@@ -299,6 +387,9 @@ export default function PostItem({
                     {post.moderationStatus === 'REJECTED' ? 'Removed' : post.moderationStatus}
                   </Badge>
                 )}
+                <Badge variant="outline" className="text-xs">
+                  {getLanguageName(post.language)}
+                </Badge>
               </div>
               <div className="flex items-center space-x-2 text-xs text-gray-500">
                 <span>{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}</span>
@@ -381,6 +472,32 @@ export default function PostItem({
               Summary
             </Button>
           )}
+          {(post.writingSuggestions || post.toneAnalysis) && (
+            <>
+              {post.writingSuggestions && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowSuggestions(!showSuggestions)}
+                  className="text-xs h-6 px-2"
+                >
+                  <Edit className="h-3 w-3 mr-1" />
+                  Suggestions
+                </Button>
+              )}
+              {post.toneAnalysis && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowToneAnalysis(!showToneAnalysis)}
+                  className="text-xs h-6 px-2"
+                >
+                  <Shield className="h-3 w-3 mr-1" />
+                  Tone
+                </Button>
+              )}
+            </>
+          )}
         </div>
       </CardHeader>
 
@@ -413,7 +530,9 @@ export default function PostItem({
             {post.title && (
               <h3 className="font-semibold text-lg mb-2 hover:text-blue-600 transition-colors">{post.title}</h3>
             )}
-            <p className="text-gray-700 mb-4 line-clamp-3">{post.content}</p>
+            <p className="text-gray-700 mb-4 line-clamp-3">
+              {isTranslated && translatedContent ? translatedContent : post.content}
+            </p>
           </div>
         </Link>
 
@@ -424,6 +543,26 @@ export default function PostItem({
               <span className="text-sm font-medium text-blue-800">AI Summary</span>
             </div>
             <p className="text-sm text-blue-700">{post.summary}</p>
+          </div>
+        )}
+
+        {showSuggestions && post.writingSuggestions && (
+          <div className="mb-4 p-3 bg-purple-50 rounded-md border border-purple-200">
+            <div className="flex items-center mb-2">
+              <Edit className="h-4 w-4 text-purple-600 mr-2" />
+              <span className="text-sm font-medium text-purple-800">Writing Suggestions</span>
+            </div>
+            <p className="text-sm text-purple-700">{JSON.stringify(post.writingSuggestions)}</p>
+          </div>
+        )}
+
+        {showToneAnalysis && post.toneAnalysis && (
+          <div className="mb-4 p-3 bg-green-50 rounded-md border border-green-200">
+            <div className="flex items-center mb-2">
+              <Shield className="h-4 w-4 text-green-600 mr-2" />
+              <span className="text-sm font-medium text-green-800">Tone Analysis</span>
+            </div>
+            <p className="text-sm text-green-700">{JSON.stringify(post.toneAnalysis)}</p>
           </div>
         )}
 
@@ -460,6 +599,12 @@ export default function PostItem({
               }}
               showCount={true}
               count={post._count.bookmarks}
+            />
+
+            <TranslationToggle
+              onTranslate={handleTranslate}
+              isTranslated={isTranslated}
+              isLoading={isTranslating}
             />
           </div>
 

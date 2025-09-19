@@ -1,3 +1,4 @@
+// E:\mannsahay\src\app\dashboard\forum\page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -30,10 +31,12 @@ import {
   Bot,
   CheckCircle,
   XCircle,
-  Bookmark
+  Bookmark,
+  Settings
 } from 'lucide-react';
 import CreatePostForm from '@/components/forum/create-post-form';
 import PostItem from '@/components/forum/post-item';
+import UserPreferences from '@/components/dashboard/user-preferences';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -60,6 +63,7 @@ interface Post {
     replies: number;
     bookmarks: number;
   };
+  language: string; // Changed from optional to required
 }
 
 interface ForumStats {
@@ -92,6 +96,22 @@ interface ModerationStats {
   moderatedReplies: number;
   autoRemovedReplies: number;
   pendingReviewReplies: number;
+}
+
+function getLanguageName(language: string): string {
+  const languageMap: Record<string, string> = {
+    en: 'English',
+    hi: 'हिन्दी (Hindi)',
+    ta: 'தமிழ் (Tamil)',
+    bn: 'বাংলা (Bengali)',
+    te: 'తెలుగు (Telugu)',
+    mr: 'मराठी (Marathi)',
+    gu: 'ગુજરાતી (Gujarati)',
+    kn: 'ಕನ್ನಡ (Kannada)',
+    ml: 'മലയാളം (Malayalam)',
+    pa: 'ਪੰਜਾਬੀ (Punjabi)',
+  };
+  return languageMap[language] || language.toUpperCase();
 }
 
 function CommunityGuidelines() {
@@ -554,6 +574,19 @@ export default function ForumPage() {
         </div>
 
         <div className="space-y-6">
+          {/* User Preferences Card */}
+          <div className="forum-card card-hover">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Settings className="h-5 w-5 mr-2" />
+                Your Preferences
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <UserPreferences />
+            </CardContent>
+          </div>
+
           <div className="forum-card card-hover">
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -591,6 +624,45 @@ export default function ForumPage() {
               )}
             </CardContent>
           </div>
+
+          {forumStats?.trendingPosts && forumStats.trendingPosts.length > 0 && (
+            <div className="forum-card card-hover">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <TrendingUp className="h-5 w-5 mr-2" />
+                  Recommended For You
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {forumStats.trendingPosts.map((post) => (
+                    <div key={post.id} className="pb-3 border-b border-gray-100 last:border-0 last:pb-0">
+                      <Link href={`/dashboard/forum/post/${post.id}`} className="block">
+                        <h4 className="font-medium text-sm mb-1 line-clamp-2">
+                          {post.title || post.content.substring(0, 60) + '...'}
+                        </h4>
+                        <div className="flex items-center text-xs text-gray-500">
+                          <div className="flex items-center mr-3">
+                            <Heart className="h-3 w-3 mr-1" />
+                            {post._count.likes}
+                          </div>
+                          <div className="flex items-center">
+                            <MessageSquare className="h-3 w-3 mr-1" />
+                            {post._count.replies}
+                          </div>
+                          {post.language && post.language !== 'en' && (
+                            <Badge variant="outline" className="ml-2 text-xs">
+                              {getLanguageName(post.language)}
+                            </Badge>
+                          )}
+                        </div>
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </div>
+          )}
 
           {moderationStats && (
             <div className="moderation-card card-hover">
@@ -680,40 +752,6 @@ export default function ForumPage() {
                     </div>
                   </div>
                 )}
-              </CardContent>
-            </div>
-          )}
-
-          {forumStats?.trendingPosts && forumStats.trendingPosts.length > 0 && (
-            <div className="forum-card card-hover">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <TrendingUp className="h-5 w-5 mr-2" />
-                  Trending Posts
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {forumStats.trendingPosts.map((post) => (
-                    <div key={post.id} className="pb-3 border-b border-gray-100 last:border-0 last:pb-0">
-                      <Link href={`/dashboard/forum/post/${post.id}`} className="block">
-                        <h4 className="font-medium text-sm mb-1 line-clamp-2">
-                          {post.title || post.content.substring(0, 60) + '...'}
-                        </h4>
-                        <div className="flex items-center text-xs text-gray-500">
-                          <div className="flex items-center mr-3">
-                            <Heart className="h-3 w-3 mr-1" />
-                            {post._count.likes}
-                          </div>
-                          <div className="flex items-center">
-                            <MessageSquare className="h-3 w-3 mr-1" />
-                            {post._count.replies}
-                          </div>
-                        </div>
-                      </Link>
-                    </div>
-                  ))}
-                </div>
               </CardContent>
             </div>
           )}

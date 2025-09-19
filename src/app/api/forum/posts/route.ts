@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       }, { status: 401 });
     }
 
-    const { title, content, isAnonymous = true, category = 'general' } = await request.json();
+    const { title, content, isAnonymous = true, category = 'general', language = 'en' } = await request.json();
 
     if (!content || content.trim() === '') {
       return NextResponse.json({ error: 'Content is required' }, { status: 400 });
@@ -117,6 +117,36 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Generate writing suggestions and tone analysis
+    try {
+      const [suggestions, toneAnalysis] = await Promise.all([
+        fetch(`${process.env.NEXTAUTH_URL}/api/forum/suggestions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: content, language })
+        }).then(res => res.ok ? res.json() : null),
+        
+        fetch(`${process.env.NEXTAUTH_URL}/api/forum/tone-analysis`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: content, language })
+        }).then(res => res.ok ? res.json() : null)
+      ]);
+
+      // Update the post with suggestions and tone analysis
+      if (suggestions || toneAnalysis) {
+        await prisma.post.update({
+          where: { id: post.id },
+          data: {
+            writingSuggestions: suggestions || null,
+            toneAnalysis: toneAnalysis || null
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error generating suggestions/tone analysis:', error);
+    }
+
     // If flagged or requires review, create notification for counselors
     if (flagged || moderationStatus === ModerationStatus.UNDER_REVIEW) {
       const counselors = await prisma.user.findMany({
@@ -145,7 +175,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Keep the existing GET function as is
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);

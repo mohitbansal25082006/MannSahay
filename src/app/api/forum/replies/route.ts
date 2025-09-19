@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { content, postId, parentId } = await request.json();
+    const { content, postId, parentId, language = 'en' } = await request.json();
 
     if (!content || content.trim() === '' || !postId) {
       return NextResponse.json({ error: 'Content and postId are required' }, { status: 400 });
@@ -39,6 +39,35 @@ export async function POST(request: NextRequest) {
 
     // Moderate content using AI
     const moderationResult = await moderateContent(content);
+    
+    // Generate writing suggestions and tone analysis
+    let writingSuggestions = null;
+    let toneAnalysis = null;
+    
+    try {
+      const [suggestionsResponse, toneResponse] = await Promise.all([
+        fetch(`${process.env.NEXTAUTH_URL}/api/forum/suggestions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: content, language })
+        }),
+        fetch(`${process.env.NEXTAUTH_URL}/api/forum/tone-analysis`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: content, language })
+        })
+      ]);
+      
+      if (suggestionsResponse.ok) {
+        writingSuggestions = await suggestionsResponse.json();
+      }
+      
+      if (toneResponse.ok) {
+        toneAnalysis = await toneResponse.json();
+      }
+    } catch (error) {
+      console.error('Error generating suggestions/tone analysis:', error);
+    }
     
     // Determine initial moderation status
     let moderationStatus: ModerationStatus = ModerationStatus.APPROVED;
@@ -69,11 +98,14 @@ export async function POST(request: NextRequest) {
         postId,
         authorId: session.user.id,
         parentId,
+        language,
         moderationStatus,
         moderationReason: moderationResult.violatesPolicy ? moderationResult.violationTypes.join(', ') : null,
         moderationNote,
         moderatedAt: moderationResult.violatesPolicy ? new Date() : null,
         isHidden,
+        writingSuggestions,
+        toneAnalysis,
       },
       include: {
         author: {
