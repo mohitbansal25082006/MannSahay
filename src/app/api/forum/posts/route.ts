@@ -4,8 +4,6 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { assessRiskLevel } from '@/lib/openai';
 import { moderateContent, summarizeContent } from '@/lib/ai-moderation';
-
-// Import the ModerationStatus enum from Prisma
 import { ModerationStatus } from '@prisma/client';
 
 export async function POST(request: NextRequest) {
@@ -143,6 +141,18 @@ export async function POST(request: NextRequest) {
       }
     } catch (error) {
       console.error('Error generating suggestions/tone analysis:', error);
+    }
+
+    // Create notification for the user if their post was flagged/removed
+    if (moderationResult.violatesPolicy && moderationStatus === ModerationStatus.REJECTED) {
+      await prisma.notification.create({
+        data: {
+          title: 'Your Post Has Been Removed',
+          message: `Your post "${title || 'Untitled'}" has been automatically removed for violating our community policies. ${moderationNote || ''}`,
+          type: 'content_moderated',
+          userId: user.id,
+        },
+      });
     }
 
     // If flagged or requires review, create notification for counselors

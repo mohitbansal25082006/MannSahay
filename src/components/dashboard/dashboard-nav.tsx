@@ -1,5 +1,3 @@
-// E:\mannsahay\src\components\dashboard\dashboard-nav.tsx
-
 'use client';
 
 import { useState } from 'react';
@@ -24,7 +22,8 @@ import {
   LogOut,
   Menu,
   X,
-  BarChart3
+  BarChart3,
+  Bell
 } from 'lucide-react';
 import NotificationsDropdown from './notifications-dropdown';
 
@@ -53,6 +52,11 @@ const navItems = [
     href: '/dashboard/resources',
     label: 'Resources',
     icon: BookOpen,
+  },
+  {
+    href: '/dashboard/notifications',
+    label: 'Notifications',
+    icon: Bell,
   },
 ];
 

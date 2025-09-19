@@ -1,5 +1,3 @@
-// E:\mannsahay\src\components\dashboard\notifications-dropdown.tsx
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -10,10 +8,23 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Bell, Check, AlertTriangle, Info, Shield, RefreshCw } from 'lucide-react';
+import { 
+  Bell, 
+  Check, 
+  AlertTriangle, 
+  Info, 
+  Shield, 
+  RefreshCw,
+  MessageCircle,
+  Eye,
+  XCircle,
+  Trash2
+} from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface Notification {
   id: string;
@@ -36,6 +47,7 @@ interface ApiResponse {
 
 export default function NotificationsDropdown() {
   const { data: session } = useSession();
+  const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -172,10 +184,52 @@ export default function NotificationsDropdown() {
       case 'flagged_content':
         return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
       case 'content_moderated':
-        return <Shield className="h-4 w-4 text-red-500" />;
+        return <XCircle className="h-4 w-4 text-red-500" />;
+      case 'reply':
+        return <MessageCircle className="h-4 w-4 text-blue-500" />;
       default:
-        return <Info className="h-4 w-4 text-blue-500" />;
+        return <Info className="h-4 w-4 text-gray-500" />;
     }
+  };
+
+  const getNotificationAction = (notification: Notification) => {
+    switch (notification.type) {
+      case 'content_moderated':
+        return (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mt-2 text-xs"
+            onClick={() => {
+              setIsOpen(false);
+              router.push('/community-guidelines');
+            }}
+          >
+            View Guidelines
+          </Button>
+        );
+      case 'reply':
+        return (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mt-2 text-xs"
+            onClick={() => {
+              setIsOpen(false);
+              router.push('/dashboard/forum');
+            }}
+          >
+            View Reply
+          </Button>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const handleViewAllNotifications = () => {
+    setIsOpen(false);
+    router.push('/dashboard/notifications');
   };
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -235,9 +289,7 @@ export default function NotificationsDropdown() {
                   className="h-6 w-6 p-0"
                   title="Clear all"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m0 0l3-3m-3 3l-3-3" />
-                  </svg>
+                  <Trash2 className="h-3 w-3" />
                 </Button>
               )}
             </div>
@@ -256,9 +308,7 @@ export default function NotificationsDropdown() {
               </div>
             ) : error ? (
               <div className="p-8 text-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-500 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <AlertTriangle className="h-8 w-8 text-red-500 mx-auto mb-2" />
                 <p className="text-gray-500 text-sm">{error}</p>
                 <Button 
                   variant="outline" 
@@ -280,7 +330,7 @@ export default function NotificationsDropdown() {
                   <div
                     key={notification.id}
                     className={`p-3 hover:bg-gray-50 transition-colors notification-item ${
-                      notification.isRead ? '' : 'notification-unread'
+                      notification.isRead ? '' : 'bg-blue-50 notification-unread'
                     }`}
                   >
                     <div className="flex items-start">
@@ -316,6 +366,7 @@ export default function NotificationsDropdown() {
                         }`}>
                           {notification.message}
                         </p>
+                        {getNotificationAction(notification)}
                       </div>
                     </div>
                   </div>
@@ -324,7 +375,6 @@ export default function NotificationsDropdown() {
             )}
           </div>
           
-          {/* Footer with view all link */}
           {notifications.length > 0 && (
             <div className="p-2 border-t text-center">
               

@@ -4,8 +4,6 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { assessRiskLevel } from '@/lib/openai';
 import { moderateContent } from '@/lib/ai-moderation';
-
-// Import the ModerationStatus enum from Prisma
 import { ModerationStatus } from '@prisma/client';
 
 export async function POST(request: NextRequest) {
@@ -122,6 +120,18 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Create notification for post author when someone replies
+    if (post.authorId !== session.user.id) {
+      await prisma.notification.create({
+        data: {
+          title: 'New Reply on Your Post',
+          message: `Someone replied to your post: "${post.title || 'Untitled'}"`,
+          type: 'reply',
+          userId: post.authorId,
+        },
+      });
+    }
+
     // If flagged or requires review, create notification for counselors
     if (flagged || moderationStatus === ModerationStatus.UNDER_REVIEW) {
       const counselors = await prisma.user.findMany({
@@ -140,14 +150,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create notification for post author
-    if (post.authorId !== session.user.id) {
+    // Create notification for the user if their reply was flagged/removed
+    if (moderationResult.violatesPolicy && moderationStatus === ModerationStatus.REJECTED) {
       await prisma.notification.create({
         data: {
-          title: 'New Reply',
-          message: `Someone replied to your post`,
-          type: 'reply',
-          userId: post.authorId,
+          title: 'Your Reply Has Been Removed',
+          message: `Your reply has been automatically removed for violating our community policies. ${moderationNote || ''}`,
+          type: 'content_moderated',
+          userId: session.user.id,
         },
       });
     }
