@@ -279,6 +279,7 @@ model Notification {
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
   userId    String
+  metadata  Json?
   
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@map("notifications")

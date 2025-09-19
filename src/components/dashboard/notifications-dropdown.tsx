@@ -18,13 +18,12 @@ import {
   MessageCircle,
   Eye,
   XCircle,
-  Trash2
+  BookOpen
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
 interface Notification {
   id: string;
@@ -33,6 +32,7 @@ interface Notification {
   type: string;
   isRead: boolean;
   createdAt: string;
+  metadata?: any; // Add metadata field
 }
 
 interface ApiResponse {
@@ -47,7 +47,6 @@ interface ApiResponse {
 
 export default function NotificationsDropdown() {
   const { data: session } = useSession();
-  const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -200,36 +199,50 @@ export default function NotificationsDropdown() {
             variant="outline" 
             size="sm" 
             className="mt-2 text-xs"
-            onClick={() => {
-              setIsOpen(false);
-              router.push('/community-guidelines');
-            }}
+            asChild
           >
-            View Guidelines
+            <Link href="/dashboard/guidelines">
+              <BookOpen className="h-3 w-3 mr-1" />
+              View Guidelines
+            </Link>
           </Button>
         );
       case 'reply':
-        return (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="mt-2 text-xs"
-            onClick={() => {
-              setIsOpen(false);
-              router.push('/dashboard/forum');
-            }}
-          >
-            View Reply
-          </Button>
-        );
+        // Check if we have post ID in metadata
+        const postId = notification.metadata?.postId;
+        if (postId) {
+          return (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mt-2 text-xs"
+              asChild
+            >
+              <Link href={`/dashboard/forum/post/${postId}`}>
+                <Eye className="h-3 w-3 mr-1" />
+                View Reply
+              </Link>
+            </Button>
+          );
+        } else {
+          // Fallback if no post ID
+          return (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mt-2 text-xs"
+              asChild
+            >
+              <Link href="/dashboard/forum">
+                <Eye className="h-3 w-3 mr-1" />
+                View Forum
+              </Link>
+            </Button>
+          );
+        }
       default:
         return null;
     }
-  };
-
-  const handleViewAllNotifications = () => {
-    setIsOpen(false);
-    router.push('/dashboard/notifications');
   };
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -289,7 +302,9 @@ export default function NotificationsDropdown() {
                   className="h-6 w-6 p-0"
                   title="Clear all"
                 >
-                  <Trash2 className="h-3 w-3" />
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m0 0l3-3m-3 3l-3-3" />
+                  </svg>
                 </Button>
               )}
             </div>
@@ -308,7 +323,9 @@ export default function NotificationsDropdown() {
               </div>
             ) : error ? (
               <div className="p-8 text-center">
-                <AlertTriangle className="h-8 w-8 text-red-500 mx-auto mb-2" />
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-500 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
                 <p className="text-gray-500 text-sm">{error}</p>
                 <Button 
                   variant="outline" 
@@ -330,7 +347,7 @@ export default function NotificationsDropdown() {
                   <div
                     key={notification.id}
                     className={`p-3 hover:bg-gray-50 transition-colors notification-item ${
-                      notification.isRead ? '' : 'bg-blue-50 notification-unread'
+                      notification.isRead ? '' : 'notification-unread'
                     }`}
                   >
                     <div className="flex items-start">
@@ -375,9 +392,12 @@ export default function NotificationsDropdown() {
             )}
           </div>
           
+          {/* Footer with view all link */}
           {notifications.length > 0 && (
             <div className="p-2 border-t text-center">
-              
+              <Link href="/dashboard/notifications" className="text-xs text-blue-600 hover:text-blue-800">
+                View all notifications
+              </Link>
             </div>
           )}
         </DropdownMenuContent>

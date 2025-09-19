@@ -128,6 +128,11 @@ export async function POST(request: NextRequest) {
           message: `Someone replied to your post: "${post.title || 'Untitled'}"`,
           type: 'reply',
           userId: post.authorId,
+          // Add post ID as metadata
+          metadata: {
+            postId: post.id,
+            replyId: reply.id
+          }
         },
       });
     }

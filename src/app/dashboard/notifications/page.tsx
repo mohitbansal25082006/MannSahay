@@ -14,7 +14,8 @@ import {
   MessageCircle,
   Eye,
   XCircle,
-  Trash2
+  Trash2,
+  BookOpen
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { formatDistanceToNow } from 'date-fns';
@@ -28,6 +29,9 @@ interface Notification {
   type: string;
   isRead: boolean;
   createdAt: string;
+  metadata?: {
+    postId?: string;
+  };
 }
 
 interface ApiResponse {
@@ -174,27 +178,47 @@ export default function NotificationsPage() {
             variant="outline" 
             size="sm" 
             className="mt-2"
-            onClick={() => {
-              // Navigate to community guidelines
-              window.location.href = '/dashboard/forum';
-            }}
-          >
-            View Guidelines
-          </Button>
-        );
-      case 'reply':
-        return (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="mt-2"
             asChild
           >
-            <Link href="/dashboard/forum">
-              View Reply
+            <Link href="/dashboard/guidelines">
+              <BookOpen className="h-4 w-4 mr-2" />
+              View Guidelines
             </Link>
           </Button>
         );
+      case 'reply':
+        // Check if we have post ID in metadata
+        const postId = notification.metadata?.postId;
+        if (postId) {
+          return (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mt-2"
+              asChild
+            >
+              <Link href={`/dashboard/forum/post/${postId}`}>
+                <Eye className="h-4 w-4 mr-2" />
+                View Reply
+              </Link>
+            </Button>
+          );
+        } else {
+          // Fallback if no post ID
+          return (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mt-2"
+              asChild
+            >
+              <Link href="/dashboard/forum">
+                <Eye className="h-4 w-4 mr-2" />
+                View Forum
+              </Link>
+            </Button>
+          );
+        }
       default:
         return null;
     }
