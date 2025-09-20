@@ -1,4 +1,3 @@
-// E:\mannsahay\src\types\index.ts
 export interface User {
   id: string
   name?: string | null
@@ -65,7 +64,7 @@ export interface Booking {
   feedbacks?: Feedback[]
   videoSession?: VideoSession
   reminders?: Reminder[]
-  moodEntries?: MoodEntry[]  // Added this relation
+  moodEntries?: MoodEntry[]
 }
 
 export interface GroupSession {
@@ -281,9 +280,71 @@ export interface Resource {
   type: ResourceType
   language: string
   fileUrl?: string | null
+  fileKey?: string | null
+  fileSize?: number | null
+  duration?: number | null
+  author?: string | null
   tags: string[]
+  categories: string[]
   isPublished: boolean
+  isFeatured: boolean
+  viewCount: number
+  downloadCount: number
   createdAt: Date
+  updatedAt: Date
+  translations?: any
+  summary?: string | null
+  summaryGeneratedAt?: Date | null
+  averageRating?: number | null
+  userRating?: number | null
+  isBookmarked?: boolean
+}
+
+export interface ResourceRating {
+  id: string
+  rating: number
+  comment?: string | null
+  createdAt: Date
+  userId: string
+  resourceId: string
+}
+
+export interface ResourceBookmark {
+  id: string
+  createdAt: Date
+  userId: string
+  resourceId: string
+}
+
+export interface ResourceDownload {
+  id: string
+  createdAt: Date
+  userId: string
+  resourceId: string
+}
+
+export interface ResourceShare {
+  id: string
+  platform: string
+  createdAt: Date
+  userId: string
+  resourceId: string
+}
+
+export interface ResourceView {
+  id: string
+  createdAt: Date
+  userId?: string | null
+  resourceId: string
+}
+
+export interface ResourceRecommendation {
+  id: string
+  score: number
+  reason?: string | null
+  createdAt: Date
+  userId: string
+  resourceId: string
 }
 
 export enum BookingStatus {
@@ -311,7 +372,12 @@ export enum ResourceType {
   VIDEO = "VIDEO",
   AUDIO = "AUDIO",
   PDF = "PDF",
-  EXERCISE = "EXERCISE"
+  EXERCISE = "EXERCISE",
+  MUSIC = "MUSIC",
+  MEDITATION = "MEDITATION",
+  INFOGRAPHIC = "INFOGRAPHIC",
+  WORKSHEET = "WORKSHEET",
+  GUIDE = "GUIDE"
 }
 
 export enum ModerationStatus {

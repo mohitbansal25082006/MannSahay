@@ -1,4 +1,3 @@
-// E:\mannsahay\prisma\schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -44,6 +43,12 @@ model User {
   moodHistory   MoodEntry[]
   groupSessions GroupSessionParticipant[]
   counselorNotes CounselorNote[]
+  resourceRatings ResourceRating[]
+  resourceBookmarks ResourceBookmark[]
+  resourceDownloads ResourceDownload[]
+  resourceShares ResourceShare[]
+  resourceViews ResourceView[]
+  resourceRecommendations ResourceRecommendation[]
   @@map("users")
 }
 
@@ -477,10 +482,109 @@ model Resource {
   type        ResourceType
   language    String      @default("en")
   fileUrl     String?
+  fileKey     String?     // For cloud storage
+  fileSize    Int?        // In bytes
+  duration    Int?        // For audio/video in seconds
+  author      String?
   tags        String[]
+  categories  String[]
   isPublished Boolean     @default(false)
+  isFeatured  Boolean     @default(false)
+  viewCount   Int         @default(0)
+  downloadCount Int       @default(0)
   createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  // Translation fields
+  translations Json?      // Translations in other languages
+  summary      String?     @db.Text // AI-generated summary
+  summaryGeneratedAt DateTime?
+  
+  // Relations
+  ratings      ResourceRating[]
+  bookmarks    ResourceBookmark[]
+  downloads    ResourceDownload[]
+  shares       ResourceShare[]
+  views        ResourceView[]
+  recommendations ResourceRecommendation[]
   @@map("resources")
+}
+
+model ResourceRating {
+  id         String   @id @default(cuid())
+  rating     Int      // 1-5 stars
+  comment    String?  @db.Text
+  createdAt  DateTime @default(now())
+  userId     String
+  resourceId String
+  
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, resourceId])
+  @@map("resource_ratings")
+}
+
+model ResourceBookmark {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  userId     String
+  resourceId String
+  
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, resourceId])
+  @@map("resource_bookmarks")
+}
+
+model ResourceDownload {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  userId     String
+  resourceId String
+  
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  @@map("resource_downloads")
+}
+
+model ResourceShare {
+  id         String   @id @default(cuid())
+  platform   String   // "whatsapp", "facebook", "twitter", "copy_link", etc.
+  createdAt  DateTime @default(now())
+  userId     String
+  resourceId String
+  
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  @@map("resource_shares")
+}
+
+model ResourceView {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  userId     String?  // Nullable for anonymous views
+  resourceId String
+  
+  user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  @@map("resource_views")
+}
+
+model ResourceRecommendation {
+  id         String   @id @default(cuid())
+  score      Float    // Recommendation score
+  reason     String?  // Why this was recommended
+  createdAt  DateTime @default(now())
+  userId     String
+  resourceId String
+  
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, resourceId])
+  @@map("resource_recommendations")
 }
 
 enum BookingStatus {
@@ -509,6 +613,11 @@ enum ResourceType {
   AUDIO
   PDF
   EXERCISE
+  MUSIC
+  MEDITATION
+  INFOGRAPHIC
+  WORKSHEET
+  GUIDE
 }
 
 enum ModerationStatus {

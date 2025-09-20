@@ -328,7 +328,7 @@ export async function generateSpeech(
   }
 }
 
-// Generate contextual response with GPT-4 - FIXED VERSION FOR HINDI
+// Generate contextual response with GPT-4
 export async function generateContextualResponse(
   message: string,
   selectedLanguage: 'en' | 'hi' = 'en',
@@ -394,12 +394,12 @@ export async function generateContextualResponse(
       }
     ];
     
-    // FIXED: Use gpt-4o model which handles Hindi better and increase max_tokens for complete responses
+    // Use gpt-4o model which handles Hindi better and increase max_tokens for complete responses
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o', // Changed from gpt-4-turbo-preview to gpt-4o for better Hindi handling
+      model: 'gpt-4o',
       messages: messages,
       temperature: 0.7,
-      max_tokens: 1000, // Increased from 600 to 1000 to ensure complete Hindi responses
+      max_tokens: 1000,
       presence_penalty: 0.1,
       frequency_penalty: 0.1,
     });
@@ -432,5 +432,100 @@ export async function generateContextualResponse(
     return selectedLanguage === 'hi'
       ? 'मुझे खेद है कि मैं आपकी बातचीत को ठीक से संसाधित नहीं कर पा रहा हूं। कृपया अपना संदेश फिर से भेजें या थोड़ा इंतजार करें। आपकी भावनाओं को समझना मेरे लिए महत्वपूर्ण है।'
       : 'I apologize that I\'m having trouble processing your conversation properly. Please resend your message or wait a moment. Understanding your feelings is important to me.';
+  }
+}
+
+// Function to summarize resource content
+export async function summarizeResourceContent(
+  content: string,
+  type: string
+): Promise<string> {
+  try {
+    let prompt = '';
+    
+    switch (type) {
+      case 'ARTICLE':
+        prompt = `Summarize the following article in 3-5 bullet points, focusing on the key takeaways and main ideas:\n\n${content}`;
+        break;
+      case 'VIDEO':
+        prompt = `Summarize the key points from this video transcript in 3-5 bullet points:\n\n${content}`;
+        break;
+      case 'AUDIO':
+        prompt = `Summarize the main insights from this audio content in 3-5 bullet points:\n\n${content}`;
+        break;
+      case 'PDF':
+        prompt = `Extract and summarize the key information from this document in 3-5 bullet points:\n\n${content}`;
+        break;
+      default:
+        prompt = `Summarize the following content in 3-5 bullet points:\n\n${content}`;
+    }
+    
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert at summarizing mental health and wellness content. Create concise, informative summaries that capture the essence of the content.',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.5,
+      max_tokens: 500,
+    });
+    
+    return response.choices[0]?.message?.content || '';
+  } catch (error) {
+    console.error('Error summarizing content:', error);
+    return '';
+  }
+}
+
+// Function to translate text
+export async function translateText(
+  text: string,
+  targetLanguage: string
+): Promise<string> {
+  try {
+    // Map language codes to full names
+    const languageNames: Record<string, string> = {
+      en: 'English',
+      hi: 'Hindi',
+      ta: 'Tamil',
+      bn: 'Bengali',
+      te: 'Telugu',
+      mr: 'Marathi',
+      gu: 'Gujarati',
+      kn: 'Kannada',
+      ml: 'Malayalam',
+      pa: 'Punjabi',
+    };
+    
+    const targetLanguageName = languageNames[targetLanguage] || targetLanguage;
+    
+    const prompt = `Translate the following text to ${targetLanguageName}. Maintain the original meaning and tone. If the text is already in ${targetLanguageName}, return it as is:\n\n${text}`;
+    
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a professional translator specializing in mental health content. Translate accurately while maintaining the original meaning and tone.',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.3,
+      max_tokens: 1000,
+    });
+    
+    return response.choices[0]?.message?.content || text;
+  } catch (error) {
+    console.error('Error translating text:', error);
+    return text;
   }
 }
