@@ -1,12 +1,12 @@
-// E:\mannsahay\src\app\api\bookings\[id]\route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { Prisma } from '@prisma/client';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -15,8 +15,10 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { id } = await context.params; // Await params to get the id
+
     const booking = await prisma.booking.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         counselor: true,
         sessionNotes: {
@@ -37,7 +39,7 @@ export async function GET(
     }
 
     // Check if user is authorized to view this booking
-    if (booking.userId !== session.user.id && booking.counselorId !== session.user.id) {
+    if (booking.userId !== session.user.id) {
       const user = await prisma.user.findUnique({
         where: { id: session.user.id },
         select: { isAdmin: true }
@@ -49,7 +51,7 @@ export async function GET(
     }
 
     return NextResponse.json(booking);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error fetching booking:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -57,7 +59,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -66,11 +68,12 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { id } = await context.params; // Await params to get the id
     const body = await request.json();
     const { status, slotTime, notes } = body;
 
     const booking = await prisma.booking.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: { counselor: true }
     });
 
@@ -79,7 +82,7 @@ export async function PATCH(
     }
 
     // Check if user is authorized to update this booking
-    if (booking.userId !== session.user.id && booking.counselorId !== session.user.id) {
+    if (booking.userId !== session.user.id) {
       const user = await prisma.user.findUnique({
         where: { id: session.user.id },
         select: { isAdmin: true }
@@ -116,7 +119,7 @@ export async function PATCH(
     }
 
     const updatedBooking = await prisma.booking.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
       include: {
         counselor: true,
@@ -134,32 +137,51 @@ export async function PATCH(
 
     // Create notification for status change
     if (status) {
+      // Only create notification if the recipient exists in the users table
       const notificationRecipient = booking.userId === session.user.id ? booking.counselorId : booking.userId;
       
-      await prisma.notification.create({
-        data: {
-          title: `Booking ${status}`,
-          message: `Your booking with ${booking.counselor.name} has been ${status.toLowerCase()}`,
-          type: `BOOKING_${status}`,
-          userId: notificationRecipient,
-          metadata: {
-            bookingId: booking.id,
-            counselorName: booking.counselor.name
-          }
-        }
+      // Check if the recipient exists in the users table
+      const recipientUser = await prisma.user.findUnique({
+        where: { id: notificationRecipient }
       });
+      
+      // Only create the notification if the user exists
+      if (recipientUser) {
+        await prisma.notification.create({
+          data: {
+            title: `Booking ${status}`,
+            message: `Your booking with ${booking.counselor.name} has been ${status.toLowerCase()}`,
+            type: `BOOKING_${status}`,
+            userId: notificationRecipient,
+            metadata: {
+              bookingId: booking.id,
+              counselorName: booking.counselor.name
+            }
+          }
+        });
+      } else {
+        console.log(`Skipping notification for user ${notificationRecipient} as they don't exist in the users table`);
+      }
     }
 
     return NextResponse.json(updatedBooking);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error updating booking:', error);
+    
+    // Handle specific database errors
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+      return NextResponse.json({ 
+        error: 'Invalid reference: The specified user does not exist' 
+      }, { status: 400 });
+    }
+    
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -168,8 +190,10 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { id } = await context.params; // Await params to get the id
+
     const booking = await prisma.booking.findUnique({
-      where: { id: params.id }
+      where: { id }
     });
 
     if (!booking) {
@@ -197,11 +221,11 @@ export async function DELETE(
     }
 
     await prisma.booking.delete({
-      where: { id: params.id }
+      where: { id }
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error deleting booking:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
