@@ -1,4 +1,3 @@
-// E:\mannsahay\src\components\booking\my-bookings-list.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,13 +5,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Clock, User, Video, MessageSquare, Star, MoreHorizontal } from 'lucide-react';
+import { Calendar, Clock, User, Video, MessageSquare, Star, MoreHorizontal, CalendarPlus } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 
 interface Booking {
   id: string;
@@ -24,6 +27,7 @@ interface Booking {
   counselor: {
     name: string;
     profileImage?: string;
+    id: string;
   };
   sessionNotes?: Array<{
     id: string;
@@ -44,13 +48,42 @@ interface Booking {
   };
 }
 
+interface Counselor {
+  id: string;
+  name: string;
+  email: string;
+  bio?: string;
+  specialties: string[];
+  languages: string[];
+  experience?: number;
+  isActive: boolean;
+  profileImage?: string;
+}
+
+interface AvailabilitySlot {
+  id: string;
+  counselorId: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  isBooked: boolean;
+}
+
 export default function MyBookingsList() {
   const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
   const [pastBookings, setPastBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [counselors, setCounselors] = useState<Counselor[]>([]);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(null);
+  const [rescheduleNotes, setRescheduleNotes] = useState('');
+  const [isRescheduleDialogOpen, setIsRescheduleDialogOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [availabilitySlots, setAvailabilitySlots] = useState<AvailabilitySlot[]>([]);
 
   useEffect(() => {
     fetchBookings();
+    fetchCounselors();
   }, []);
 
   const fetchBookings = async () => {
@@ -69,6 +102,18 @@ export default function MyBookingsList() {
       console.error('Error fetching bookings:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCounselors = async () => {
+    try {
+      const response = await fetch('/api/counselors');
+      if (response.ok) {
+        const data = await response.json();
+        setCounselors(data);
+      }
+    } catch (error) {
+      console.error('Error fetching counselors:', error);
     }
   };
 
@@ -97,6 +142,97 @@ export default function MyBookingsList() {
       console.error('Error cancelling booking:', error);
       alert(error instanceof Error ? error.message : 'Failed to cancel booking');
     }
+  };
+
+  const handleRescheduleClick = (booking: Booking) => {
+    setSelectedBooking(booking);
+    setRescheduleNotes('');
+    setIsRescheduleDialogOpen(true);
+    
+    // Fetch availability slots for this counselor
+    fetchCounselorAvailability(booking.counselor.id);
+  };
+
+  const fetchCounselorAvailability = async (counselorId: string) => {
+    try {
+      const response = await fetch(`/api/counselors/${counselorId}/availability`);
+      if (response.ok) {
+        const data = await response.json();
+        setAvailabilitySlots(data);
+      }
+    } catch (error) {
+      console.error('Error fetching counselor availability:', error);
+    }
+  };
+
+  const handleSlotSelect = (slot: AvailabilitySlot) => {
+    setSelectedSlot(slot);
+  };
+
+  const handleConfirmReschedule = async () => {
+    if (!selectedBooking || !selectedSlot) return;
+    
+    setIsProcessing(true);
+    
+    try {
+      const response = await fetch(`/api/bookings/${selectedBooking.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          slotTime: new Date(selectedBooking.slotTime).toISOString().split('T')[0] + 'T' + selectedSlot.startTime,
+          notes: rescheduleNotes || selectedBooking.notes
+        })
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to reschedule booking');
+      }
+
+      // Update the local state
+      setUpcomingBookings(prevBookings =>
+        prevBookings.map(booking =>
+          booking.id === selectedBooking.id 
+            ? { 
+                ...booking, 
+                slotTime: new Date(selectedBooking.slotTime).toISOString().split('T')[0] + 'T' + selectedSlot.startTime,
+                notes: rescheduleNotes || selectedBooking.notes
+              } 
+            : booking
+        )
+      );
+
+      // Close dialog and reset state
+      setIsRescheduleDialogOpen(false);
+      setSelectedBooking(null);
+      setSelectedSlot(null);
+      setRescheduleNotes('');
+      
+      alert('Booking rescheduled successfully!');
+    } catch (error) {
+      console.error('Error rescheduling booking:', error);
+      alert(error instanceof Error ? error.message : 'Failed to reschedule booking');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleAddToCalendar = (booking: Booking) => {
+    const { slotTime, endTime, counselor } = booking;
+    const title = `Counseling Session with ${counselor.name}`;
+    const description = `Counseling session booked through MannSahay`;
+    const location = 'Online (Video Session)';
+    
+    // Create Google Calendar URL
+    const startTime = new Date(slotTime).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    const formattedEndTime = new Date(endTime).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    
+    const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${startTime}/${formattedEndTime}&details=${encodeURIComponent(description)}&location=${encodeURIComponent(location)}`;
+    
+    // Open in new window
+    window.open(googleCalendarUrl, '_blank');
   };
 
   const statusColors: Record<string, string> = {
@@ -176,14 +312,15 @@ export default function MyBookingsList() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => handleCancelBooking(booking.id)}>
-                  Cancel Booking
-                </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleRescheduleClick(booking)}>
                   Reschedule
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleAddToCalendar(booking)}>
+                  <CalendarPlus className="h-4 w-4 mr-2" />
                   Add to Calendar
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleCancelBooking(booking.id)}>
+                  Cancel Booking
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -245,6 +382,70 @@ export default function MyBookingsList() {
           )}
         </TabsContent>
       </Tabs>
+      
+      {/* Reschedule Dialog */}
+      <Dialog open={isRescheduleDialogOpen} onOpenChange={setIsRescheduleDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Reschedule Your Session</DialogTitle>
+            <DialogDescription>
+              Select a new time slot for your session with {selectedBooking?.counselor.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Current Appointment</Label>
+              <div className="p-3 bg-gray-50 rounded-md">
+                <p className="font-medium">
+                  {selectedBooking && new Date(selectedBooking.slotTime).toLocaleDateString()} at {selectedBooking && new Date(selectedBooking.slotTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Select New Time Slot</Label>
+              <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto p-2 border rounded-md">
+                {availabilitySlots
+                  .filter(slot => !slot.isBooked)
+                  .map((slot) => (
+                    <Button
+                      key={slot.id}
+                      variant={selectedSlot?.id === slot.id ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleSlotSelect(slot)}
+                      className="justify-start"
+                    >
+                      {slot.startTime}
+                    </Button>
+                  ))}
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes (Optional)</Label>
+              <Textarea
+                id="notes"
+                placeholder="Any specific requirements or preferences for the new time slot..."
+                value={rescheduleNotes}
+                onChange={(e) => setRescheduleNotes(e.target.value)}
+                rows={3}
+              />
+            </div>
+            
+            <div className="flex justify-end space-x-3 pt-4">
+              <Button variant="outline" onClick={() => setIsRescheduleDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleConfirmReschedule} 
+                disabled={!selectedSlot || isProcessing}
+              >
+                {isProcessing ? 'Rescheduling...' : 'Confirm Reschedule'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

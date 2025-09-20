@@ -1,4 +1,4 @@
-// E:\mannsahay\src\app\dashboard\booking\page.tsx
+// E:\mannsahay\src\app\dashboard\booking\page.tsx (partial update)
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, Clock, User, Search, Filter, Video, Users, Plus } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import CounselorCard from '@/components/booking/counselor-card';
 import BookingCalendar from '@/components/booking/booking-calendar';
 import BookingForm from '@/components/booking/booking-form';
@@ -31,7 +32,11 @@ interface Counselor {
 
 export default function BookingPage() {
   const { data: session } = useSession();
-  const [activeTab, setActiveTab] = useState('counselors');
+  const searchParams = useSearchParams();
+  const rescheduleBookingId = searchParams.get('reschedule');
+  const counselorNameParam = searchParams.get('counselorId');
+  
+  const [activeTab, setActiveTab] = useState(rescheduleBookingId ? 'calendar' : 'counselors');
   const [selectedCounselor, setSelectedCounselor] = useState<Counselor | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<any>(null);
   const [specializationFilter, setSpecializationFilter] = useState<string>('all');
@@ -39,6 +44,7 @@ export default function BookingPage() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [counselors, setCounselors] = useState<Counselor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [rescheduleData, setRescheduleData] = useState<any>(null);
 
   const specializations = [
     'Anxiety',
@@ -68,7 +74,23 @@ export default function BookingPage() {
 
   useEffect(() => {
     fetchCounselors();
-  }, [specializationFilter, languageFilter]);
+    
+    // Handle reschedule case
+    if (rescheduleBookingId) {
+      fetchBookingDetails(rescheduleBookingId);
+    }
+  }, [rescheduleBookingId]);
+
+  useEffect(() => {
+    if (counselorNameParam && counselors.length > 0) {
+      const counselor = counselors.find(c => 
+        c.name.replace(/\s+/g, '-').toLowerCase() === counselorNameParam
+      );
+      if (counselor) {
+        setSelectedCounselor(counselor);
+      }
+    }
+  }, [counselorNameParam, counselors]);
 
   const fetchCounselors = async () => {
     setLoading(true);
@@ -91,6 +113,22 @@ export default function BookingPage() {
     }
   };
 
+  const fetchBookingDetails = async (bookingId: string) => {
+    try {
+      const response = await fetch(`/api/bookings/${bookingId}`);
+      if (response.ok) {
+        const booking = await response.json();
+        setRescheduleData({
+          bookingId: booking.id,
+          counselorId: booking.counselorId,
+          originalSlotTime: booking.slotTime
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching booking details:', error);
+    }
+  };
+
   const handleCounselorSelect = (counselor: Counselor) => {
     setSelectedCounselor(counselor);
     setActiveTab('calendar');
@@ -104,6 +142,7 @@ export default function BookingPage() {
   const handleBookingComplete = () => {
     setSelectedCounselor(null);
     setSelectedSlot(null);
+    setRescheduleData(null);
     setActiveTab('my-bookings');
   };
 
@@ -124,9 +163,14 @@ export default function BookingPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Book a Session</h1>
+        <h1 className="text-3xl font-bold text-gray-900">
+          {rescheduleBookingId ? 'Reschedule Session' : 'Book a Session'}
+        </h1>
         <p className="mt-2 text-gray-600">
-          Connect with professional counselors for personalized support
+          {rescheduleBookingId 
+            ? 'Select a new time slot for your session' 
+            : 'Connect with professional counselors for personalized support'
+          }
         </p>
       </div>
 
@@ -219,10 +263,16 @@ export default function BookingPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Calendar className="h-5 w-5 mr-2" />
-                    Schedule with {selectedCounselor.name}
+                    {rescheduleBookingId 
+                      ? `Reschedule with ${selectedCounselor.name}`
+                      : `Schedule with ${selectedCounselor.name}`
+                    }
                   </CardTitle>
                   <CardDescription>
-                    Select an available time slot for your session
+                    {rescheduleBookingId
+                      ? `Current appointment: ${new Date(rescheduleData?.originalSlotTime).toLocaleString()}`
+                      : 'Select an available time slot for your session'
+                    }
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -247,6 +297,7 @@ export default function BookingPage() {
             <BookingForm
               counselor={selectedCounselor}
               slot={selectedSlot}
+              rescheduleData={rescheduleData}
               onComplete={handleBookingComplete}
             />
           ) : (

@@ -1,4 +1,4 @@
-// E:\mannsahay\src\components\booking\booking-form.tsx
+// E:\mannsahay\src\components\booking\booking-form.tsx (partial update)
 'use client';
 
 import { useState } from 'react';
@@ -16,9 +16,14 @@ interface BookingFormProps {
   counselor: any;
   slot: any;
   onComplete: () => void;
+  rescheduleData?: {
+    bookingId: string;
+    counselorId: string;
+    originalSlotTime: string;
+  };
 }
 
-export default function BookingForm({ counselor, slot, onComplete }: BookingFormProps) {
+export default function BookingForm({ counselor, slot, onComplete, rescheduleData }: BookingFormProps) {
   const { data: session } = useSession();
   const [notes, setNotes] = useState('');
   const [sessionType, setSessionType] = useState('ONE_ON_ONE');
@@ -34,21 +39,34 @@ export default function BookingForm({ counselor, slot, onComplete }: BookingForm
     setError('');
 
     try {
-      const response = await fetch('/api/bookings', {
-        method: 'POST',
+      const url = rescheduleData 
+        ? `/api/bookings/${rescheduleData.bookingId}`
+        : '/api/bookings';
+        
+      const method = rescheduleData ? 'PATCH' : 'POST';
+      
+      const body = rescheduleData
+        ? {
+            slotTime: slot.dateTime.toISOString(),
+            notes
+          }
+        : {
+            counselorId: counselor.id,
+            slotTime: slot.dateTime.toISOString(),
+            notes,
+            sessionType,
+            isRecurring,
+            recurringPattern: isRecurring ? recurringPattern : null,
+            recurringEndDate: isRecurring ? recurringEndDate : null,
+            availabilitySlotId: slot.id
+          };
+
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          counselorId: counselor.id,
-          slotTime: slot.dateTime.toISOString(),
-          notes,
-          sessionType,
-          isRecurring,
-          recurringPattern: isRecurring ? recurringPattern : null,
-          recurringEndDate: isRecurring ? recurringEndDate : null,
-          availabilitySlotId: slot.id // Pass the availability slot ID
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
@@ -69,10 +87,13 @@ export default function BookingForm({ counselor, slot, onComplete }: BookingForm
       <CardHeader>
         <CardTitle className="flex items-center">
           <Calendar className="h-5 w-5 mr-2" />
-          Confirm Your Booking
+          {rescheduleData ? 'Reschedule Your Session' : 'Confirm Your Booking'}
         </CardTitle>
         <CardDescription>
-          Review your session details and confirm your booking
+          {rescheduleData
+            ? `Rescheduling your session with ${counselor.name}`
+            : 'Review your session details and confirm your booking'
+          }
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -100,6 +121,18 @@ export default function BookingForm({ counselor, slot, onComplete }: BookingForm
                     </div>
                   </div>
                   
+                  {rescheduleData && (
+                    <div className="flex items-center">
+                      <Clock className="h-5 w-5 text-gray-400 mr-2" />
+                      <div>
+                        <p className="font-medium">Original Time</p>
+                        <p className="text-sm text-gray-500">
+                          {new Date(rescheduleData.originalSlotTime).toLocaleDateString()} at {new Date(rescheduleData.originalSlotTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="flex items-center">
                     <Clock className="h-5 w-5 text-gray-400 mr-2" />
                     <div>
@@ -118,56 +151,60 @@ export default function BookingForm({ counselor, slot, onComplete }: BookingForm
                 </div>
               </div>
               
-              <div>
-                <h3 className="text-lg font-medium">Session Type</h3>
-                <Select value={sessionType} onValueChange={setSessionType}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ONE_ON_ONE">One-on-One Session</SelectItem>
-                    <SelectItem value="GROUP">Group Session</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="recurring"
-                  checked={isRecurring}
-                  onCheckedChange={(checked) => setIsRecurring(checked as boolean)}
-                />
-                <label htmlFor="recurring" className="text-sm font-medium">
-                  Make this a recurring session
-                </label>
-              </div>
-              
-              {isRecurring && (
-                <div className="space-y-3 pl-6 border-l-2 border-gray-200">
+              {!rescheduleData && (
+                <>
                   <div>
-                    <label className="text-sm font-medium">Recurring Pattern</label>
-                    <Select value={recurringPattern} onValueChange={setRecurringPattern}>
+                    <h3 className="text-lg font-medium">Session Type</h3>
+                    <Select value={sessionType} onValueChange={setSessionType}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select pattern" />
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="weekly">Weekly</SelectItem>
-                        <SelectItem value="biweekly">Bi-weekly</SelectItem>
-                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="ONE_ON_ONE">One-on-One Session</SelectItem>
+                        <SelectItem value="GROUP">Group Session</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   
-                  <div>
-                    <label className="text-sm font-medium">End Date</label>
-                    <Input
-                      type="date"
-                      value={recurringEndDate}
-                      onChange={(e) => setRecurringEndDate(e.target.value)}
-                      min={new Date().toISOString().split('T')[0]}
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="recurring"
+                      checked={isRecurring}
+                      onCheckedChange={(checked) => setIsRecurring(checked as boolean)}
                     />
+                    <label htmlFor="recurring" className="text-sm font-medium">
+                      Make this a recurring session
+                    </label>
                   </div>
-                </div>
+                  
+                  {isRecurring && (
+                    <div className="space-y-3 pl-6 border-l-2 border-gray-200">
+                      <div>
+                        <label className="text-sm font-medium">Recurring Pattern</label>
+                        <Select value={recurringPattern} onValueChange={setRecurringPattern}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select pattern" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="weekly">Weekly</SelectItem>
+                            <SelectItem value="biweekly">Bi-weekly</SelectItem>
+                            <SelectItem value="monthly">Monthly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <label className="text-sm font-medium">End Date</label>
+                        <Input
+                          type="date"
+                          value={recurringEndDate}
+                          onChange={(e) => setRecurringEndDate(e.target.value)}
+                          min={new Date().toISOString().split('T')[0]}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
             
@@ -233,7 +270,7 @@ export default function BookingForm({ counselor, slot, onComplete }: BookingForm
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Booking...' : 'Confirm Booking'}
+              {isSubmitting ? (rescheduleData ? 'Rescheduling...' : 'Booking...') : (rescheduleData ? 'Reschedule Session' : 'Confirm Booking')}
             </Button>
           </div>
         </form>

@@ -1,3 +1,4 @@
+// E:\mannsahay\src\app\api\waitlist\route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
@@ -68,18 +69,27 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    // Notify counselor about new waitlist entry
-    await prisma.notification.create({
-      data: {
-        title: 'New Waitlist Entry',
-        message: `A client has joined your waitlist`,
-        type: 'WAITLIST_ENTRY',
-        userId: counselorId,
-        metadata: {
-          waitlistEntryId: waitlistEntry.id
-        }
-      }
+    // Check if the counselor has a user account before creating a notification
+    const counselorUser = await prisma.user.findUnique({
+      where: { id: counselorId }
     });
+
+    // Only create notification if the counselor has a user account
+    if (counselorUser) {
+      await prisma.notification.create({
+        data: {
+          title: 'New Waitlist Entry',
+          message: `A client has joined your waitlist`,
+          type: 'WAITLIST_ENTRY',
+          userId: counselorId,
+          metadata: {
+            waitlistEntryId: waitlistEntry.id
+          }
+        }
+      });
+    } else {
+      console.log(`Skipping notification for counselor ${counselorId} as they don't have a user account`);
+    }
 
     return NextResponse.json(waitlistEntry, { status: 201 });
   } catch (error) {
