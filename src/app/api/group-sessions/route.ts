@@ -36,12 +36,12 @@ export async function GET(request: NextRequest) {
 
     // Check if user is participating in each session
     const sessionsWithParticipation = await Promise.all(
-      groupSessions.map(async (sessionItem) => { // Renamed 'session' to 'sessionItem' to avoid confusion
+      groupSessions.map(async (sessionItem) => { // Renamed session to sessionItem to avoid confusion
         const participation = await prisma.groupSessionParticipant.findUnique({
           where: {
             groupSessionId_userId: {
               groupSessionId: sessionItem.id,
-              userId: session.user.id // Now correctly accessing session.user.id
+              userId: session.user.id // Use the NextAuth session user ID
             }
           }
         });

@@ -37,78 +37,15 @@ export default function GroupSessionsList() {
   const fetchGroupSessions = async () => {
     setLoading(true);
     try {
-      // This would be an actual API call in a real implementation
-      // const [upcomingResponse, pastResponse] = await Promise.all([
-      //   fetch('/api/group-sessions?upcoming=true'),
-      //   fetch('/api/group-sessions?upcoming=false')
-      // ]);
-      // const upcomingData = await upcomingResponse.json();
-      // const pastData = await pastResponse.json();
+      // Fetch upcoming sessions
+      const upcomingResponse = await fetch('/api/group-sessions?upcoming=true');
+      const upcomingData = await upcomingResponse.json();
+      setUpcomingSessions(upcomingData);
       
-      // Mock data for demonstration
-      const mockUpcomingSessions: GroupSession[] = [
-        {
-          id: '1',
-          title: 'Managing Academic Stress',
-          description: 'Learn effective strategies to cope with academic pressure and exam stress.',
-          maxParticipants: 15,
-          sessionDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-          duration: 60,
-          counselor: { name: 'Dr. Priya Sharma' },
-          _count: { participants: 8 },
-          isParticipating: false
-        },
-        {
-          id: '2',
-          title: 'Building Healthy Relationships',
-          description: 'Explore the foundations of healthy relationships and communication skills.',
-          maxParticipants: 12,
-          sessionDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-          duration: 90,
-          counselor: { name: 'Dr. Rajesh Kumar' },
-          _count: { participants: 5 },
-          isParticipating: true
-        },
-        {
-          id: '3',
-          title: 'Mindfulness and Meditation',
-          description: 'Introduction to mindfulness practices for stress reduction and mental wellness.',
-          maxParticipants: 20,
-          sessionDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
-          duration: 45,
-          counselor: { name: 'Dr. Ananya Reddy' },
-          _count: { participants: 12 },
-          isParticipating: false
-        }
-      ];
-      
-      const mockPastSessions: GroupSession[] = [
-        {
-          id: '4',
-          title: 'Overcoming Social Anxiety',
-          description: 'Techniques to manage social anxiety in academic and social settings.',
-          maxParticipants: 10,
-          sessionDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-          duration: 60,
-          counselor: { name: 'Dr. Priya Sharma' },
-          _count: { participants: 10 },
-          isParticipating: true
-        },
-        {
-          id: '5',
-          title: 'Career Planning for Students',
-          description: 'Guidance on making informed career decisions and planning for the future.',
-          maxParticipants: 15,
-          sessionDate: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
-          duration: 75,
-          counselor: { name: 'Dr. Rajesh Kumar' },
-          _count: { participants: 13 },
-          isParticipating: false
-        }
-      ];
-      
-      setUpcomingSessions(mockUpcomingSessions);
-      setPastSessions(mockPastSessions);
+      // Fetch past sessions
+      const pastResponse = await fetch('/api/group-sessions?upcoming=false');
+      const pastData = await pastResponse.json();
+      setPastSessions(pastData);
     } catch (error) {
       console.error('Error fetching group sessions:', error);
     } finally {
@@ -118,9 +55,15 @@ export default function GroupSessionsList() {
 
   const handleJoinSession = async (sessionId: string) => {
     try {
-      // This would be an actual API call in a real implementation
-      // await fetch(`/api/group-sessions/${sessionId}/join`, { method: 'POST' });
-      
+      const response = await fetch(`/api/group-sessions/${sessionId}/join`, {
+        method: 'POST'
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to join session');
+      }
+
       // Update the local state to reflect participation
       setUpcomingSessions(prevSessions =>
         prevSessions.map(session =>
@@ -129,14 +72,21 @@ export default function GroupSessionsList() {
       );
     } catch (error) {
       console.error('Error joining group session:', error);
+      alert(error instanceof Error ? error.message : 'Failed to join session');
     }
   };
 
   const handleLeaveSession = async (sessionId: string) => {
     try {
-      // This would be an actual API call in a real implementation
-      // await fetch(`/api/group-sessions/${sessionId}/join`, { method: 'DELETE' });
-      
+      const response = await fetch(`/api/group-sessions/${sessionId}/join`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to leave session');
+      }
+
       // Update the local state to reflect participation
       setUpcomingSessions(prevSessions =>
         prevSessions.map(session =>
@@ -145,6 +95,7 @@ export default function GroupSessionsList() {
       );
     } catch (error) {
       console.error('Error leaving group session:', error);
+      alert(error instanceof Error ? error.message : 'Failed to leave session');
     }
   };
 

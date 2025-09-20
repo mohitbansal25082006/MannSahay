@@ -24,9 +24,16 @@ interface WaitlistEntry {
   contacted: boolean;
 }
 
+interface Counselor {
+  id: string;
+  name: string;
+  specialties: string[];
+  languages: string[];
+}
+
 export default function WaitlistManager() {
   const [waitlistEntries, setWaitlistEntries] = useState<WaitlistEntry[]>([]);
-  const [counselors, setCounselors] = useState<any[]>([]);
+  const [counselors, setCounselors] = useState<Counselor[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedCounselor, setSelectedCounselor] = useState('');
   const [preferredDay, setPreferredDay] = useState('');
@@ -52,28 +59,13 @@ export default function WaitlistManager() {
   const fetchWaitlistEntries = async () => {
     setLoading(true);
     try {
-      // This would be an actual API call in a real implementation
-      // const response = await fetch('/api/waitlist');
-      // const data = await response.json();
-      
-      // Mock data for demonstration
-      const mockWaitlistEntries: WaitlistEntry[] = [
-        {
-          id: '1',
-          counselor: {
-            name: 'Dr. Priya Sharma',
-            specialties: ['Anxiety', 'Depression'],
-            languages: ['en', 'hi']
-          },
-          preferredDay: 1,
-          preferredTime: '10:00',
-          notes: 'Looking for morning sessions',
-          createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-          contacted: false
-        }
-      ];
-      
-      setWaitlistEntries(mockWaitlistEntries);
+      const response = await fetch('/api/waitlist');
+      if (response.ok) {
+        const data = await response.json();
+        setWaitlistEntries(data);
+      } else {
+        console.error('Failed to fetch waitlist entries');
+      }
     } catch (error) {
       console.error('Error fetching waitlist entries:', error);
     } finally {
@@ -83,18 +75,13 @@ export default function WaitlistManager() {
 
   const fetchCounselors = async () => {
     try {
-      // This would be an actual API call in a real implementation
-      // const response = await fetch('/api/counselors');
-      // const data = await response.json();
-      
-      // Mock data for demonstration
-      const mockCounselors = [
-        { id: '1', name: 'Dr. Priya Sharma', specialties: ['Anxiety', 'Depression'], languages: ['en', 'hi'] },
-        { id: '2', name: 'Dr. Rajesh Kumar', specialties: ['Relationship Issues', 'Career Guidance'], languages: ['en', 'ta'] },
-        { id: '3', name: 'Dr. Ananya Reddy', specialties: ['Trauma', 'Family Issues'], languages: ['en', 'te', 'hi'] }
-      ];
-      
-      setCounselors(mockCounselors);
+      const response = await fetch('/api/counselors');
+      if (response.ok) {
+        const data = await response.json();
+        setCounselors(data);
+      } else {
+        console.error('Failed to fetch counselors');
+      }
     } catch (error) {
       console.error('Error fetching counselors:', error);
     }
@@ -104,17 +91,21 @@ export default function WaitlistManager() {
     if (!selectedCounselor) return;
     
     try {
-      // This would be an actual API call in a real implementation
-      // await fetch('/api/waitlist', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     counselorId: selectedCounselor,
-      //     preferredDay: preferredDay ? parseInt(preferredDay) : undefined,
-      //     preferredTime,
-      //     notes
-      //   })
-      // });
+      const response = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          counselorId: selectedCounselor,
+          preferredDay: preferredDay ? parseInt(preferredDay) : undefined,
+          preferredTime,
+          notes
+        })
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to join waitlist');
+      }
       
       // Reset form
       setSelectedCounselor('');
@@ -127,18 +118,26 @@ export default function WaitlistManager() {
       fetchWaitlistEntries();
     } catch (error) {
       console.error('Error joining waitlist:', error);
+      alert(error instanceof Error ? error.message : 'Failed to join waitlist');
     }
   };
 
   const handleLeaveWaitlist = async (entryId: string) => {
     try {
-      // This would be an actual API call in a real implementation
-      // await fetch(`/api/waitlist/${entryId}`, { method: 'DELETE' });
+      const response = await fetch(`/api/waitlist/${entryId}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to leave waitlist');
+      }
       
       // Update local state
       setWaitlistEntries(prevEntries => prevEntries.filter(entry => entry.id !== entryId));
     } catch (error) {
       console.error('Error leaving waitlist:', error);
+      alert(error instanceof Error ? error.message : 'Failed to leave waitlist');
     }
   };
 
