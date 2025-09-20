@@ -1,6 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
+// E:\mannsahay\prisma\schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -24,6 +22,10 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   
+  // New fields for counselor matching
+  preferredSpecializations String[] @default([])
+  preferredLanguages      String[] @default(["en"])
+  
   accounts     Account[]
   sessions     Session[]
   chats        Chat[]
@@ -36,6 +38,12 @@ model User {
   shares       Share[]
   flags        Flag[]
   notifications Notification[]
+  sessionNotes  SessionNote[]
+  feedbacks     Feedback[]
+  waitlistEntries WaitlistEntry[]
+  moodHistory   MoodEntry[]
+  groupSessions GroupSessionParticipant[]
+  counselorNotes CounselorNote[]
   @@map("users")
 }
 
@@ -119,27 +127,203 @@ model Counselor {
   id           String    @id @default(cuid())
   name         String
   email        String    @unique
+  bio          String?   @db.Text
   specialties  String[]
-  availability Json?
+  languages    String[]  @default(["en"])
   isActive     Boolean   @default(true)
   createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
   
-  bookings Booking[]
+  // New fields for counselor profile
+  profileImage String?
+  experience   Int?      // Years of experience
+  education    String?   @db.Text
+  approach     String?   @db.Text
+  consultationFee Float?  // For future reference
+  maxDailySessions Int?   @default(8)
+  bufferTimeMinutes Int?  @default(15)
+  
+  bookings     Booking[]
+  availability AvailabilitySlot[]
+  groupSessions GroupSession[]
+  counselorNotes CounselorNote[]
+  waitlistEntries WaitlistEntry[]
+  sessionNotes SessionNote[]
   @@map("counselors")
 }
 
-model Booking {
-  id          String        @id @default(cuid())
-  slotTime    DateTime
-  status      BookingStatus @default(PENDING)
-  notes       String?       @db.Text
-  createdAt   DateTime      @default(now())
-  userId      String
-  counselorId String
+model AvailabilitySlot {
+  id           String   @id @default(cuid())
+  counselorId  String
+  dayOfWeek    Int      // 0-6 (Sunday-Saturday)
+  startTime    DateTime // Time part only
+  endTime      DateTime // Time part only
+  isBooked     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
   
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  counselor Counselor @relation(fields: [counselorId], references: [id])
+  counselor    Counselor @relation(fields: [counselorId], references: [id], onDelete: Cascade)
+  booking      Booking?
+  
+  @@unique([counselorId, dayOfWeek, startTime, endTime])
+  @@map("availability_slots")
+}
+
+model Booking {
+  id            String        @id @default(cuid())
+  slotTime      DateTime
+  endTime       DateTime
+  status        BookingStatus @default(PENDING)
+  notes         String?       @db.Text
+  sessionType   SessionType   @default(ONE_ON_ONE)
+  isRecurring   Boolean       @default(false)
+  recurringPattern String?    // daily, weekly, biweekly, monthly
+  recurringEndDate DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  userId        String
+  counselorId   String
+  availabilitySlotId String?  @unique
+  
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  counselor      Counselor        @relation(fields: [counselorId], references: [id])
+  availabilitySlot AvailabilitySlot? @relation(fields: [availabilitySlotId], references: [id])
+  sessionNotes   SessionNote[]
+  feedbacks      Feedback[]
+  reminders      Reminder[]
+  videoSession   VideoSession?
+  moodEntries    MoodEntry[]
   @@map("bookings")
+}
+
+model GroupSession {
+  id           String    @id @default(cuid())
+  title        String
+  description  String?   @db.Text
+  maxParticipants Int    @default(10)
+  sessionDate  DateTime
+  duration     Int       // in minutes
+  counselorId  String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  
+  counselor    Counselor @relation(fields: [counselorId], references: [id])
+  participants GroupSessionParticipant[]
+  @@map("group_sessions")
+}
+
+model GroupSessionParticipant {
+  id           String    @id @default(cuid())
+  groupSessionId String
+  userId       String
+  joinedAt     DateTime  @default(now())
+  
+  groupSession GroupSession @relation(fields: [groupSessionId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([groupSessionId, userId])
+  @@map("group_session_participants")
+}
+
+model WaitlistEntry {
+  id           String    @id @default(cuid())
+  userId       String
+  counselorId  String
+  preferredDay Int?      // 0-6 (Sunday-Saturday)
+  preferredTime String?  // HH:MM format
+  notes        String?   @db.Text
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  contacted    Boolean   @default(false)
+  
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  counselor    Counselor @relation(fields: [counselorId], references: [id])
+  
+  @@unique([userId, counselorId])
+  @@map("waitlist_entries")
+}
+
+model SessionNote {
+  id           String    @id @default(cuid())
+  content      String    @db.Text
+  isPrivate    Boolean   @default(true) // true for counselor eyes only, false for shared with user
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  userId       String
+  counselorId  String
+  bookingId    String
+  
+  user         User      @relation(fields: [userId], references: [id])
+  counselor    Counselor @relation(fields: [counselorId], references: [id])
+  booking      Booking   @relation(fields: [bookingId], references: [id])
+  @@map("session_notes")
+}
+
+model CounselorNote {
+  id           String    @id @default(cuid())
+  content      String    @db.Text
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  counselorId  String
+  userId       String
+  
+  counselor    Counselor @relation(fields: [counselorId], references: [id])
+  user         User      @relation(fields: [userId], references: [id])
+  @@map("counselor_notes")
+}
+
+model MoodEntry {
+  id           String    @id @default(cuid())
+  mood         Int       // 1-10 scale
+  notes        String?   @db.Text
+  createdAt    DateTime  @default(now())
+  userId       String
+  bookingId    String?   // Optional: associated with a session
+  
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  booking      Booking?  @relation(fields: [bookingId], references: [id])
+  @@map("mood_entries")
+}
+
+model Feedback {
+  id           String    @id @default(cuid())
+  rating       Int       // 1-5 stars
+  content      String?   @db.Text
+  createdAt    DateTime  @default(now())
+  userId       String
+  bookingId    String
+  
+  user         User      @relation(fields: [userId], references: [id])
+  booking      Booking   @relation(fields: [bookingId], references: [id])
+  @@map("feedbacks")
+}
+
+model Reminder {
+  id           String        @id @default(cuid())
+  type         ReminderType
+  message      String        @db.Text
+  sendAt       DateTime
+  sent         Boolean       @default(false)
+  sentAt       DateTime?
+  createdAt    DateTime      @default(now())
+  bookingId    String
+  
+  booking      Booking       @relation(fields: [bookingId], references: [id])
+  @@map("reminders")
+}
+
+model VideoSession {
+  id           String    @id @default(cuid())
+  platform     VideoPlatform
+  meetingId    String?
+  meetingUrl   String?
+  hostUrl      String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  bookingId    String    @unique
+  
+  booking      Booking   @relation(fields: [bookingId], references: [id])
+  @@map("video_sessions")
 }
 
 model Post {
@@ -304,6 +488,12 @@ enum BookingStatus {
   CONFIRMED
   CANCELLED
   COMPLETED
+  NO_SHOW
+}
+
+enum SessionType {
+  ONE_ON_ONE
+  GROUP
 }
 
 enum RiskLevel {
@@ -333,4 +523,16 @@ enum AiReviewStatus {
   REVIEWING
   COMPLETED
   ERROR
+}
+
+enum ReminderType {
+  EMAIL
+  SMS
+  PUSH_NOTIFICATION
+}
+
+enum VideoPlatform {
+  ZOOM
+  GOOGLE_MEET
+  MICROSOFT_TEAMS
 }

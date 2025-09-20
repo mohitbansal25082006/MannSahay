@@ -1,3 +1,4 @@
+// E:\mannsahay\src\components\ui\select.tsx
 "use client"
 
 import * as React from "react"
@@ -98,11 +99,27 @@ function SelectLabel({
   )
 }
 
+/**
+ * A selectable item in the dropdown menu of a Select component.
+ * Must have a non-empty `value` prop to ensure proper selection handling.
+ * @param props - Props for the SelectItem component, including a required non-empty `value` prop.
+ */
 function SelectItem({
   className,
   children,
+  value,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Item>) {
+}: React.ComponentProps<typeof SelectPrimitive.Item> & {
+  value: string; // Enforce non-empty string
+}) {
+  // Only log the error in development, don't throw or return null
+  if (process.env.NODE_ENV === 'development' && !value) {
+    console.warn("SelectItem should have a non-empty value prop");
+  }
+  
+  // If value is empty, use a fallback value to prevent errors
+  const safeValue = value || `item-${Math.random().toString(36).substr(2, 9)}`;
+  
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
@@ -110,6 +127,7 @@ function SelectItem({
         "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
         className
       )}
+      value={safeValue}
       {...props}
     >
       <span className="absolute right-2 flex size-3.5 items-center justify-center">

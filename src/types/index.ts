@@ -1,5 +1,4 @@
 // E:\mannsahay\src\types\index.ts
-
 export interface User {
   id: string
   name?: string | null
@@ -8,8 +7,161 @@ export interface User {
   hashedId?: string | null
   language?: string | null
   isAdmin: boolean
+  preferredLanguage?: string | null
+  interests?: string[]
+  preferredSpecializations?: string[]
+  preferredLanguages?: string[]
   createdAt: Date
   updatedAt: Date
+}
+
+export interface Counselor {
+  id: string
+  name: string
+  email: string
+  bio?: string | null
+  specialties: string[]
+  languages: string[]
+  isActive: boolean
+  profileImage?: string | null
+  experience?: number | null
+  education?: string | null
+  approach?: string | null
+  consultationFee?: number | null
+  maxDailySessions?: number | null
+  bufferTimeMinutes?: number | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface AvailabilitySlot {
+  id: string
+  counselorId: string
+  dayOfWeek: number
+  startTime: Date
+  endTime: Date
+  isBooked: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface Booking {
+  id: string
+  slotTime: Date
+  endTime: Date
+  status: BookingStatus
+  notes?: string | null
+  sessionType: SessionType
+  isRecurring: boolean
+  recurringPattern?: string | null
+  recurringEndDate?: Date | null
+  createdAt: Date
+  updatedAt: Date
+  userId: string
+  counselorId: string
+  availabilitySlotId?: string | null
+  counselor?: Counselor
+  sessionNotes?: SessionNote[]
+  feedbacks?: Feedback[]
+  videoSession?: VideoSession
+  reminders?: Reminder[]
+  moodEntries?: MoodEntry[]  // Added this relation
+}
+
+export interface GroupSession {
+  id: string
+  title: string
+  description?: string | null
+  maxParticipants: number
+  sessionDate: Date
+  duration: number
+  counselorId: string
+  createdAt: Date
+  updatedAt: Date
+  counselor?: Counselor
+  participants?: GroupSessionParticipant[]
+}
+
+export interface GroupSessionParticipant {
+  id: string
+  groupSessionId: string
+  userId: string
+  joinedAt: Date
+}
+
+export interface WaitlistEntry {
+  id: string
+  userId: string
+  counselorId: string
+  preferredDay?: number | null
+  preferredTime?: string | null
+  notes?: string | null
+  createdAt: Date
+  updatedAt: Date
+  contacted: boolean
+}
+
+export interface SessionNote {
+  id: string
+  content: string
+  isPrivate: boolean
+  createdAt: Date
+  updatedAt: Date
+  userId: string
+  counselorId: string
+  bookingId: string
+  counselor?: {
+    name: string
+  }
+}
+
+export interface CounselorNote {
+  id: string
+  content: string
+  createdAt: Date
+  updatedAt: Date
+  counselorId: string
+  userId: string
+}
+
+export interface MoodEntry {
+  id: string
+  mood: number
+  notes?: string | null
+  createdAt: Date
+  userId: string
+  bookingId?: string | null
+}
+
+export interface Feedback {
+  id: string
+  rating: number
+  content?: string | null
+  createdAt: Date
+  userId: string
+  bookingId: string
+}
+
+export interface Reminder {
+  id: string
+  type: ReminderType
+  message: string
+  sendAt: Date
+  sent: boolean
+  sentAt?: Date | null
+  createdAt: Date
+  bookingId: string
+}
+
+export interface VideoSession {
+  id: string
+  platform: VideoPlatform
+  meetingId?: string | null
+  meetingUrl?: string | null
+  hostUrl?: string | null
+  createdAt: Date
+  updatedAt: Date
+  bookingId: string
 }
 
 export interface Chat {
@@ -18,18 +170,11 @@ export interface Chat {
   role: string
   timestamp: Date
   userId: string
+  sessionId: string
   language?: string | null
   riskLevel: RiskLevel
-}
-
-export interface Booking {
-  id: string
-  slotTime: Date
-  status: BookingStatus
-  notes?: string | null
-  createdAt: Date
-  userId: string
-  counselorId: string
+  context?: any
+  audioUrl?: string | null
 }
 
 export interface Post {
@@ -39,7 +184,10 @@ export interface Post {
   isAnonymous: boolean
   flagged: boolean
   riskLevel: RiskLevel
+  category?: string | null
+  views: number
   createdAt: Date
+  updatedAt: Date
   authorId: string
   moderationStatus?: ModerationStatus
   moderationReason?: string | null
@@ -49,6 +197,10 @@ export interface Post {
   summary?: string | null
   summaryGeneratedAt?: Date | null
   isHidden?: boolean
+  language: string
+  translatedContent?: any
+  writingSuggestions?: any
+  toneAnalysis?: any
 }
 
 export interface Reply {
@@ -57,6 +209,7 @@ export interface Reply {
   flagged: boolean
   riskLevel: RiskLevel
   createdAt: Date
+  updatedAt: Date
   postId: string
   authorId: string
   parentId?: string | null
@@ -66,6 +219,33 @@ export interface Reply {
   moderatedAt?: Date | null
   moderatedBy?: string | null
   isHidden?: boolean
+  language: string
+  translatedContent?: any
+  writingSuggestions?: any
+  toneAnalysis?: any
+}
+
+export interface Like {
+  id: string
+  createdAt: Date
+  userId: string
+  postId?: string | null
+  replyId?: string | null
+}
+
+export interface Bookmark {
+  id: string
+  createdAt: Date
+  userId: string
+  postId: string
+}
+
+export interface Share {
+  id: string
+  platform: string
+  createdAt: Date
+  userId: string
+  postId: string
 }
 
 export interface Flag {
@@ -82,11 +262,41 @@ export interface Flag {
   aiConfidence?: number | null
 }
 
+export interface Notification {
+  id: string
+  title: string
+  message: string
+  type: string
+  isRead: boolean
+  createdAt: Date
+  userId: string
+  metadata?: any
+}
+
+export interface Resource {
+  id: string
+  title: string
+  description?: string | null
+  content?: string | null
+  type: ResourceType
+  language: string
+  fileUrl?: string | null
+  tags: string[]
+  isPublished: boolean
+  createdAt: Date
+}
+
 export enum BookingStatus {
   PENDING = "PENDING",
   CONFIRMED = "CONFIRMED", 
   CANCELLED = "CANCELLED",
-  COMPLETED = "COMPLETED"
+  COMPLETED = "COMPLETED",
+  NO_SHOW = "NO_SHOW"
+}
+
+export enum SessionType {
+  ONE_ON_ONE = "ONE_ON_ONE",
+  GROUP = "GROUP"
 }
 
 export enum RiskLevel {
@@ -116,6 +326,18 @@ export enum AiReviewStatus {
   REVIEWING = "REVIEWING",
   COMPLETED = "COMPLETED",
   ERROR = "ERROR"
+}
+
+export enum ReminderType {
+  EMAIL = "EMAIL",
+  SMS = "SMS",
+  PUSH_NOTIFICATION = "PUSH_NOTIFICATION"
+}
+
+export enum VideoPlatform {
+  ZOOM = "ZOOM",
+  GOOGLE_MEET = "GOOGLE_MEET",
+  MICROSOFT_TEAMS = "MICROSOFT_TEAMS"
 }
 
 declare module "next-auth" {
