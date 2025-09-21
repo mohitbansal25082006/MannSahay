@@ -30,7 +30,7 @@ import Link from 'next/link';
 export default function ResourceDetailPage() {
   const params = useParams();
   const resourceId = params.id as string;
-  
+
   const [resource, setResource] = useState<Resource | null>(null);
   const [loading, setLoading] = useState(true);
   const [isBookmarked, setIsBookmarked] = useState(false);
@@ -39,9 +39,17 @@ export default function ResourceDetailPage() {
   const [showTranslation, setShowTranslation] = useState(false);
 
   useEffect(() => {
+    if (!resourceId || typeof resourceId !== 'string') {
+      setLoading(false);
+      return;
+    }
+
     const fetchResource = async () => {
       try {
         const response = await fetch(`/api/resources/${resourceId}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const data = await response.json();
         setResource(data);
         setIsBookmarked(data.isBookmarked || false);
@@ -60,6 +68,9 @@ export default function ResourceDetailPage() {
       const response = await fetch(`/api/resources/${resourceId}/bookmark`, {
         method: 'POST',
       });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
       setIsBookmarked(data.bookmarked);
     } catch (error) {
@@ -69,14 +80,17 @@ export default function ResourceDetailPage() {
 
   const handleDownload = async () => {
     try {
-      await fetch(`/api/resources/${resourceId}/download`, {
+      const response = await fetch(`/api/resources/${resourceId}/download`, {
         method: 'POST',
       });
-      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       if (resource?.fileUrl) {
         const link = document.createElement('a');
         link.href = resource.fileUrl;
-        link.download = resource.title;
+        link.download = resource.title || 'download';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -88,16 +102,37 @@ export default function ResourceDetailPage() {
 
   const handleShare = async (platform: string) => {
     try {
-      await fetch(`/api/resources/${resourceId}/share`, {
+      const response = await fetch(`/api/resources/${resourceId}/share`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ platform }),
       });
-      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       if (platform === 'copy_link') {
-        navigator.clipboard.writeText(window.location.href);
+        // Check if document is focused
+        if (document.hasFocus()) {
+          await navigator.clipboard.writeText(window.location.href);
+          // Optionally, add a toast notification here
+          console.log('Link copied to clipboard');
+        } else {
+          // Fallback: Create a temporary textarea to copy the link
+          const textarea = document.createElement('textarea');
+          textarea.value = window.location.href;
+          document.body.appendChild(textarea);
+          textarea.select();
+          try {
+            document.execCommand('copy');
+            console.log('Link copied to clipboard using fallback');
+          } catch (err) {
+            console.error('Failed to copy link:', err);
+          }
+          document.body.removeChild(textarea);
+        }
       }
     } catch (error) {
       console.error('Error sharing resource:', error);

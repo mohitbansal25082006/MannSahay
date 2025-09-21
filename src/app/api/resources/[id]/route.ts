@@ -1,4 +1,3 @@
-// E:\mannsahay\src\app\api\resources\[id]\route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
@@ -6,15 +5,27 @@ import { prisma } from '@/lib/db';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
+    // Await params to handle cases where it's a Promise
+    const params = await ('then' in context.params ? context.params : Promise.resolve(context.params));
+    const resourceId = params.id;
+
+    // Validate resourceId
+    if (!resourceId || typeof resourceId !== 'string') {
+      return NextResponse.json(
+        { error: 'Invalid resource ID' },
+        { status: 400 }
+      );
+    }
+
     const session = await getServerSession(authOptions);
     const userId = session?.user?.id;
-    
+
     const resource = await prisma.resource.findUnique({
       where: {
-        id: params.id,
+        id: resourceId,
         isPublished: true,
       },
       include: {
@@ -45,55 +56,47 @@ export async function GET(
         },
       },
     });
-    
+
     if (!resource) {
       return NextResponse.json(
         { error: 'Resource not found' },
         { status: 404 }
       );
     }
-    
+
     // Record view
-    if (userId) {
-      await prisma.resourceView.create({
-        data: {
-          userId,
-          resourceId: params.id,
-        },
-      });
-    } else {
-      await prisma.resourceView.create({
-        data: {
-          resourceId: params.id,
-        },
-      });
-    }
-    
+    await prisma.resourceView.create({
+      data: {
+        userId: userId ?? undefined,
+        resourceId,
+      },
+    });
+
     // Update view count
     await prisma.resource.update({
-      where: { id: params.id },
+      where: { id: resourceId },
       data: {
         viewCount: {
           increment: 1,
         },
       },
     });
-    
+
     // Calculate average rating and check user interactions
     const avgRating = resource.ratings.length > 0
       ? resource.ratings.reduce((sum, rating) => sum + rating.rating, 0) / resource.ratings.length
       : 0;
-    
+
     let isBookmarked = false;
     let userRating = null;
-    
+
     if (userId) {
       const [bookmark, rating] = await Promise.all([
         prisma.resourceBookmark.findUnique({
           where: {
             userId_resourceId: {
               userId,
-              resourceId: params.id,
+              resourceId,
             },
           },
         }),
@@ -101,16 +104,16 @@ export async function GET(
           where: {
             userId_resourceId: {
               userId,
-              resourceId: params.id,
+              resourceId,
             },
           },
         }),
       ]);
-      
+
       isBookmarked = !!bookmark;
       userRating = rating?.rating || null;
     }
-    
+
     return NextResponse.json({
       ...resource,
       averageRating: parseFloat(avgRating.toFixed(1)),
@@ -128,31 +131,43 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
+    // Await params to handle cases where it's a Promise
+    const params = await ('then' in context.params ? context.params : Promise.resolve(context.params));
+    const resourceId = params.id;
+
+    // Validate resourceId
+    if (!resourceId || typeof resourceId !== 'string') {
+      return NextResponse.json(
+        { error: 'Invalid resource ID' },
+        { status: 400 }
+      );
+    }
+
     const session = await getServerSession(authOptions);
-    
+
     if (!session || !session.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
-    
+
     // Fetch the full user to check if they're an admin
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { isAdmin: true }
     });
-    
+
     if (!user?.isAdmin) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
-    
+
     const data = await request.json();
     const {
       title,
@@ -170,9 +185,9 @@ export async function PUT(
       isPublished,
       isFeatured,
     } = data;
-    
+
     const resource = await prisma.resource.update({
-      where: { id: params.id },
+      where: { id: resourceId },
       data: {
         title,
         description,
@@ -190,7 +205,7 @@ export async function PUT(
         isFeatured,
       },
     });
-    
+
     return NextResponse.json(resource);
   } catch (error) {
     console.error('Error updating resource:', error);
@@ -203,35 +218,47 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
+    // Await params to handle cases where it's a Promise
+    const params = await ('then' in context.params ? context.params : Promise.resolve(context.params));
+    const resourceId = params.id;
+
+    // Validate resourceId
+    if (!resourceId || typeof resourceId !== 'string') {
+      return NextResponse.json(
+        { error: 'Invalid resource ID' },
+        { status: 400 }
+      );
+    }
+
     const session = await getServerSession(authOptions);
-    
+
     if (!session || !session.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
-    
+
     // Fetch the full user to check if they're an admin
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { isAdmin: true }
     });
-    
+
     if (!user?.isAdmin) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
-    
+
     await prisma.resource.delete({
-      where: { id: params.id },
+      where: { id: resourceId },
     });
-    
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting resource:', error);
