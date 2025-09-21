@@ -1,4 +1,3 @@
-// E:\mannsahay\src\components\resources\resource-list.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -170,6 +169,7 @@ export default function ResourceList({
                 key={resource.id}
                 resource={resource}
                 viewMode={viewMode}
+                showAiScore={true}
               />
             ))}
           </div>

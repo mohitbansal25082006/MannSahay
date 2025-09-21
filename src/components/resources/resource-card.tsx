@@ -1,6 +1,7 @@
 // E:\mannsahay\src\components\resources\resource-card.tsx
-'use client';
 
+// Update the card to show AI recommendation scores when applicable
+// Add this import at the top
 import { useState } from 'react';
 import { Resource, ResourceType } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -37,15 +38,21 @@ import {
   Clock,
   Bookmark,
   Share,
+  Sparkles,
+  Brain,
 } from 'lucide-react';
 import Link from 'next/link';
 
 interface ResourceCardProps {
-  resource: Resource;
+  resource: Resource & {
+    aiScore?: number;
+    aiReason?: string;
+  };
   viewMode: 'grid' | 'list';
+  showAiScore?: boolean;
 }
 
-export default function ResourceCard({ resource, viewMode }: ResourceCardProps) {
+export default function ResourceCard({ resource, viewMode, showAiScore = false }: ResourceCardProps) {
   const [isBookmarked, setIsBookmarked] = useState(resource.isBookmarked || false);
   const [userRating, setUserRating] = useState(resource.userRating || null);
   const [showPlayer, setShowPlayer] = useState(false);
@@ -82,6 +89,22 @@ export default function ResourceCard({ resource, viewMode }: ResourceCardProps) 
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
+  const getLanguageName = (code: string) => {
+    const languages: Record<string, string> = {
+      en: 'English',
+      hi: 'Hindi',
+      ta: 'Tamil',
+      bn: 'Bengali',
+      te: 'Telugu',
+      mr: 'Marathi',
+      gu: 'Gujarati',
+      kn: 'Kannada',
+      ml: 'Malayalam',
+      pa: 'Punjabi',
+    };
+    return languages[code] || code;
   };
 
   const handleBookmark = async () => {
@@ -151,22 +174,6 @@ export default function ResourceCard({ resource, viewMode }: ResourceCardProps) 
     }
   };
 
-  const getLanguageName = (code: string) => {
-    const languages: Record<string, string> = {
-      en: 'English',
-      hi: 'Hindi',
-      ta: 'Tamil',
-      bn: 'Bengali',
-      te: 'Telugu',
-      mr: 'Marathi',
-      gu: 'Gujarati',
-      kn: 'Kannada',
-      ml: 'Malayalam',
-      pa: 'Punjabi',
-    };
-    return languages[code] || code;
-  };
-
   const cardContent = (
     <>
       <CardHeader className="pb-3">
@@ -178,11 +185,25 @@ export default function ResourceCard({ resource, viewMode }: ResourceCardProps) 
             <Badge variant="secondary" className="text-xs">
               {resource.type.replace('_', ' ')}
             </Badge>
+            <Badge variant="outline" className="text-xs">
+              {getLanguageName(resource.language)}
+            </Badge>
+            {showAiScore && resource.aiScore && resource.aiScore > 0.7 && (
+              <Badge variant="default" className="text-xs bg-purple-100 text-purple-800">
+                <Brain className="h-3 w-3 mr-1" />
+                Strong Match
+              </Badge>
+            )}
           </div>
           
-          <Badge variant="outline" className="text-xs">
-            {getLanguageName(resource.language)}
-          </Badge>
+          {showAiScore && resource.aiScore && (
+            <div className="flex items-center gap-1">
+              <Sparkles className="h-4 w-4 text-purple-500" />
+              <span className="text-xs font-medium text-purple-600">
+                {(resource.aiScore * 100).toFixed(0)}% match
+              </span>
+            </div>
+          )}
         </div>
         
         <div className="space-y-2">

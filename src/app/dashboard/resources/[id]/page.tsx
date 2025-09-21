@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Resource, ResourceType } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,36 +23,42 @@ import {
   FileText,
   Calendar,
   User,
-  Loader2
+  Loader2,
+  Sparkles,
+  RefreshCw
 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function ResourceDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const resourceId = params.id as string;
-
+  
   const [resource, setResource] = useState<Resource | null>(null);
   const [loading, setLoading] = useState(true);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [translatedContent, setTranslatedContent] = useState<string>('');
   const [translatedDescription, setTranslatedDescription] = useState<string>('');
   const [showTranslation, setShowTranslation] = useState(false);
+  const [summary, setSummary] = useState<string>('');
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryCached, setSummaryCached] = useState(false);
+  const [activeTab, setActiveTab] = useState('content'); // State to track active tab
 
   useEffect(() => {
-    if (!resourceId || typeof resourceId !== 'string') {
-      setLoading(false);
-      return;
-    }
-
     const fetchResource = async () => {
       try {
+        setLoading(true);
         const response = await fetch(`/api/resources/${resourceId}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
         const data = await response.json();
         setResource(data);
         setIsBookmarked(data.isBookmarked || false);
+        
+        // If summary exists, set it
+        if (data.summary) {
+          setSummary(data.summary);
+          setSummaryCached(data.cached || false);
+        }
       } catch (error) {
         console.error('Error fetching resource:', error);
       } finally {
@@ -63,14 +69,38 @@ export default function ResourceDetailPage() {
     fetchResource();
   }, [resourceId]);
 
+  const generateSummary = async () => {
+    if (!resource) return;
+    
+    try {
+      setSummaryLoading(true);
+      const response = await fetch(`/api/resources/${resourceId}/summarize`, {
+        method: 'POST',
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSummary(data.summary);
+        setSummaryCached(data.cached || false);
+        
+        // Update the resource in state
+        setResource(prev => prev ? { ...prev, summary: data.summary } : null);
+      } else {
+        const error = await response.json();
+        console.error('Error generating summary:', error);
+      }
+    } catch (error) {
+      console.error('Error generating summary:', error);
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
+
   const handleBookmark = async () => {
     try {
       const response = await fetch(`/api/resources/${resourceId}/bookmark`, {
         method: 'POST',
       });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
       const data = await response.json();
       setIsBookmarked(data.bookmarked);
     } catch (error) {
@@ -80,17 +110,14 @@ export default function ResourceDetailPage() {
 
   const handleDownload = async () => {
     try {
-      const response = await fetch(`/api/resources/${resourceId}/download`, {
+      await fetch(`/api/resources/${resourceId}/download`, {
         method: 'POST',
       });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
+      
       if (resource?.fileUrl) {
         const link = document.createElement('a');
         link.href = resource.fileUrl;
-        link.download = resource.title || 'download';
+        link.download = resource.title;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -102,37 +129,16 @@ export default function ResourceDetailPage() {
 
   const handleShare = async (platform: string) => {
     try {
-      const response = await fetch(`/api/resources/${resourceId}/share`, {
+      await fetch(`/api/resources/${resourceId}/share`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ platform }),
       });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
+      
       if (platform === 'copy_link') {
-        // Check if document is focused
-        if (document.hasFocus()) {
-          await navigator.clipboard.writeText(window.location.href);
-          // Optionally, add a toast notification here
-          console.log('Link copied to clipboard');
-        } else {
-          // Fallback: Create a temporary textarea to copy the link
-          const textarea = document.createElement('textarea');
-          textarea.value = window.location.href;
-          document.body.appendChild(textarea);
-          textarea.select();
-          try {
-            document.execCommand('copy');
-            console.log('Link copied to clipboard using fallback');
-          } catch (err) {
-            console.error('Failed to copy link:', err);
-          }
-          document.body.removeChild(textarea);
-        }
+        navigator.clipboard.writeText(window.location.href);
       }
     } catch (error) {
       console.error('Error sharing resource:', error);
@@ -291,11 +297,11 @@ export default function ResourceDetailPage() {
               </CardHeader>
               
               <CardContent>
-                <Tabs defaultValue="content" className="w-full">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="content">Content</TabsTrigger>
                     <TabsTrigger value="details">Details</TabsTrigger>
-                    <TabsTrigger value="summary">Summary</TabsTrigger>
+                    <TabsTrigger value="summary">AI Summary</TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="content" className="mt-4">
@@ -434,16 +440,59 @@ export default function ResourceDetailPage() {
                   </TabsContent>
                   
                   <TabsContent value="summary" className="mt-4">
-                    {resource.summary ? (
-                      <div className="prose max-w-none">
-                        <p>{resource.summary}</p>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <h3 className="text-lg font-semibold flex items-center gap-2">
+                          <Sparkles className="h-5 w-5 text-yellow-500" />
+                          AI-Generated Summary
+                        </h3>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={generateSummary}
+                          disabled={summaryLoading}
+                          className="flex items-center gap-2"
+                        >
+                          {summaryLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <RefreshCw className="h-4 w-4" />
+                          )}
+                          {summaryCached ? 'Regenerate' : 'Generate'}
+                        </Button>
                       </div>
-                    ) : (
-                      <div className="text-center py-12">
-                        <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-500">No summary available for this resource.</p>
-                      </div>
-                    )}
+                      
+                      {summaryLoading ? (
+                        <div className="flex justify-center items-center py-12">
+                          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                        </div>
+                      ) : summary ? (
+                        <div className="bg-blue-50 rounded-lg p-6 border border-blue-100">
+                          <div className="prose max-w-none">
+                            <p className="text-gray-700">{summary}</p>
+                          </div>
+                          {summaryCached && resource.summaryGeneratedAt && (
+                            <div className="mt-4 text-sm text-gray-500 flex items-center gap-1">
+                              <Sparkles className="h-3 w-3" />
+                              Cached summary generated on {new Date(resource.summaryGeneratedAt).toLocaleDateString()}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
+                          <Sparkles className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <h3 className="text-lg font-medium text-gray-900 mb-2">
+                            No Summary Available
+                          </h3>
+                          <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                            Generate an AI-powered summary of this resource to get key insights and takeaways at a glance.
+                          </p>
+                          <Button onClick={generateSummary}>
+                            Generate Summary
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </TabsContent>
                 </Tabs>
               </CardContent>
@@ -513,13 +562,26 @@ export default function ResourceDetailPage() {
               </CardContent>
             </Card>
             
-            {resource.summary && (
+            {summary && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Summary</CardTitle>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-yellow-500" />
+                    Summary Preview
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-gray-600">{resource.summary}</p>
+                  <p className="text-sm text-gray-600 line-clamp-4">
+                    {summary}
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2 w-full"
+                    onClick={() => setActiveTab('summary')} // Switch to summary tab
+                  >
+                    View Full Summary
+                  </Button>
                 </CardContent>
               </Card>
             )}

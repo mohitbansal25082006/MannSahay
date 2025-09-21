@@ -6,12 +6,12 @@ import { Resource } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { RefreshCw, Sparkles } from 'lucide-react';
-import ResourceCard from './resource-card';
+import { RefreshCw, Sparkles, TrendingUp, Brain, Heart, BookOpen } from 'lucide-react';
 
 export default function Recommendations() {
   const [recommendations, setRecommendations] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
+  const [aiReasons, setAiReasons] = useState<Record<string, string>>({});
 
   const fetchRecommendations = async () => {
     try {
@@ -19,6 +19,15 @@ export default function Recommendations() {
       const response = await fetch('/api/resources/recommendations');
       const data = await response.json();
       setRecommendations(data);
+      
+      // Extract AI reasons for each recommendation
+      const reasons: Record<string, string> = {};
+      data.forEach((rec: any) => {
+        if (rec.aiReason) {
+          reasons[rec.id] = rec.aiReason;
+        }
+      });
+      setAiReasons(reasons);
     } catch (error) {
       console.error('Error fetching recommendations:', error);
     } finally {
@@ -35,8 +44,8 @@ export default function Recommendations() {
       <CardHeader className="pb-3">
         <div className="flex justify-between items-center">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Sparkles className="h-5 w-5 text-yellow-500" />
-            Recommended for You
+            <Brain className="h-5 w-5 text-purple-600" />
+            AI-Powered Recommendations
           </CardTitle>
           <Button
             variant="ghost"
@@ -64,8 +73,8 @@ export default function Recommendations() {
           </div>
         ) : recommendations.length === 0 ? (
           <div className="text-center py-8">
-            <div className="text-gray-400 mb-2">
-              <Sparkles className="h-8 w-8 mx-auto" />
+            <div className="text-gray-400 mb-4">
+              <Brain className="h-12 w-12 mx-auto" />
             </div>
             <p className="text-gray-500 text-sm">
               No recommendations yet. Explore some resources to get personalized suggestions!
@@ -74,7 +83,7 @@ export default function Recommendations() {
         ) : (
           <div className="space-y-4">
             {recommendations.map((resource) => (
-              <div key={resource.id} className="border rounded-lg p-3 hover:bg-gray-50 transition-colors">
+              <div key={resource.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
                 <div className="flex justify-between items-start mb-2">
                   <h4 className="font-medium text-sm line-clamp-2 flex-1">
                     {resource.title}
@@ -83,9 +92,20 @@ export default function Recommendations() {
                     {resource.type.replace('_', ' ')}
                   </Badge>
                 </div>
+                
                 <p className="text-xs text-gray-600 line-clamp-2 mb-3">
                   {resource.description}
                 </p>
+                
+                {aiReasons[resource.id] && (
+                  <div className="flex items-start gap-1 mb-3">
+                    <Sparkles className="h-3 w-3 text-purple-500 mt-0.5 flex-shrink-0" />
+                    <p className="text-xs text-purple-600">
+                      {aiReasons[resource.id]}
+                    </p>
+                  </div>
+                )}
+                
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-1">
                     {resource.averageRating && (
@@ -97,6 +117,7 @@ export default function Recommendations() {
                       </>
                     )}
                   </div>
+                  
                   <Button
                     variant="ghost"
                     size="sm"
@@ -112,6 +133,13 @@ export default function Recommendations() {
             ))}
           </div>
         )}
+        
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <Brain className="h-4 w-4" />
+            <span>Powered by AI analysis of your preferences and behavior</span>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

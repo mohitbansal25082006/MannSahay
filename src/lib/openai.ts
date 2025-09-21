@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { ResourceType } from '@/types';
 
 export const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -201,7 +202,7 @@ export const hindiSystemPrompt = `आप मनसहाय हैं, भार
 5. प्रोत्साहन और अगले कदम (1-2 वाक्य)
 
 संकट प्रतिक्रिया प्रोटोकॉल:
-- उच्च जोखिम: तत्काल सत्यापन + जरूरी पेशेवर मदद प्रोत्साहन + संकट हेल्पलाइन नंबर
+- उच्च जोखिम: तत्कालीन सत्यापन + जरूरी पेशेवर मदद प्रोत्साहन + संकट हेल्पलाइन नंबर
 - मध्यम जोखिम: गहरी सहानुभूति + सामना करने की रणनीतियाँ + कोमल परामर्श सुझाव
 - कम जोखिम: सहायक मार्गदर्शन + व्यावहारिक तकनीकें + जांच प्रोत्साहन
 
@@ -237,9 +238,9 @@ export const englishContextualStarters = {
 
 // Conversation starters based on context - Hindi only
 export const hindiContextualStarters = {
-  academic: "लगता है पढ़ाई का दबाव तुम्हें बहुत परेशान कर रहा है। बहुत से भारतीय छात्र इसका सामना करते हैं - तुम अकेले नहीं हो।",
+  academic: "लगता है पढ़ाई का दबाव तुम्हें बहुत परेशान कर रहा है बहुत से भारतीय छात्र इसका सामना करते है तुम अकेले नहीं हो।",
   social: "रिश्ते और सामाजिक स्थितियां वाकई चुनौतीपूर्ण हो सकती हैं, खासकर भारतीय परिवारों और दोस्तों के दबाव के साथ।",
-  positive: "तुम्हारी तरफ से कुछ सकारात्मक सुनकर बहुत खुशी हुई! जब हम अच्छे पलों को पहचान सकते हैं तो यह बहुत अच्छी बात है।"
+  positive: "तुम्हारी तरफ से कुछ सकारात्मक सुनकर बहुत खुशी हुई। जब हम अच्छे पलों को पहचान सकते हैं तो यह बहुत अच्छी बात है।"
 };
 
 // Helper function to get contextual starter based on language
@@ -328,7 +329,7 @@ export async function generateSpeech(
   }
 }
 
-// Generate contextual response with GPT-4
+// Generate contextual response with GPT-4 - FIXED VERSION FOR HINDI
 export async function generateContextualResponse(
   message: string,
   selectedLanguage: 'en' | 'hi' = 'en',
@@ -352,19 +353,19 @@ export async function generateContextualResponse(
     
     if (context.isAcademicStress) {
       enhancedPrompt += selectedLanguage === 'hi' 
-        ? '\n\nवर्तमान संदर्भ: उपयोगकर्ता शैक्षणिक तनाव का अनुभव कर रहा है। अध्ययन-जीवन संतुलन, परीक्षा की चिंता और माता-पिता के दबाव से निपटने की रणनीतियों पर ध्यान दें।'
+        ? '\n\nवर्तमान संदर्भ: उपयोगकर्ता शैक्षणिक तनाव का अनुभव कर रहा है अध्ययन-जीवन संतुलन, परीक्षा की चिंता और माता-पिता के दबाव से निपटने की रणनीतियों पर ध्यान दें।'
         : '\n\nCURRENT CONTEXT: User is experiencing academic stress. Focus on study-life balance, exam anxiety, and parental pressure coping strategies.';
     }
     
     if (context.isSocialIssue) {
       enhancedPrompt += selectedLanguage === 'hi'
-        ? '\n\nवर्तमान संदर्भ: उपयोगकर्ता सामाजिक/संबंध संबंधी मुद्दों से निपट रहा है। भारतीय पारिवारिक गतिशीलता, मित्रता की चुनौतियों या रोमांटिक चिंताओं को संवेदनशीलता से संबोधित करें।'
+        ? '\n\nवर्तमान संदर्भ: उपयोगकर्ता सामाजिक/संबंध संबंधी मुद्दों से निपट रहा है भारतीय पारिवारिक गतिशीलता, मित्रता की चुनौतियों या रोमांटिक चिंताओं को संवेदनशीलता से संबोधित करें।'
         : '\n\nCURRENT CONTEXT: User is dealing with social/relationship issues. Address Indian family dynamics, friendship challenges, or romantic concerns sensitively.';
     }
     
     if (riskLevel === 'HIGH') {
       enhancedPrompt += selectedLanguage === 'hi'
-        ? '\n\nसंकट चेतावनी: उपयोगकर्ता में उच्च-जोखिम संकेतक दिखाई देते हैं। तत्काल भावनात्मक सहायता प्रदान करें, भावनाओं को मान्य करें और पेशेवर मदद को दृढ़ता से प्रोत्साहित करें। भारतीय संकट हेल्पलाइन शामिल करें।'
+        ? '\n\nसंकट चेतावनी: उपयोगकर्ता में उच्च-जोखिम संकेटक दिखाई देते हैं तत्कालीन भावनात्मक सहायता प्रदान करें, भावनाओं को मान्य करें और पेशेवर मदद को दृढ़ता से प्रोत्साहित करें भारतीय संकट हेल्पलाइन शामिल करें।'
         : '\n\nCRISIS ALERT: User shows high-risk indicators. Provide immediate emotional support, validate feelings, and strongly encourage professional help. Include Indian crisis helplines.';
     }
     
@@ -394,12 +395,12 @@ export async function generateContextualResponse(
       }
     ];
     
-    // Use gpt-4o model which handles Hindi better and increase max_tokens for complete responses
+    // FIXED: Use gpt-4o model which handles Hindi better and increase max_tokens for complete responses
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4o', // Changed from gpt-4-turbo-preview to gpt-4o for better Hindi handling
       messages: messages,
       temperature: 0.7,
-      max_tokens: 1000,
+      max_tokens: 1000, // Increased from 600 to 1000 to ensure complete Hindi responses
       presence_penalty: 0.1,
       frequency_penalty: 0.1,
     });
@@ -409,7 +410,7 @@ export async function generateContextualResponse(
     // If content is empty or too short, provide a fallback response
     if (!content || content.length < 20) {
       content = selectedLanguage === 'hi' 
-        ? 'मैं समझता हूं कि आप संपर्क कर रहे हैं। मुझे आपके साथ इसे काम करने में मदद करने दें। कृपया अपनी भावनाओं को विस्तार से साझा करें ताकि मैं आपको बेहतर समर्थन दे सकूं।'
+        ? 'मैं समझता हूं कि आप संपर्क कर रहे हैं मुझे आपके साथ इसे काम करने में मदद करने दें कृपया अपनी भावनाओं को विस्तार से साझा करें ताकि मैं आपको बेहतर समर्थन दे सकूं।'
         : 'I understand you\'re reaching out. Let me help you work through this. Please share more details about your feelings so I can provide better support.';
     }
     
@@ -430,34 +431,145 @@ export async function generateContextualResponse(
     
     // Provide a meaningful fallback response based on language
     return selectedLanguage === 'hi'
-      ? 'मुझे खेद है कि मैं आपकी बातचीत को ठीक से संसाधित नहीं कर पा रहा हूं। कृपया अपना संदेश फिर से भेजें या थोड़ा इंतजार करें। आपकी भावनाओं को समझना मेरे लिए महत्वपूर्ण है।'
+      ? 'मुझे खेद है कि मैं आपकी बातचीत को ठीक से संसाधित नहीं कर पा रहा हूं। कृपया अपना संदेश फिर से भेजें या थोड़ा इंतजार करें आपकी भावनाओं को समझना मेरे लिए महत्वपूर्ण है।'
       : 'I apologize that I\'m having trouble processing your conversation properly. Please resend your message or wait a moment. Understanding your feelings is important to me.';
+  }
+}
+
+// Advanced function to generate personalized recommendations
+export async function generatePersonalizedRecommendations(
+  userId: string,
+  userPreferences: {
+    interests?: string[];
+    preferredLanguage?: string;
+    preferredSpecializations?: string[];
+    moodHistory?: Array<{ mood: number; createdAt: Date }>;
+    bookmarkedCategories?: string[];
+    recentActivity?: string[];
+  },
+  availableResources: Array<{
+    id: string;
+    title: string;
+    description?: string;
+    type: string;
+    categories: string[];
+    tags: string[];
+    language: string;
+    averageRating?: number;
+    viewCount: number;
+  }>
+): Promise<Array<{
+    resourceId: string;
+    score: number;
+    reason: string;
+  }>> {
+  try {
+    // Calculate user's average mood
+    const avgMood = userPreferences.moodHistory && userPreferences.moodHistory.length > 0
+      ? userPreferences.moodHistory.reduce((sum, entry) => sum + entry.mood, 0) / userPreferences.moodHistory.length
+      : 5;
+    
+    // Create a user profile for the AI
+    const userProfile = {
+      interests: userPreferences.interests || [],
+      specializations: userPreferences.preferredSpecializations || [],
+      language: userPreferences.preferredLanguage || 'en',
+      moodLevel: avgMood < 4 ? 'low' : avgMood > 7 ? 'high' : 'medium',
+      bookmarkedCategories: userPreferences.bookmarkedCategories || [],
+      recentActivity: userPreferences.recentActivity || []
+    };
+    
+    // Create a prompt for the AI to generate recommendations
+    const prompt = `You are an expert recommendation system for a mental health platform. Based on the user profile and available resources, please provide personalized recommendations.
+
+User Profile:
+- Interests: ${userProfile.interests.join(', ') || 'None specified'}
+- Specializations of interest: ${userProfile.specializations.join(', ') || 'None specified'}
+- Preferred language: ${userProfile.language}
+- Current mood level: ${userProfile.moodLevel}
+- Frequently bookmarked categories: ${userProfile.bookmarkedCategories.join(', ') || 'None'}
+- Recent activity: ${userProfile.recentActivity.join(', ') || 'None'}
+
+Available Resources:
+${availableResources.map(resource => 
+  `- ID: ${resource.id}, Title: ${resource.title}, Type: ${resource.type}, Categories: ${resource.categories.join(', ')}, Tags: ${resource.tags.join(', ')}, Language: ${resource.language}, Rating: ${resource.averageRating || 'N/A'}, Views: ${resource.viewCount}`
+).join('\n')}
+
+Please analyze the user profile and available resources to provide personalized recommendations. For each recommendation, provide:
+1. Resource ID
+2. A score from 0-1 indicating how well it matches the user's needs
+3. A brief explanation of why this resource is recommended
+
+Format your response as a JSON array with objects containing resourceId, score, and reason properties.`;
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert recommendation system for mental health resources. Provide personalized recommendations based on user profiles and preferences.',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.3,
+      max_tokens: 1500,
+      response_format: { type: 'json_object' },
+    });
+    
+    const content = response.choices[0]?.message?.content || '{}';
+    const recommendations = JSON.parse(content);
+    
+    // Ensure the response is in the expected format
+    if (Array.isArray(recommendations)) {
+      return recommendations.map(rec => ({
+        resourceId: rec.resourceId,
+        score: parseFloat(rec.score) || 0,
+        reason: rec.reason || 'Recommended based on your preferences'
+      }));
+    } else if (recommendations.recommendations && Array.isArray(recommendations.recommendations)) {
+      return recommendations.recommendations.map((rec: any) => ({
+        resourceId: rec.resourceId,
+        score: parseFloat(rec.score) || 0,
+        reason: rec.reason || 'Recommended based on your preferences'
+      }));
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('Error generating personalized recommendations:', error);
+    return [];
   }
 }
 
 // Function to summarize resource content
 export async function summarizeResourceContent(
   content: string,
-  type: string
+  type: ResourceType,
+  title?: string,
+  language: string = 'en'
 ): Promise<string> {
   try {
+    // Create prompt based on content type
     let prompt = '';
     
     switch (type) {
       case 'ARTICLE':
-        prompt = `Summarize the following article in 3-5 bullet points, focusing on the key takeaways and main ideas:\n\n${content}`;
+        prompt = `Summarize the following article in 3-5 bullet points, focusing on the key takeaways and main ideas:\n\n${title ? `Title: ${title}\n\n` : ''}Content: ${content}`;
         break;
       case 'VIDEO':
-        prompt = `Summarize the key points from this video transcript in 3-5 bullet points:\n\n${content}`;
+        prompt = `Summarize the key points from this video transcript in 3-5 bullet points:\n\n${title ? `Title: ${title}\n\n` : ''}Content: ${content}`;
         break;
       case 'AUDIO':
-        prompt = `Summarize the main insights from this audio content in 3-5 bullet points:\n\n${content}`;
+        prompt = `Summarize the main insights from this audio content in 3-5 bullet points:\n\n${title ? `Title: ${title}\n\n` : ''}Content: ${content}`;
         break;
       case 'PDF':
-        prompt = `Extract and summarize the key information from this document in 3-5 bullet points:\n\n${content}`;
+        prompt = `Extract and summarize the key information from this document in 3-5 bullet points:\n\n${title ? `Title: ${title}\n\n` : ''}Content: ${content}`;
         break;
       default:
-        prompt = `Summarize the following content in 3-5 bullet points:\n\n${content}`;
+        prompt = `Summarize the following content in 3-5 bullet points:\n\n${title ? `Title: ${title}\n\n` : ''}Content: ${content}`;
     }
     
     const response = await openai.chat.completions.create({
@@ -527,5 +639,32 @@ export async function translateText(
   } catch (error) {
     console.error('Error translating text:', error);
     return text;
+  }
+}
+
+// Function to extract text from different file types
+export async function extractTextFromFile(fileUrl: string, fileType: string): Promise<string> {
+  try {
+    // This is a placeholder implementation
+    // In a real implementation, you would use appropriate libraries to extract text from different file types
+    
+    switch (fileType) {
+      case 'PDF':
+        // Use a PDF parsing library like pdf-parse
+        return 'PDF text extraction would be implemented here';
+      case 'VIDEO':
+        // Use video transcription services
+        return 'Video transcription would be implemented here';
+      case 'AUDIO':
+        // Use audio transcription services
+        return 'Audio transcription would be implemented here';
+      default:
+        // For text-based files, you could fetch the content directly
+        const response = await fetch(fileUrl);
+        return await response.text();
+    }
+  } catch (error) {
+    console.error('Error extracting text from file:', error);
+    return '';
   }
 }

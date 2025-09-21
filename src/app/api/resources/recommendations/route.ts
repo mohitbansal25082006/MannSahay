@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { openai } from '@/lib/openai';
+import { ResourceType } from '@/types';
 
 export async function GET(request: NextRequest) {
   try {
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
           orderBy: {
             createdAt: 'desc',
           },
-          take: 5,
+          take: 10, // Get more mood history for better analysis
         },
         resourceBookmarks: {
           include: {
@@ -91,6 +91,7 @@ export async function GET(request: NextRequest) {
             ratings: true,
             bookmarks: true,
             downloads: true,
+            views: true,
           },
         },
         ratings: {
@@ -103,91 +104,89 @@ export async function GET(request: NextRequest) {
     });
     
     // Score each resource based on user preferences
-    const scoredResources = await Promise.all(
-      resources.map(async (resource) => {
-        let score = 0;
-        const reasons = [];
-        
-        // Calculate average rating
-        const avgRating = resource.ratings.length > 0
-          ? resource.ratings.reduce((sum, rating) => sum + rating.rating, 0) / resource.ratings.length
-          : 0;
-        
-        // Base score from rating
-        score += avgRating * 0.2;
-        
-        // Interest match
-        const interestMatches = resource.categories.filter((category) =>
-          userInterests.includes(category)
-        ).length;
-        if (interestMatches > 0) {
-          score += interestMatches * 0.3;
-          reasons.push(`Matches your interests: ${resource.categories.join(', ')}`);
+    const scoredResources = resources.map((resource) => {
+      let score = 0;
+      const reasons = [];
+      
+      // Calculate average rating
+      const avgRating = resource.ratings.length > 0
+        ? resource.ratings.reduce((sum, rating) => sum + rating.rating, 0) / resource.ratings.length
+        : 0;
+      
+      // Base score from rating
+      score += avgRating * 0.2;
+      
+      // Interest match
+      const interestMatches = resource.categories.filter((category) =>
+        userInterests.includes(category)
+      ).length;
+      if (interestMatches > 0) {
+        score += interestMatches * 0.3;
+        reasons.push(`Matches your interests: ${resource.categories.join(', ')}`);
+      }
+      
+      // Specialization match
+      const specializationMatches = resource.categories.filter((category) =>
+        userSpecializations.includes(category)
+      ).length;
+      if (specializationMatches > 0) {
+        score += specializationMatches * 0.4;
+        reasons.push(`Matches your specializations: ${resource.categories.join(', ')}`);
+      }
+      
+      // Bookmarked category/tag match
+      const categoryMatches = resource.categories.filter((category) =>
+        bookmarkedCategories.includes(category)
+      ).length;
+      const tagMatches = resource.tags.filter((tag) =>
+        bookmarkedTags.includes(tag)
+      ).length;
+      
+      if (categoryMatches > 0 || tagMatches > 0) {
+        score += (categoryMatches + tagMatches) * 0.25;
+        reasons.push(`Similar to your bookmarked resources`);
+      }
+      
+      // Mood-based scoring
+      if (avgMood < 4) {
+        // User is feeling down, recommend uplifting content
+        if (resource.categories.includes('wellness') || 
+            resource.categories.includes('mindfulness') ||
+            resource.type === 'MUSIC' ||
+            resource.type === 'MEDITATION') {
+          score += 0.3;
+          reasons.push('Content for emotional wellness');
         }
-        
-        // Specialization match
-        const specializationMatches = resource.categories.filter((category) =>
-          userSpecializations.includes(category)
-        ).length;
-        if (specializationMatches > 0) {
-          score += specializationMatches * 0.4;
-          reasons.push(`Matches your specializations: ${resource.categories.join(', ')}`);
+      } else if (avgMood > 7) {
+        // User is feeling good, recommend growth content
+        if (resource.categories.includes('personal-growth') || 
+            resource.categories.includes('skill-building')) {
+          score += 0.2;
+          reasons.push('Content for personal growth');
         }
-        
-        // Bookmarked category/tag match
-        const categoryMatches = resource.categories.filter((category) =>
-          bookmarkedCategories.includes(category)
-        ).length;
-        const tagMatches = resource.tags.filter((tag) =>
-          bookmarkedTags.includes(tag)
-        ).length;
-        
-        if (categoryMatches > 0 || tagMatches > 0) {
-          score += (categoryMatches + tagMatches) * 0.25;
-          reasons.push(`Similar to your bookmarked resources`);
-        }
-        
-        // Mood-based scoring
-        if (avgMood < 4) {
-          // User is feeling down, recommend uplifting content
-          if (resource.categories.includes('wellness') || 
-              resource.categories.includes('mindfulness') ||
-              resource.type === 'MUSIC' ||
-              resource.type === 'MEDITATION') {
-            score += 0.3;
-            reasons.push('Content for emotional wellness');
-          }
-        } else if (avgMood > 7) {
-          // User is feeling good, recommend growth content
-          if (resource.categories.includes('personal-growth') || 
-              resource.categories.includes('skill-building')) {
-            score += 0.2;
-            reasons.push('Content for personal growth');
-          }
-        }
-        
-        // Popularity boost
-        const popularityScore = (
-          resource._count.bookmarks * 0.01 +
-          resource._count.downloads * 0.005 +
-          resource._count.ratings * 0.02
-        );
-        score += popularityScore;
-        
-        // Featured boost
-        if (resource.isFeatured) {
-          score += 0.1;
-          reasons.push('Featured content');
-        }
-        
-        return {
-          ...resource,
-          score,
-          reasons: reasons.length > 0 ? reasons.join(', ') : 'General recommendation',
-          averageRating: parseFloat(avgRating.toFixed(1)),
-        };
-      })
-    );
+      }
+      
+      // Popularity boost
+      const popularityScore = (
+        resource._count.bookmarks * 0.01 +
+        resource._count.downloads * 0.005 +
+        resource._count.ratings * 0.02
+      );
+      score += popularityScore;
+      
+      // Featured boost
+      if (resource.isFeatured) {
+        score += 0.1;
+        reasons.push('Featured content');
+      }
+      
+      return {
+        ...resource,
+        score,
+        reasons: reasons.length > 0 ? reasons.join(', ') : 'General recommendation',
+        averageRating: parseFloat(avgRating.toFixed(1)),
+      };
+    });
     
     // Sort by score and take top recommendations
     const recommendations = scoredResources
@@ -208,7 +207,20 @@ export async function GET(request: NextRequest) {
       })),
     });
     
-    return NextResponse.json(recommendations);
+    // Format the response to match expected interface
+    const formattedRecommendations = recommendations.map((resource) => ({
+      id: resource.id,
+      title: resource.title,
+      description: resource.description || undefined,
+      type: resource.type,
+      categories: resource.categories,
+      tags: resource.tags,
+      language: resource.language,
+      averageRating: resource.averageRating,
+      viewCount: resource.viewCount,
+    }));
+    
+    return NextResponse.json(formattedRecommendations);
   } catch (error) {
     console.error('Error generating recommendations:', error);
     return NextResponse.json(
