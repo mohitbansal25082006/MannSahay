@@ -1,4 +1,3 @@
-// E:\mannsahay\src\components\resources\ai-assistant.tsx
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -44,7 +43,6 @@ export default function AIAssistant({
     scrollToBottom();
   }, [messages]);
 
-  // Initialize with a welcome message
   useEffect(() => {
     setMessages([
       {
@@ -82,7 +80,7 @@ export default function AIAssistant({
           resourceId,
           resourceTitle,
           resourceContent,
-          conversationHistory: messages.slice(-5), // Send last 5 messages for context
+          conversationHistory: messages.slice(-5),
         }),
       });
 
@@ -129,24 +127,17 @@ export default function AIAssistant({
     recognition.interimResults = false;
     recognition.lang = 'en-US';
 
-    recognition.onstart = () => {
-      setIsListening(true);
-    };
-
+    recognition.onstart = () => setIsListening(true);
     recognition.onresult = (event) => {
       const transcript = event.results[0][0].transcript;
       setInput(transcript);
       setIsListening(false);
     };
-
     recognition.onerror = (event) => {
       console.error('Speech recognition error', event.error);
       setIsListening(false);
     };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
+    recognition.onend = () => setIsListening(false);
 
     recognition.start();
   };
@@ -170,10 +161,7 @@ export default function AIAssistant({
         const audio = new Audio(audioUrl);
         audio.play();
         setIsSpeaking(true);
-        
-        audio.onended = () => {
-          setIsSpeaking(false);
-        };
+        audio.onended = () => setIsSpeaking(false);
       }
     } catch (error) {
       console.error('Error with text-to-speech:', error);
@@ -182,24 +170,22 @@ export default function AIAssistant({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-2xl max-h-[80vh] flex flex-col">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-blue-600" />
-              AI Resource Assistant
-              <Badge variant="secondary" className="ml-auto">
-                <Sparkles className="h-3 w-3 mr-1" />
-                Powered by AI
-              </Badge>
-            </CardTitle>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+      <Card className="w-full max-w-2xl h-[80vh] flex flex-col bg-white rounded-lg shadow-lg">
+        <CardHeader className="border-b p-4 flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-lg font-semibold">
+            <MessageSquare className="h-5 w-5 text-blue-600" />
+            AI Resource Assistant
+            <Badge variant="secondary" className="ml-2">
+              <Sparkles className="h-3 w-3 mr-1" />
+              Powered by AI
+            </Badge>
+          </CardTitle>
+          <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
+            <X className="h-4 w-4" />
+          </Button>
         </CardHeader>
-        <CardContent className="flex-1 flex flex-col p-0">
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
             {messages.map((message) => (
               <div
                 key={message.id}
@@ -213,26 +199,24 @@ export default function AIAssistant({
                   </div>
                 )}
                 <div
-                  className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                  className={`max-w-[75%] break-words rounded-lg px-4 py-2 ${
                     message.role === 'user'
                       ? 'bg-blue-600 text-white'
                       : 'bg-gray-100 text-gray-900'
                   }`}
                 >
-                  <p className="text-sm">{message.content}</p>
-                  <div className="flex justify-between items-center mt-2">
-                    <p className="text-xs opacity-70">
-                      {message.timestamp.toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </p>
+                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  <div className="flex justify-between items-center mt-2 text-xs">
+                    <span className="opacity-70">
+                      {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
                     {message.role === 'assistant' && (
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleTextToSpeech(message.content)}
-                        className="h-6 w-6 p-0"
+                        className="h-6 w-6 p-0 text-gray-600 hover:text-blue-600"
+                        disabled={isSpeaking}
                       >
                         <Volume2 className="h-3 w-3" />
                       </Button>
@@ -263,37 +247,39 @@ export default function AIAssistant({
             <div ref={messagesEndRef} />
           </div>
           <Separator />
-          <form onSubmit={handleSubmit} className="p-4">
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleVoiceInput}
-                disabled={isListening}
-                className="flex-shrink-0"
-              >
-                {isListening ? (
-                  <div className="flex space-x-1">
-                    <div className="w-1 h-3 bg-red-500 animate-pulse"></div>
-                    <div className="w-1 h-3 bg-red-500 animate-pulse delay-75"></div>
-                    <div className="w-1 h-3 bg-red-500 animate-pulse delay-150"></div>
-                  </div>
-                ) : (
-                  <Mic className="h-4 w-4" />
-                )}
-              </Button>
-              <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask a question about this resource..."
-                disabled={isLoading}
-                className="flex-1"
-              />
-              <Button type="submit" disabled={isLoading || !input.trim()}>
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
+          <form onSubmit={handleSubmit} className="p-4 flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleVoiceInput}
+              disabled={isListening}
+              className="flex-shrink-0 h-10 w-10"
+            >
+              {isListening ? (
+                <div className="flex space-x-1">
+                  <div className="w-1 h-3 bg-red-500 animate-pulse"></div>
+                  <div className="w-1 h-3 bg-red-500 animate-pulse delay-75"></div>
+                  <div className="w-1 h-3 bg-red-500 animate-pulse delay-150"></div>
+                </div>
+              ) : (
+                <Mic className="h-4 w-4" />
+              )}
+            </Button>
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask a question about this resource..."
+              disabled={isLoading}
+              className="flex-1 h-10 text-sm"
+            />
+            <Button
+              type="submit"
+              disabled={isLoading || !input.trim()}
+              className="h-10 w-10 p-0"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
           </form>
         </CardContent>
       </Card>
