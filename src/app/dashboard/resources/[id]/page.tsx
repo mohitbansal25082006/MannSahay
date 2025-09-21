@@ -1,4 +1,3 @@
-// E:\mannsahay\src\app\dashboard\resources\[id]\page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -165,21 +164,36 @@ export default function ResourceDetailPage() {
     }
   };
 
-  const handleShare = async (platform: string) => {
+  const handleShare = async () => {
+    if (!resource) return;
+
     try {
+      // Track the share action
       await fetch(`/api/resources/${resourceId}/share`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ platform }),
+        body: JSON.stringify({ platform: 'web_share' }),
       });
-      
-      if (platform === 'copy_link') {
-        navigator.clipboard.writeText(window.location.href);
+
+      // Use Web Share API if available
+      if (navigator.share) {
+        await navigator.share({
+          title: resource.title,
+          text: resource.description || `Check out this resource: ${resource.title}`,
+          url: window.location.href,
+        });
+      } else {
+        // Fallback to copying the link
+        await navigator.clipboard.writeText(window.location.href);
+        alert('Link copied to clipboard!');
       }
     } catch (error) {
       console.error('Error sharing resource:', error);
+      // Fallback to copying the link if sharing fails
+      await navigator.clipboard.writeText(window.location.href);
+      alert('Link copied to clipboard!');
     }
   };
 
@@ -492,7 +506,7 @@ export default function ResourceDetailPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleShare('copy_link')}
+                            onClick={handleShare}
                             className="p-2 h-8 w-8 text-gray-500"
                             title="Share"
                           >
@@ -708,10 +722,10 @@ export default function ResourceDetailPage() {
                 <Button
                   variant="outline"
                   className="w-full justify-start"
-                  onClick={() => handleShare('copy_link')}
+                  onClick={handleShare}
                 >
                   <Share2 className="mr-2 h-4 w-4" />
-                  Copy Link
+                  Share
                 </Button>
                 
                 <Button
