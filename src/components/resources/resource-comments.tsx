@@ -1,4 +1,3 @@
-// E:\mannsahay\src\components\resources\resource-comments.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -7,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { MessageCircle, Send, User, Clock, Flag, Heart, Reply, Loader2 } from 'lucide-react';
+import { MessageCircle, Send, User, Clock, Heart, Reply, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface Comment {
@@ -155,25 +154,6 @@ export default function ResourceComments({ resourceId }: ResourceCommentsProps) 
     }
   };
 
-  const handleFlag = async (commentId: string) => {
-    try {
-      const response = await fetch(`/api/resources/${resourceId}/comments/${commentId}/flag`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ reason: 'Inappropriate content' }),
-      });
-
-      if (response.ok) {
-        // Show success message
-        alert('Comment has been flagged for review');
-      }
-    } catch (error) {
-      console.error('Error flagging comment:', error);
-    }
-  };
-
   const renderComment = (comment: Comment, isReply = false) => (
     <div key={comment.id} className={`flex gap-3 ${isReply ? 'ml-12' : ''}`}>
       <Avatar className="h-8 w-8">
@@ -215,16 +195,6 @@ export default function ResourceComments({ resourceId }: ResourceCommentsProps) 
               Reply
             </Button>
           )}
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleFlag(comment.id)}
-            className="h-6 px-2 text-xs text-gray-500"
-          >
-            <Flag className="h-3 w-3 mr-1" />
-            Report
-          </Button>
         </div>
         
         {replyingTo === comment.id && (
