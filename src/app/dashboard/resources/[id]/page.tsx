@@ -72,6 +72,8 @@ export default function ResourceDetailPage() {
   } | null>(null);
   const [readingTime, setReadingTime] = useState(0);
   const [moodBasedRecommendations, setMoodBasedRecommendations] = useState<any[]>([]);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(false);
+  const [recommendationsError, setRecommendationsError] = useState<string | null>(null);
   const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
 
   useEffect(() => {
@@ -248,6 +250,9 @@ export default function ResourceDetailPage() {
     if (!resource) return;
     
     try {
+      setRecommendationsLoading(true);
+      setRecommendationsError(null);
+      
       const response = await fetch('/api/resources/mood-recommendations', {
         method: 'POST',
         headers: {
@@ -256,15 +261,29 @@ export default function ResourceDetailPage() {
         body: JSON.stringify({
           resourceId: resource.id,
           categories: resource.categories,
+          mood: 5, // Added default mood
         }),
       });
       
       if (response.ok) {
         const data = await response.json();
-        setMoodBasedRecommendations(data.recommendations);
+        if (data.recommendations && Array.isArray(data.recommendations)) {
+          setMoodBasedRecommendations(data.recommendations);
+          if (data.recommendations.length === 0) {
+            setRecommendationsError(data.message || 'No similar resources found.');
+          }
+        } else {
+          setRecommendationsError('No recommendations received');
+        }
+      } else {
+        const errorData = await response.json();
+        setRecommendationsError(errorData.error || 'Failed to get recommendations');
       }
     } catch (error) {
       console.error('Error getting mood-based recommendations:', error);
+      setRecommendationsError('An error occurred while fetching recommendations');
+    } finally {
+      setRecommendationsLoading(false);
     }
   };
 
@@ -799,16 +818,58 @@ export default function ResourceDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className={`text-sm mb-4 ${highContrastMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                  Resources recommended based on your current mood and interests
-                </p>
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={getMoodBasedRecommendations}
-                >
-                  Get Recommendations
-                </Button>
+                {recommendationsLoading ? (
+                  <div className="flex justify-center items-center py-4">
+                    <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                  </div>
+                ) : recommendationsError ? (
+                  <div className="text-center py-4">
+                    <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
+                    <p className="text-sm text-gray-600 mb-2">{recommendationsError}</p>
+                    <Button variant="outline" size="sm" onClick={getMoodBasedRecommendations}>
+                      Try Again
+                    </Button>
+                  </div>
+                ) : moodBasedRecommendations.length > 0 ? (
+                  <div className="space-y-3">
+                    {moodBasedRecommendations.map((rec, index) => (
+                      <div key={index} className="p-2 border rounded-lg">
+                        <h4 className="font-medium text-sm">{rec.title}</h4>
+                        <p className="text-xs text-gray-600">{rec.reason}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="outline" className="text-xs">
+                            {rec.mood}
+                          </Badge>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-xs h-5 px-1"
+                            onClick={() => {
+                              if (rec.resourceId) {
+                                window.location.href = `/dashboard/resources/${rec.resourceId}`;
+                              }
+                            }}
+                          >
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    <p className={`text-sm mb-4 ${highContrastMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                      Resources recommended based on your current mood and interests
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={getMoodBasedRecommendations}
+                    >
+                      Get Recommendations
+                    </Button>
+                  </>
+                )}
               </CardContent>
             </Card>
             

@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -22,7 +23,9 @@ import {
   AlertTriangle,
   Info,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  AlertCircle,
+  ExternalLink
 } from 'lucide-react';
 
 interface ResourceAnalyticsProps {
@@ -65,6 +68,8 @@ export default function ResourceAnalytics({
   const [qualityLoading, setQualityLoading] = useState(false);
   const [moodRecommendationsLoading, setMoodRecommendationsLoading] = useState(false);
   const [contentQuality, setContentQuality] = useState<ContentQualityData | null>(null);
+  const [moodError, setMoodError] = useState<string | null>(null);
+  const [moodRecommendations, setMoodRecommendations] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -119,6 +124,8 @@ export default function ResourceAnalytics({
     
     try {
       setMoodRecommendationsLoading(true);
+      setMoodError(null);
+      
       const response = await fetch('/api/resources/mood-recommendations', {
         method: 'POST',
         headers: {
@@ -127,18 +134,33 @@ export default function ResourceAnalytics({
         body: JSON.stringify({
           resourceId,
           categories,
+          mood: 5, // Default mood if not provided
         }),
       });
       
       if (response.ok) {
         const data = await response.json();
-        setAnalytics(prev => prev ? {
-          ...prev,
-          moodBasedRecommendations: data.recommendations || []
-        } : null);
+        console.log('Mood recommendations response:', data); // Debug log
+        
+        if (data.recommendations && Array.isArray(data.recommendations)) {
+          setMoodRecommendations(data.recommendations);
+          if (data.recommendations.length === 0) {
+            setMoodError(data.message || 'No similar resources found.');
+          }
+          setAnalytics(prev => prev ? {
+            ...prev,
+            moodBasedRecommendations: data.recommendations
+          } : null);
+        } else {
+          setMoodError('No recommendations received');
+        }
+      } else {
+        const errorData = await response.json();
+        setMoodError(errorData.error || 'Failed to get recommendations');
       }
     } catch (error) {
       console.error('Error getting mood-based recommendations:', error);
+      setMoodError('An error occurred while fetching recommendations');
     } finally {
       setMoodRecommendationsLoading(false);
     }
@@ -322,9 +344,20 @@ export default function ResourceAnalytics({
             <div className="flex justify-center items-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
             </div>
-          ) : analytics.moodBasedRecommendations && analytics.moodBasedRecommendations.length > 0 ? (
+          ) : moodError ? (
+            <div className="text-center py-4">
+              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Error Loading Recommendations
+              </h3>
+              <p className="text-gray-500 mb-4">{moodError}</p>
+              <Button variant="outline" onClick={getMoodBasedRecommendations}>
+                Try Again
+              </Button>
+            </div>
+          ) : moodRecommendations.length > 0 ? (
             <div className="space-y-3">
-              {analytics.moodBasedRecommendations.map((rec, index) => (
+              {moodRecommendations.map((rec, index) => (
                 <div key={index} className="p-3 border rounded-lg">
                   <div className="flex items-start gap-3">
                     <Brain className="h-5 w-5 text-purple-600 mt-0.5" />
@@ -339,8 +372,13 @@ export default function ResourceAnalytics({
                           variant="ghost" 
                           size="sm" 
                           className="text-xs h-6 px-2"
-                          onClick={() => window.location.href = `/dashboard/resources/${rec.resourceId}`}
+                          onClick={() => {
+                            if (rec.resourceId) {
+                              window.location.href = `/dashboard/resources/${rec.resourceId}`;
+                            }
+                          }}
                         >
+                          <ExternalLink className="h-3 w-3 mr-1" />
                           View Resource
                         </Button>
                       </div>
