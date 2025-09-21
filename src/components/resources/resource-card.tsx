@@ -1,7 +1,5 @@
-// E:\mannsahay\src\components\resources\resource-card.tsx
+'use client';
 
-// Update the card to show AI recommendation scores when applicable
-// Add this import at the top
 import { useState } from 'react';
 import { Resource, ResourceType } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -37,7 +35,7 @@ import {
   Download,
   Clock,
   Bookmark,
-  Share,
+  Share2,
   Sparkles,
   Brain,
 } from 'lucide-react';
@@ -135,22 +133,34 @@ export default function ResourceCard({ resource, viewMode, showAiScore = false }
     }
   };
 
-  const handleShare = async (platform: string) => {
+  const handleShare = async () => {
     try {
+      // Track the share action
       await fetch(`/api/resources/${resource.id}/share`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ platform }),
+        body: JSON.stringify({ platform: 'web_share' }),
       });
-      
-      // Implement actual sharing logic
-      if (platform === 'copy_link') {
-        navigator.clipboard.writeText(window.location.origin + `/dashboard/resources/${resource.id}`);
+
+      // Use Web Share API if available
+      if (navigator.share) {
+        await navigator.share({
+          title: resource.title,
+          text: resource.description || `Check out this resource: ${resource.title}`,
+          url: window.location.origin + `/dashboard/resources/${resource.id}`,
+        });
+      } else {
+        // Fallback to copying the link
+        await navigator.clipboard.writeText(window.location.origin + `/dashboard/resources/${resource.id}`);
+        alert('Link copied to clipboard!');
       }
     } catch (error) {
       console.error('Error sharing resource:', error);
+      // Fallback to copying the link if sharing fails
+      await navigator.clipboard.writeText(window.location.origin + `/dashboard/resources/${resource.id}`);
+      alert('Link copied to clipboard!');
     }
   };
 
@@ -306,11 +316,8 @@ export default function ResourceCard({ resource, viewMode, showAiScore = false }
                 <DropdownMenuItem onClick={handleDownload}>
                   Download
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleShare('copy_link')}>
-                  Copy Link
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleShare('whatsapp')}>
-                  Share on WhatsApp
+                <DropdownMenuItem onClick={handleShare}>
+                  Share
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
