@@ -1,12 +1,11 @@
-// E:\mannsahay\src\app\api\avatar\[id]\route.ts
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  // Extract the id from params
-  const id = params.id;
+  // Await the params to get the id
+  const { id } = await params;
 
   // Validate the id to prevent potential errors
   if (!id || typeof id !== 'string') {

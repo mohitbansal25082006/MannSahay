@@ -5,23 +5,29 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Calendar, Clock, Users, Star, TrendingUp } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import { Calendar, Clock, Users, Star, TrendingUp, DollarSign, MessageSquare } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 
 interface AnalyticsData {
   totalSessions: number;
   completedSessions: number;
   cancelledSessions: number;
+  upcomingSessions: number;
   avgRating: number;
   totalClients: number;
   newClients: number;
-  sessionByMonth: { month: string; sessions: number }[];
+  totalEarnings: number;
+  sessionByMonth: { month: string; sessions: number; earnings: number }[];
   sessionByStatus: { name: string; value: number; color: string }[];
   clientSatisfaction: { rating: number; count: number }[];
   topSpecializations: { name: string; count: number }[];
+  moodTrends: { date: string; avgMood: number }[];
+  recentFeedback: { id: string; clientName: string; rating: number; comment: string; date: string }[];
 }
 
 export default function CounselorAnalytics() {
+  const { data: session } = useSession();
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -32,45 +38,13 @@ export default function CounselorAnalytics() {
   const fetchAnalyticsData = async () => {
     setLoading(true);
     try {
-      // This would be an actual API call in a real implementation
-      // const response = await fetch('/api/counselor/analytics');
-      // const data = await response.json();
-      
-      // Mock data for demonstration
-      const mockAnalyticsData: AnalyticsData = {
-        totalSessions: 48,
-        completedSessions: 42,
-        cancelledSessions: 6,
-        avgRating: 4.6,
-        totalClients: 24,
-        newClients: 8,
-        sessionByMonth: [
-          { month: 'Jan', sessions: 8 },
-          { month: 'Feb', sessions: 10 },
-          { month: 'Mar', sessions: 12 },
-          { month: 'Apr', sessions: 9 },
-          { month: 'May', sessions: 9 }
-        ],
-        sessionByStatus: [
-          { name: 'Completed', value: 42, color: '#10B981' },
-          { name: 'Cancelled', value: 6, color: '#EF4444' }
-        ],
-        clientSatisfaction: [
-          { rating: 5, count: 30 },
-          { rating: 4, count: 12 },
-          { rating: 3, count: 4 },
-          { rating: 2, count: 2 },
-          { rating: 1, count: 0 }
-        ],
-        topSpecializations: [
-          { name: 'Anxiety', count: 18 },
-          { name: 'Depression', count: 12 },
-          { name: 'Academic Stress', count: 10 },
-          { name: 'Relationship Issues', count: 8 }
-        ]
-      };
-      
-      setAnalyticsData(mockAnalyticsData);
+      const response = await fetch('/api/counselor/analytics');
+      if (response.ok) {
+        const data = await response.json();
+        setAnalyticsData(data);
+      } else {
+        console.error('Failed to fetch analytics data');
+      }
     } catch (error) {
       console.error('Error fetching analytics data:', error);
     } finally {
@@ -81,7 +55,8 @@ export default function CounselorAnalytics() {
   if (loading) {
     return (
       <div className="text-center py-8">
-        Loading analytics data...
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+        <p className="mt-4 text-gray-600">Loading analytics data...</p>
       </div>
     );
   }
@@ -93,6 +68,8 @@ export default function CounselorAnalytics() {
       </div>
     );
   }
+
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
   return (
     <div className="space-y-6">
@@ -138,15 +115,13 @@ export default function CounselorAnalytics() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Earnings</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {Math.round((analyticsData.completedSessions / analyticsData.totalSessions) * 100)}%
-            </div>
+            <div className="text-2xl font-bold">${analyticsData.totalEarnings.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
-              {analyticsData.cancelledSessions} cancelled
+              This month
             </p>
           </CardContent>
         </Card>
@@ -156,25 +131,30 @@ export default function CounselorAnalytics() {
         <TabsList>
           <TabsTrigger value="sessions">Sessions</TabsTrigger>
           <TabsTrigger value="satisfaction">Client Satisfaction</TabsTrigger>
-          <TabsTrigger value="specializations">Specializations</TabsTrigger>
+          <TabsTrigger value="mood">Mood Trends</TabsTrigger>
+          <TabsTrigger value="feedback">Recent Feedback</TabsTrigger>
         </TabsList>
         
         <TabsContent value="sessions" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Sessions by Month</CardTitle>
+                <CardTitle>Sessions & Earnings by Month</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={analyticsData.sessionByMonth}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="sessions" fill="#3B82F6" />
-                  </BarChart>
-                </ResponsiveContainer>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={analyticsData.sessionByMonth}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis yAxisId="left" />
+                      <YAxis yAxisId="right" orientation="right" />
+                      <Tooltip />
+                      <Bar yAxisId="left" dataKey="sessions" fill="#3B82F6" name="Sessions" />
+                      <Bar yAxisId="right" dataKey="earnings" fill="#10B981" name="Earnings ($)" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </CardContent>
             </Card>
             
@@ -183,25 +163,27 @@ export default function CounselorAnalytics() {
                 <CardTitle>Session Status</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={analyticsData.sessionByStatus}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {analyticsData.sessionByStatus.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={analyticsData.sessionByStatus}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      >
+                        {analyticsData.sessionByStatus.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -213,37 +195,76 @@ export default function CounselorAnalytics() {
               <CardTitle>Client Satisfaction Ratings</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={analyticsData.clientSatisfaction}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="rating" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="#F59E0B" />
-                </BarChart>
-              </ResponsiveContainer>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={analyticsData.clientSatisfaction}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="rating" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#F59E0B" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
         
-        <TabsContent value="specializations" className="space-y-4">
+        <TabsContent value="mood" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Top Specializations</CardTitle>
+              <CardTitle>Client Mood Trends</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={analyticsData.moodTrends}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis domain={[0, 10]} />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="avgMood" stroke="#8B5CF6" activeDot={{ r: 8 }} strokeWidth={2} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="feedback" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Client Feedback</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {analyticsData.topSpecializations.map((spec, index) => (
-                  <div key={spec.name} className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-800 font-medium mr-3">
-                        {index + 1}
+                {analyticsData.recentFeedback.length > 0 ? (
+                  analyticsData.recentFeedback.map(feedback => (
+                    <div key={feedback.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-medium">{feedback.clientName}</h4>
+                          <div className="flex items-center mt-1">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`h-4 w-4 ${
+                                  i < feedback.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <span className="text-sm text-gray-500">{feedback.date}</span>
                       </div>
-                      <span className="font-medium">{spec.name}</span>
+                      <p className="text-gray-600">{feedback.comment}</p>
                     </div>
-                    <Badge variant="secondary">{spec.count} sessions</Badge>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    No feedback available yet
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>

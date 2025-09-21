@@ -347,6 +347,34 @@ export interface ResourceRecommendation {
   resourceId: string
 }
 
+export interface EmailOptions {
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+}
+
+export interface EmailTemplate {
+  bookingConfirmation: {
+    userName: string;
+    counselorName: string;
+    sessionTime: Date;
+    meetingLink?: string;
+  };
+  sessionReminder: {
+    userName: string;
+    counselorName: string;
+    sessionTime: Date;
+    meetingLink?: string;
+  };
+  sessionCancellation: {
+    userName: string;
+    counselorName: string;
+    sessionTime: Date;
+    reason?: string;
+  };
+}
+
 export enum BookingStatus {
   PENDING = "PENDING",
   CONFIRMED = "CONFIRMED", 

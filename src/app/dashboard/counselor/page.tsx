@@ -11,7 +11,6 @@ import { Calendar, Clock, Users, Star, MessageSquare, Video, Plus } from 'lucide
 import CounselorSchedule from '@/components/counselor/counselor-schedule';
 import ClientList from '@/components/counselor/client-list';
 import CounselorAnalytics from '@/components/counselor/counselor-analytics';
-import ResourceSharing from '@/components/counselor/resource-sharing';
 
 export default function CounselorDashboard() {
   const { data: session } = useSession();
@@ -22,16 +21,15 @@ export default function CounselorDashboard() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Counselor Dashboard</h1>
         <p className="mt-2 text-gray-600">
-          Manage your schedule, clients, and resources
+          Welcome back, {session?.user?.name || 'Counselor'}! Here's your overview.
         </p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="schedule">Schedule</TabsTrigger>
           <TabsTrigger value="clients">Clients</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="resources">Resources</TabsTrigger>
         </TabsList>
 
         <TabsContent value="schedule" className="space-y-6">
@@ -44,10 +42,6 @@ export default function CounselorDashboard() {
 
         <TabsContent value="analytics" className="space-y-6">
           <CounselorAnalytics />
-        </TabsContent>
-
-        <TabsContent value="resources" className="space-y-6">
-          <ResourceSharing />
         </TabsContent>
       </Tabs>
     </div>

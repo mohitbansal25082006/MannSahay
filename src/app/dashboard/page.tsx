@@ -1,10 +1,10 @@
-// app/dashboard/page.tsx  (or wherever your dashboard page is)
+// E:\mannsahay\src\app\dashboard\page.tsx
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, Calendar, Users, BookOpen, Clock } from 'lucide-react';
+import { MessageCircle, Calendar, Users, BookOpen, Clock, TrendingUp, UserCheck } from 'lucide-react';
 import Link from 'next/link';
 
 async function getUserStats(userId: string) {
@@ -49,11 +49,23 @@ async function getUserStats(userId: string) {
   };
 }
 
+async function checkCounselorStatus(email: string) {
+  const authorizedCounselors = [
+    process.env.COUNSELOR1,
+    process.env.COUNSELOR2,
+    process.env.COUNSELOR3,
+    process.env.COUNSELOR4,
+    process.env.COUNSELOR5,
+  ].filter(Boolean);
+
+  return authorizedCounselors.includes(email);
+}
+
 export default async function DashboardPage() {
   // Get the session
   const session = await getServerSession(authOptions);
 
-  // If there's no session at all, show a sign-in CTA (don't render indefinite "Loading...")
+  // If there's no session at all, show a sign-in CTA
   if (!session?.user) {
     return (
       <div className="max-w-2xl mx-auto p-8 text-center">
@@ -77,7 +89,7 @@ export default async function DashboardPage() {
     userId = dbUser?.id ?? undefined;
   }
 
-  // If we still don't have a user id, render an error message (instead of Loading...)
+  // If we still don't have a user id, render an error message
   if (!userId) {
     return (
       <div className="max-w-2xl mx-auto p-8 text-center">
@@ -89,6 +101,9 @@ export default async function DashboardPage() {
       </div>
     );
   }
+
+  // Check if user is a counselor
+  const isCounselor = session.user.email ? await checkCounselorStatus(session.user.email) : false;
 
   // Now fetch stats
   const stats = await getUserStats(userId);
@@ -127,17 +142,29 @@ export default async function DashboardPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* Welcome Section */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">
-          Welcome back, {session.user.name?.split(' ')[0] || 'Friend'}! 👋
-        </h1>
-        <p className="mt-2 text-gray-600">
-          How are you feeling today? Your mental wellness journey continues here.
-        </p>
+      <div className="mb-8 flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Welcome back, {session.user.name?.split(' ')[0] || 'Friend'}!
+          </h1>
+          <p className="mt-2 text-gray-600">
+            How are you feeling today? Your mental wellness journey continues here.
+          </p>
+        </div>
+        
+        {/* Counselor Dashboard Button */}
+        {isCounselor && (
+          <Button asChild className="bg-indigo-600 hover:bg-indigo-700">
+            <Link href="/dashboard/counselor" className="flex items-center">
+              <UserCheck className="h-4 w-4 mr-2" />
+              Counselor Dashboard
+            </Link>
+          </Button>
+        )}
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Chat Sessions</CardTitle>
@@ -173,6 +200,21 @@ export default async function DashboardPage() {
             <div className="text-2xl font-bold">{stats.postCount}</div>
             <p className="text-xs text-muted-foreground">
               Community contributions
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Progress</CardTitle>
+            <TrendingUp className="h-4 w-4 text-indigo-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {stats.chatCount > 0 ? Math.round((stats.chatCount / 10) * 100) : 0}%
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Journey completion
             </p>
           </CardContent>
         </Card>

@@ -15,17 +15,54 @@ export default async function CounselorDashboardLayout({
     redirect('/auth/signin');
   }
 
-  // Check if user is a counselor
+  // Get user details
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { isAdmin: true }
+    select: { email: true, isAdmin: true }
   });
 
-  // For demo purposes, we'll allow access to the counselor dashboard
-  // In a real app, you would check if the user is actually a counselor
-  // if (!user?.isAdmin) {
-  //   redirect('/dashboard');
-  // }
+  if (!user?.email) {
+    redirect('/dashboard');
+  }
+
+  // Check if user's email is in the authorized counselor list
+  const authorizedCounselors = [
+    process.env.COUNSELOR1,
+    process.env.COUNSELOR2,
+    process.env.COUNSELOR3,
+    process.env.COUNSELOR4,
+    process.env.COUNSELOR5,
+  ].filter(Boolean); // Remove undefined values
+
+  const isAuthorizedCounselor = authorizedCounselors.includes(user.email);
+
+  if (!isAuthorizedCounselor && !user.isAdmin) {
+    redirect('/dashboard?error=unauthorized');
+  }
+
+  // Try to get or create counselor profile
+  let counselor = await prisma.counselor.findUnique({
+    where: { email: user.email }
+  });
+
+  // If counselor doesn't exist, create one
+  if (!counselor && isAuthorizedCounselor) {
+    const userName = await prisma.user.findUnique({
+      where: { email: user.email },
+      select: { name: true }
+    });
+
+    counselor = await prisma.counselor.create({
+      data: {
+        name: userName?.name || 'Counselor',
+        email: user.email,
+        specialties: ['General Counseling'],
+        languages: ['en'],
+        bio: 'Professional counselor helping clients with their mental health journey.',
+        isActive: true
+      }
+    });
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

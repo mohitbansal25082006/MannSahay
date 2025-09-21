@@ -1,4 +1,3 @@
-// E:\mannsahay\src\app\dashboard\booking\page.tsx (partial update)
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -9,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, Clock, User, Search, Filter, Video, Users, Plus } from 'lucide-react';
+import { Calendar, Clock, User, Search, Filter, Video, Users, Plus, Award } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import CounselorCard from '@/components/booking/counselor-card';
 import BookingCalendar from '@/components/booking/booking-calendar';
@@ -45,6 +44,8 @@ export default function BookingPage() {
   const [counselors, setCounselors] = useState<Counselor[]>([]);
   const [loading, setLoading] = useState(true);
   const [rescheduleData, setRescheduleData] = useState<any>(null);
+  const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [showRecommendations, setShowRecommendations] = useState(false);
 
   const specializations = [
     'Anxiety',
@@ -72,26 +73,6 @@ export default function BookingPage() {
     { code: 'pa', name: 'Punjabi' }
   ];
 
-  useEffect(() => {
-    fetchCounselors();
-    
-    // Handle reschedule case
-    if (rescheduleBookingId) {
-      fetchBookingDetails(rescheduleBookingId);
-    }
-  }, [rescheduleBookingId]);
-
-  useEffect(() => {
-    if (counselorNameParam && counselors.length > 0) {
-      const counselor = counselors.find(c => 
-        c.name.replace(/\s+/g, '-').toLowerCase() === counselorNameParam
-      );
-      if (counselor) {
-        setSelectedCounselor(counselor);
-      }
-    }
-  }, [counselorNameParam, counselors]);
-
   const fetchCounselors = async () => {
     setLoading(true);
     try {
@@ -112,6 +93,61 @@ export default function BookingPage() {
       setLoading(false);
     }
   };
+
+  const fetchRecommendations = async () => {
+    try {
+      const response = await fetch('/api/counselors/recommendations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          needs: "I'm looking for help with anxiety and stress management",
+          preferences: {
+            language: languageFilter !== 'all' ? languageFilter : 'en',
+            specializations: specializationFilter !== 'all' ? [specializationFilter] : []
+          }
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setRecommendations(data);
+        setShowRecommendations(true);
+      }
+    } catch (error) {
+      console.error('Error fetching recommendations:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCounselors();
+  }, [specializationFilter, languageFilter]);
+
+  useEffect(() => {
+    if (specializationFilter !== 'all' || languageFilter !== 'all') {
+      fetchRecommendations();
+    } else {
+      setShowRecommendations(false);
+    }
+  }, [specializationFilter, languageFilter]);
+
+  useEffect(() => {
+    if (rescheduleBookingId) {
+      fetchBookingDetails(rescheduleBookingId);
+    }
+  }, [rescheduleBookingId]);
+
+  useEffect(() => {
+    if (counselorNameParam && counselors.length > 0) {
+      const counselor = counselors.find(c => 
+        c.name.replace(/\s+/g, '-').toLowerCase() === counselorNameParam
+      );
+      if (counselor) {
+        setSelectedCounselor(counselor);
+      }
+    }
+  }, [counselorNameParam, counselors]);
 
   const fetchBookingDetails = async (bookingId: string) => {
     try {
@@ -231,6 +267,44 @@ export default function BookingPage() {
               </div>
             </CardContent>
           </Card>
+
+          {showRecommendations && recommendations.length > 0 && (
+            <Card className="border-blue-200 bg-blue-50">
+              <CardHeader>
+                <CardTitle className="text-blue-800 flex items-center">
+                  <Award className="h-5 w-5 mr-2" />
+                  AI-Powered Recommendations
+                </CardTitle>
+                <CardDescription className="text-blue-700">
+                  Based on your preferences and needs, we recommend these counselors
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {recommendations.map((rec) => {
+                    const counselor = counselors.find(c => c.id === rec.counselorId);
+                    if (!counselor) return null;
+                    
+                    return (
+                      <CounselorCard
+                        key={rec.counselorId}
+                        id={counselor.id}
+                        name={counselor.name}
+                        specialties={counselor.specialties}
+                        languages={counselor.languages}
+                        experience={counselor.experience}
+                        bio={counselor.bio}
+                        onSelect={handleCounselorSelect}
+                        isRecommended={true}
+                        matchScore={rec.score}
+                        matchReason={rec.reason}
+                      />
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {loading ? (
