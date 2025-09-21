@@ -4,11 +4,11 @@ import { openai } from '@/lib/openai';
 
 export async function POST(request: NextRequest) {
   try {
-    const { text, targetLanguage } = await request.json();
+    const { title, description, content, summary, targetLanguage } = await request.json();
     
-    if (!text || !targetLanguage) {
+    if (!title || !targetLanguage) {
       return NextResponse.json(
-        { error: 'Text and target language are required' },
+        { error: 'Title and target language are required' },
         { status: 400 }
       );
     }
@@ -29,14 +29,33 @@ export async function POST(request: NextRequest) {
     
     const targetLanguageName = languageNames[targetLanguage] || targetLanguage;
     
-    const prompt = `Translate the following text to ${targetLanguageName}. Maintain the original meaning and tone. If the text is already in ${targetLanguageName}, return it as is:\n\n${text}`;
+    const prompt = `Translate the following mental health resource content to ${targetLanguageName}. 
+
+IMPORTANT INSTRUCTIONS:
+1. Maintain the original meaning, tone, and context
+2. Keep all technical mental health terms accurate
+3. Preserve any cultural references and adapt them appropriately
+4. Ensure the translation is empathetic and supportive in tone
+5. Format the response as a JSON object with the following structure:
+{
+  "translatedTitle": "translated title here",
+  "translatedDescription": "translated description here",
+  "translatedContent": "translated content here",
+  "translatedSummary": "translated summary here"
+}
+
+Content to translate:
+Title: ${title}
+Description: ${description || ''}
+Content: ${content || ''}
+Summary: ${summary || ''}`;
     
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
         {
           role: 'system',
-          content: 'You are a professional translator specializing in mental health content. Translate accurately while maintaining the original meaning and tone.',
+          content: 'You are a professional translator specializing in mental health content. Translate accurately while maintaining the original meaning, tone, and cultural context.',
         },
         {
           role: 'user',
@@ -44,12 +63,14 @@ export async function POST(request: NextRequest) {
         },
       ],
       temperature: 0.3,
-      max_tokens: 1000,
+      max_tokens: 4000,
+      response_format: { type: 'json_object' },
     });
     
-    const translatedText = response.choices[0]?.message?.content || text;
+    const responseText = response.choices[0]?.message?.content || '{}';
+    const translations = JSON.parse(responseText);
     
-    return NextResponse.json({ translatedText });
+    return NextResponse.json(translations);
   } catch (error) {
     console.error('Error translating text:', error);
     return NextResponse.json(

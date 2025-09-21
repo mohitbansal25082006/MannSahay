@@ -6,12 +6,13 @@ import { Resource } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { RefreshCw, Sparkles, TrendingUp, Brain, Heart, BookOpen } from 'lucide-react';
+import { RefreshCw, Sparkles, TrendingUp, Brain, Heart, BookOpen, Target } from 'lucide-react';
 
 export default function Recommendations() {
   const [recommendations, setRecommendations] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
   const [aiReasons, setAiReasons] = useState<Record<string, string>>({});
+  const [moodBasedRecommendations, setMoodBasedRecommendations] = useState<any[]>([]);
 
   const fetchRecommendations = async () => {
     try {
@@ -32,6 +33,27 @@ export default function Recommendations() {
       console.error('Error fetching recommendations:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchMoodBasedRecommendations = async () => {
+    try {
+      const response = await fetch('/api/resources/mood-recommendations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          categories: ['stress', 'anxiety', 'wellness'], // Example categories
+        }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setMoodBasedRecommendations(data.recommendations || []);
+      }
+    } catch (error) {
+      console.error('Error fetching mood-based recommendations:', error);
     }
   };
 
@@ -82,7 +104,7 @@ export default function Recommendations() {
           </div>
         ) : (
           <div className="space-y-4">
-            {recommendations.map((resource) => (
+            {recommendations.slice(0, 3).map((resource) => (
               <div key={resource.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
                 <div className="flex justify-between items-start mb-2">
                   <h4 className="font-medium text-sm line-clamp-2 flex-1">
@@ -140,6 +162,32 @@ export default function Recommendations() {
             <span>Powered by AI analysis of your preferences and behavior</span>
           </div>
         </div>
+        
+        <div className="mt-4">
+          <Button 
+            variant="outline" 
+            className="w-full justify-start"
+            onClick={fetchMoodBasedRecommendations}
+          >
+            <Target className="mr-2 h-4 w-4" />
+            Get Mood-Based Recommendations
+          </Button>
+        </div>
+        
+        {moodBasedRecommendations.length > 0 && (
+          <div className="mt-4 space-y-2">
+            <h4 className="text-sm font-medium flex items-center gap-1">
+              <Heart className="h-4 w-4 text-red-500" />
+              For Your Current Mood
+            </h4>
+            {moodBasedRecommendations.map((rec, index) => (
+              <div key={index} className="p-2 bg-gray-50 rounded text-xs">
+                <div className="font-medium">{rec.title}</div>
+                <div className="text-gray-600">{rec.reason}</div>
+              </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

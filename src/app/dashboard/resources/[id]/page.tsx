@@ -1,3 +1,4 @@
+// E:\mannsahay\src\app\dashboard\resources\[id]\page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -12,6 +13,9 @@ import ResourcePlayer from '@/components/resources/resource-player';
 import ResourceViewer from '@/components/resources/resource-viewer';
 import ResourceRating from '@/components/resources/resource-rating';
 import TranslationToggle from '@/components/resources/translation-toggle';
+import AIAssistant from '@/components/resources/ai-assistant';
+import ResourceAnalytics from '@/components/resources/resource-analytics';
+import ResourceComments from '@/components/resources/resource-comments';
 import { 
   ArrowLeft, 
   Download, 
@@ -25,7 +29,25 @@ import {
   User,
   Loader2,
   Sparkles,
-  RefreshCw
+  RefreshCw,
+  Volume2,
+  VolumeX,
+  MessageSquare,
+  BarChart3,
+  Accessibility,
+  TrendingUp,
+  Brain,
+  BookOpen,
+  Headphones,
+  Mic,
+  Maximize,
+  Settings,
+  Lightbulb,
+  Award,
+  Target,
+  CheckCircle,
+  AlertCircle,
+  Info
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -37,13 +59,28 @@ export default function ResourceDetailPage() {
   const [resource, setResource] = useState<Resource | null>(null);
   const [loading, setLoading] = useState(true);
   const [isBookmarked, setIsBookmarked] = useState(false);
-  const [translatedContent, setTranslatedContent] = useState<string>('');
-  const [translatedDescription, setTranslatedDescription] = useState<string>('');
+  const [translatedContent, setTranslatedContent] = useState<{
+    title?: string;
+    description?: string;
+    content?: string;
+    summary?: string;
+  }>({});
   const [showTranslation, setShowTranslation] = useState(false);
   const [summary, setSummary] = useState<string>('');
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summaryCached, setSummaryCached] = useState(false);
-  const [activeTab, setActiveTab] = useState('content'); // State to track active tab
+  const [activeTab, setActiveTab] = useState('content');
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [highContrastMode, setHighContrastMode] = useState(false);
+  const [contentQuality, setContentQuality] = useState<{
+    score: number;
+    assessment: string;
+    suggestions: string[];
+  } | null>(null);
+  const [readingTime, setReadingTime] = useState(0);
+  const [moodBasedRecommendations, setMoodBasedRecommendations] = useState<any[]>([]);
+  const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
 
   useEffect(() => {
     const fetchResource = async () => {
@@ -53,6 +90,13 @@ export default function ResourceDetailPage() {
         const data = await response.json();
         setResource(data);
         setIsBookmarked(data.isBookmarked || false);
+        
+        // Calculate reading time
+        if (data.content) {
+          const wordsPerMinute = 200;
+          const words = data.content.split(/\s+/).length;
+          setReadingTime(Math.ceil(words / wordsPerMinute));
+        }
         
         // If summary exists, set it
         if (data.summary) {
@@ -155,6 +199,85 @@ export default function ResourceDetailPage() {
     }
   };
 
+  const handleTextToSpeech = async () => {
+    if (!resource) return;
+    
+    try {
+      const text = showTranslation && translatedContent.content 
+        ? translatedContent.content 
+        : resource.content || '';
+      if (!text) return;
+      
+      const response = await fetch('/api/resources/text-to-speech', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text,
+          language: showTranslation ? 'hi' : resource.language,
+        }),
+      });
+      
+      if (response.ok) {
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        audio.play();
+        setIsPlaying(true);
+        
+        audio.onended = () => {
+          setIsPlaying(false);
+        };
+      } else {
+        console.error('Error generating speech:', await response.text());
+      }
+    } catch (error) {
+      console.error('Error generating speech:', error);
+    }
+  };
+
+  const analyzeContentQuality = async () => {
+    if (!resource) return;
+    
+    try {
+      const response = await fetch(`/api/resources/${resourceId}/quality-analysis`, {
+        method: 'POST',
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setContentQuality(data);
+      }
+    } catch (error) {
+      console.error('Error analyzing content quality:', error);
+    }
+  };
+
+  const getMoodBasedRecommendations = async () => {
+    if (!resource) return;
+    
+    try {
+      const response = await fetch('/api/resources/mood-recommendations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          resourceId: resource.id,
+          categories: resource.categories,
+        }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setMoodBasedRecommendations(data.recommendations);
+      }
+    } catch (error) {
+      console.error('Error getting mood-based recommendations:', error);
+    }
+  };
+
   const getLanguageName = (code: string) => {
     const languages: Record<string, string> = {
       en: 'English',
@@ -222,16 +345,24 @@ export default function ResourceDetailPage() {
     );
   }
 
-  const displayContent = showTranslation && translatedContent 
-    ? translatedContent 
+  const displayTitle = showTranslation && translatedContent.title 
+    ? translatedContent.title 
+    : resource.title;
+    
+  const displayDescription = showTranslation && translatedContent.description 
+    ? translatedContent.description 
+    : resource.description || '';
+    
+  const displayContent = showTranslation && translatedContent.content 
+    ? translatedContent.content 
     : resource.content || '';
     
-  const displayDescription = showTranslation && translatedDescription 
-    ? translatedDescription 
-    : resource.description || '';
+  const displaySummary = showTranslation && translatedContent.summary 
+    ? translatedContent.summary 
+    : summary;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-8">
+    <div className={`min-h-screen py-8 ${highContrastMode ? 'bg-black text-white' : 'bg-gradient-to-br from-blue-50 to-indigo-50'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-6">
           <Link href="/dashboard/resources">
@@ -244,7 +375,7 @@ export default function ResourceDetailPage() {
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
-            <Card>
+            <Card className={highContrastMode ? 'bg-gray-900 border-gray-700' : ''}>
               <CardHeader>
                 <div className="flex flex-wrap justify-between items-start gap-4">
                   <div className="space-y-2">
@@ -259,7 +390,9 @@ export default function ResourceDetailPage() {
                         <Badge variant="default">Featured</Badge>
                       )}
                     </div>
-                    <CardTitle className="text-2xl">{resource.title}</CardTitle>
+                    <CardTitle className={`text-2xl ${highContrastMode ? 'text-white' : ''}`}>
+                      {displayTitle}
+                    </CardTitle>
                     <div className="flex items-center gap-4 text-sm text-gray-600">
                       {resource.author && (
                         <div className="flex items-center gap-1">
@@ -270,6 +403,10 @@ export default function ResourceDetailPage() {
                       <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
                         {formatDate(resource.createdAt)}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-4 w-4" />
+                        {readingTime} min read
                       </div>
                     </div>
                   </div>
@@ -284,7 +421,9 @@ export default function ResourceDetailPage() {
                 </div>
                 
                 {displayDescription && (
-                  <p className="text-gray-600">{displayDescription}</p>
+                  <p className={highContrastMode ? 'text-gray-300' : 'text-gray-600'}>
+                    {displayDescription}
+                  </p>
                 )}
                 
                 <div className="flex flex-wrap gap-2">
@@ -297,23 +436,54 @@ export default function ResourceDetailPage() {
               </CardHeader>
               
               <CardContent>
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                  <TabsList className="grid w-full grid-cols-3">
+                <TranslationToggle 
+                  resource={{
+                    id: resource.id,
+                    title: resource.title,
+                    description: resource.description || '',
+                    content: resource.content || '',
+                    summary: summary,
+                    language: resource.language
+                  }}
+                  onTranslated={setTranslatedContent}
+                />
+                
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-4">
+                  <TabsList className="grid w-full grid-cols-5">
                     <TabsTrigger value="content">Content</TabsTrigger>
                     <TabsTrigger value="details">Details</TabsTrigger>
                     <TabsTrigger value="summary">AI Summary</TabsTrigger>
+                    <TabsTrigger value="analytics">Analytics</TabsTrigger>
+                    <TabsTrigger value="comments">Comments</TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="content" className="mt-4">
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
-                        <TranslationToggle
-                          originalText={resource.content || ''}
-                          targetLanguage="hi"
-                          onTranslated={setTranslatedContent}
-                        />
+                        <div className="flex items-center gap-2">
+                          {showTranslation && (
+                            <Badge variant="secondary" className="text-xs">
+                              Translated
+                            </Badge>
+                          )}
+                        </div>
                         
                         <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleTextToSpeech}
+                            disabled={!displayContent}
+                            className="p-2 h-8 w-8"
+                            title="Read Aloud"
+                          >
+                            {isPlaying ? (
+                              <VolumeX className="h-4 w-4" />
+                            ) : (
+                              <Volume2 className="h-4 w-4" />
+                            )}
+                          </Button>
+                          
                           <Button
                             variant="ghost"
                             size="sm"
@@ -321,6 +491,7 @@ export default function ResourceDetailPage() {
                             className={`p-2 h-8 w-8 ${
                               isBookmarked ? 'text-blue-600' : 'text-gray-500'
                             }`}
+                            title={isBookmarked ? 'Remove Bookmark' : 'Bookmark'}
                           >
                             <Bookmark
                               className={`h-4 w-4 ${
@@ -334,6 +505,7 @@ export default function ResourceDetailPage() {
                             size="sm"
                             onClick={handleDownload}
                             className="p-2 h-8 w-8 text-gray-500"
+                            title="Download"
                           >
                             <Download className="h-4 w-4" />
                           </Button>
@@ -343,8 +515,19 @@ export default function ResourceDetailPage() {
                             size="sm"
                             onClick={() => handleShare('copy_link')}
                             className="p-2 h-8 w-8 text-gray-500"
+                            title="Share"
                           >
                             <Share2 className="h-4 w-4" />
+                          </Button>
+                          
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setHighContrastMode(!highContrastMode)}
+                            className="p-2 h-8 w-8 text-gray-500"
+                            title={highContrastMode ? 'Normal Mode' : 'High Contrast'}
+                          >
+                            <Accessibility className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
@@ -363,6 +546,12 @@ export default function ResourceDetailPage() {
                           <ResourceViewer resource={resource} />
                         )}
                       </div>
+                      
+                      {displayContent && (
+                        <div className={`prose max-w-none ${highContrastMode ? 'prose-invert' : ''}`}>
+                          <div dangerouslySetInnerHTML={{ __html: displayContent }} />
+                        </div>
+                      )}
                     </div>
                   </TabsContent>
                   
@@ -466,10 +655,12 @@ export default function ResourceDetailPage() {
                         <div className="flex justify-center items-center py-12">
                           <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
                         </div>
-                      ) : summary ? (
-                        <div className="bg-blue-50 rounded-lg p-6 border border-blue-100">
+                      ) : displaySummary ? (
+                        <div className={`p-6 rounded-lg border ${highContrastMode ? 'bg-gray-800 border-gray-700' : 'bg-blue-50 border-blue-100'}`}>
                           <div className="prose max-w-none">
-                            <p className="text-gray-700">{summary}</p>
+                            <p className={highContrastMode ? 'text-gray-300' : 'text-gray-700'}>
+                              {displaySummary}
+                            </p>
                           </div>
                           {summaryCached && resource.summaryGeneratedAt && (
                             <div className="mt-4 text-sm text-gray-500 flex items-center gap-1">
@@ -479,7 +670,7 @@ export default function ResourceDetailPage() {
                           )}
                         </div>
                       ) : (
-                        <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
+                        <div className={`text-center py-12 rounded-lg border ${highContrastMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
                           <Sparkles className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                           <h3 className="text-lg font-medium text-gray-900 mb-2">
                             No Summary Available
@@ -494,13 +685,25 @@ export default function ResourceDetailPage() {
                       )}
                     </div>
                   </TabsContent>
+                  
+                  <TabsContent value="analytics" className="mt-4">
+                    <ResourceAnalytics 
+                      resourceId={resource.id}
+                      resourceType={resource.type}
+                      categories={resource.categories}
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="comments" className="mt-4">
+                    <ResourceComments resourceId={resource.id} />
+                  </TabsContent>
                 </Tabs>
               </CardContent>
             </Card>
           </div>
           
           <div className="lg:col-span-1 space-y-6">
-            <Card>
+            <Card className={highContrastMode ? 'bg-gray-900 border-gray-700' : ''}>
               <CardHeader>
                 <CardTitle className="text-lg">Resource Actions</CardTitle>
               </CardHeader>
@@ -531,10 +734,47 @@ export default function ResourceDetailPage() {
                   <Share2 className="mr-2 h-4 w-4" />
                   Copy Link
                 </Button>
+                
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={handleTextToSpeech}
+                  disabled={!displayContent}
+                >
+                  {isPlaying ? (
+                    <>
+                      <VolumeX className="mr-2 h-4 w-4" />
+                      Stop Audio
+                    </>
+                  ) : (
+                    <>
+                      <Volume2 className="mr-2 h-4 w-4" />
+                      Read Aloud
+                    </>
+                  )}
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => setHighContrastMode(!highContrastMode)}
+                >
+                  <Accessibility className="mr-2 h-4 w-4" />
+                  {highContrastMode ? 'Normal Mode' : 'High Contrast'}
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => setAiAssistantOpen(true)}
+                >
+                  <Brain className="mr-2 h-4 w-4" />
+                  AI Assistant
+                </Button>
               </CardContent>
             </Card>
             
-            <Card>
+            <Card className={highContrastMode ? 'bg-gray-900 border-gray-700' : ''}>
               <CardHeader>
                 <CardTitle className="text-lg">Statistics</CardTitle>
               </CardHeader>
@@ -559,11 +799,16 @@ export default function ResourceDetailPage() {
                     </div>
                   </div>
                 )}
+                
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Reading Time</span>
+                  <span className="font-medium">{readingTime} min</span>
+                </div>
               </CardContent>
             </Card>
             
-            {summary && (
-              <Card>
+            {displaySummary && (
+              <Card className={highContrastMode ? 'bg-gray-900 border-gray-700' : ''}>
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Sparkles className="h-5 w-5 text-yellow-500" />
@@ -571,23 +816,91 @@ export default function ResourceDetailPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-gray-600 line-clamp-4">
-                    {summary}
+                  <p className={`text-sm line-clamp-4 ${highContrastMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                    {displaySummary}
                   </p>
                   <Button
                     variant="outline"
                     size="sm"
                     className="mt-2 w-full"
-                    onClick={() => setActiveTab('summary')} // Switch to summary tab
+                    onClick={() => setActiveTab('summary')}
                   >
                     View Full Summary
                   </Button>
                 </CardContent>
               </Card>
             )}
+            
+            <Card className={highContrastMode ? 'bg-gray-900 border-gray-700' : ''}>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Target className="h-5 w-5 text-purple-600" />
+                  Mood-Based Recommendations
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className={`text-sm mb-4 ${highContrastMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  Resources recommended based on your current mood and interests
+                </p>
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={getMoodBasedRecommendations}
+                >
+                  Get Recommendations
+                </Button>
+              </CardContent>
+            </Card>
+            
+            <Card className={highContrastMode ? 'bg-gray-900 border-gray-700' : ''}>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Award className="h-5 w-5 text-yellow-600" />
+                  Content Quality
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className={`text-sm mb-4 ${highContrastMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  AI-powered assessment of this resource's quality and accuracy
+                </p>
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={analyzeContentQuality}
+                >
+                  Analyze Quality
+                </Button>
+                
+                {contentQuality && (
+                  <div className="mt-4 p-3 rounded-lg bg-blue-50">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className={`w-3 h-3 rounded-full ${
+                        contentQuality.score > 8 ? 'bg-green-500' : 
+                        contentQuality.score > 6 ? 'bg-yellow-500' : 'bg-red-500'
+                      }`}></div>
+                      <span className="font-medium">
+                        Quality Score: {contentQuality.score}/10
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-700">
+                      {contentQuality.assessment}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
+      
+      {aiAssistantOpen && (
+        <AIAssistant
+          resourceId={resource.id}
+          resourceTitle={resource.title}
+          resourceContent={resource.content || undefined}
+          onClose={() => setAiAssistantOpen(false)}
+        />
+      )}
     </div>
   );
 }
