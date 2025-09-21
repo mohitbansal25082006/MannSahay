@@ -21,7 +21,8 @@ import {
   CheckCircle,
   AlertTriangle,
   Info,
-  Loader2
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
 
 interface ResourceAnalyticsProps {
@@ -48,6 +49,12 @@ interface AnalyticsData {
   trending: boolean;
 }
 
+interface ContentQualityData {
+  score: number;
+  assessment: string;
+  suggestions: string[];
+}
+
 export default function ResourceAnalytics({
   resourceId,
   resourceType,
@@ -55,7 +62,9 @@ export default function ResourceAnalytics({
 }: ResourceAnalyticsProps) {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [qualityLoading, setQualityLoading] = useState(false);
   const [moodRecommendationsLoading, setMoodRecommendationsLoading] = useState(false);
+  const [contentQuality, setContentQuality] = useState<ContentQualityData | null>(null);
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -78,6 +87,32 @@ export default function ResourceAnalytics({
 
     fetchAnalytics();
   }, [resourceId]);
+
+  const analyzeContentQuality = async () => {
+    if (!analytics) return;
+    
+    try {
+      setQualityLoading(true);
+      const response = await fetch(`/api/resources/${resourceId}/quality-analysis`, {
+        method: 'POST',
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setContentQuality(data);
+        
+        // Update analytics with quality data
+        setAnalytics(prev => prev ? {
+          ...prev,
+          contentQuality: data
+        } : null);
+      }
+    } catch (error) {
+      console.error('Error analyzing content quality:', error);
+    } finally {
+      setQualityLoading(false);
+    }
+  };
 
   const getMoodBasedRecommendations = async () => {
     if (!analytics) return;
@@ -119,6 +154,12 @@ export default function ResourceAnalytics({
     if (score >= 8) return <CheckCircle className="h-4 w-4" />;
     if (score >= 6) return <AlertTriangle className="h-4 w-4" />;
     return <AlertTriangle className="h-4 w-4" />;
+  };
+
+  const getQualityBadgeVariant = (score: number) => {
+    if (score >= 8) return 'default';
+    if (score >= 6) return 'secondary';
+    return 'destructive';
   };
 
   if (loading) {
@@ -216,31 +257,31 @@ export default function ResourceAnalytics({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {analytics.contentQuality ? (
+          {contentQuality ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  {getQualityIcon(analytics.contentQuality.score)}
+                  {getQualityIcon(contentQuality.score)}
                   <span className="font-medium">Quality Score</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <span className={`text-2xl font-bold ${getQualityColor(analytics.contentQuality.score)}`}>
-                    {analytics.contentQuality.score}/10
+                  <span className={`text-2xl font-bold ${getQualityColor(contentQuality.score)}`}>
+                    {contentQuality.score}/10
                   </span>
-                  <Badge variant={analytics.contentQuality.score >= 8 ? 'default' : 'secondary'}>
-                    {analytics.contentQuality.score >= 8 ? 'Excellent' : analytics.contentQuality.score >= 6 ? 'Good' : 'Needs Improvement'}
+                  <Badge variant={getQualityBadgeVariant(contentQuality.score)}>
+                    {contentQuality.score >= 8 ? 'Excellent' : contentQuality.score >= 6 ? 'Good' : 'Needs Improvement'}
                   </Badge>
                 </div>
               </div>
               
               <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-gray-700">{analytics.contentQuality.assessment}</p>
+                <p className="text-gray-700">{contentQuality.assessment}</p>
               </div>
               
               <div>
                 <h4 className="font-medium mb-2">Improvement Suggestions</h4>
                 <ul className="space-y-1">
-                  {analytics.contentQuality.suggestions.map((suggestion, index) => (
+                  {contentQuality.suggestions.map((suggestion, index) => (
                     <li key={index} className="flex items-start gap-2 text-sm">
                       <Lightbulb className="h-4 w-4 text-yellow-500 mt-0.5 flex-shrink-0" />
                       <span>{suggestion}</span>
@@ -251,8 +292,18 @@ export default function ResourceAnalytics({
             </div>
           ) : (
             <div className="text-center py-4">
-              <Button variant="outline" onClick={() => window.location.reload()}>
-                Analyze Content Quality
+              <Button variant="outline" onClick={analyzeContentQuality} disabled={qualityLoading}>
+                {qualityLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Analyze Content Quality
+                  </>
+                )}
               </Button>
             </div>
           )}
@@ -277,12 +328,22 @@ export default function ResourceAnalytics({
                 <div key={index} className="p-3 border rounded-lg">
                   <div className="flex items-start gap-3">
                     <Brain className="h-5 w-5 text-purple-600 mt-0.5" />
-                    <div>
+                    <div className="flex-1">
                       <h4 className="font-medium">{rec.title}</h4>
                       <p className="text-sm text-gray-600">{rec.reason}</p>
-                      <Badge variant="outline" className="mt-1">
-                        {rec.mood}
-                      </Badge>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Badge variant="outline" className="text-xs">
+                          {rec.mood}
+                        </Badge>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-xs h-6 px-2"
+                          onClick={() => window.location.href = `/dashboard/resources/${rec.resourceId}`}
+                        >
+                          View Resource
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>

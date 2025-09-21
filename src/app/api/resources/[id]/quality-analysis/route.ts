@@ -84,6 +84,15 @@ Please respond in JSON format with the following structure:
     const content = response.choices[0]?.message?.content || '{}';
     const analysis = JSON.parse(content);
 
+    // Save the analysis to the resource
+    await prisma.resource.update({
+      where: { id: resourceId },
+      data: {
+        // Store quality analysis in a JSON field
+        // You might need to add a field to your schema for this
+      },
+    });
+
     return NextResponse.json(analysis);
   } catch (error) {
     console.error('Error analyzing content quality:', error);

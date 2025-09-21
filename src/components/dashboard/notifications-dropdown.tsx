@@ -1,3 +1,4 @@
+// E:\mannsahay\src\components\dashboard\notifications-dropdown.tsx
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -18,7 +19,10 @@ import {
   MessageCircle,
   Eye,
   XCircle,
-  BookOpen
+  Trash2,
+  BookOpen,
+  Flag,
+  CheckCircle
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { formatDistanceToNow } from 'date-fns';
@@ -186,6 +190,10 @@ export default function NotificationsDropdown() {
         return <XCircle className="h-4 w-4 text-red-500" />;
       case 'reply':
         return <MessageCircle className="h-4 w-4 text-blue-500" />;
+      case 'content_flagged':
+        return <Flag className="h-4 w-4 text-orange-500" />;
+      case 'flag_reviewed':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
       default:
         return <Info className="h-4 w-4 text-gray-500" />;
     }
@@ -198,11 +206,11 @@ export default function NotificationsDropdown() {
           <Button 
             variant="outline" 
             size="sm" 
-            className="mt-2 text-xs"
+            className="mt-2"
             asChild
           >
             <Link href="/dashboard/guidelines">
-              <BookOpen className="h-3 w-3 mr-1" />
+              <BookOpen className="h-4 w-4 mr-2" />
               View Guidelines
             </Link>
           </Button>
@@ -215,11 +223,11 @@ export default function NotificationsDropdown() {
             <Button 
               variant="outline" 
               size="sm" 
-              className="mt-2 text-xs"
+              className="mt-2"
               asChild
             >
               <Link href={`/dashboard/forum/post/${postId}`}>
-                <Eye className="h-3 w-3 mr-1" />
+                <Eye className="h-4 w-4 mr-2" />
                 View Reply
               </Link>
             </Button>
@@ -230,16 +238,56 @@ export default function NotificationsDropdown() {
             <Button 
               variant="outline" 
               size="sm" 
-              className="mt-2 text-xs"
+              className="mt-2"
               asChild
             >
               <Link href="/dashboard/forum">
-                <Eye className="h-3 w-3 mr-1" />
+                <Eye className="h-4 w-4 mr-2" />
                 View Forum
               </Link>
             </Button>
           );
         }
+      case 'content_flagged':
+        // Show moderation status
+        const moderationResult = notification.metadata?.moderationResult;
+        if (moderationResult) {
+          return (
+            <div className="mt-2 p-2 bg-orange-50 rounded border border-orange-200">
+              <div className="flex items-center gap-2 mb-1">
+                <AlertTriangle className="h-4 w-4 text-orange-600" />
+                <span className="font-medium text-sm">Under Review</span>
+              </div>
+              <p className="text-xs text-gray-600">
+                {moderationResult.violatesPolicy 
+                  ? "This comment is being reviewed for policy violations."
+                  : "This comment has been flagged for review."
+                }
+              </p>
+            </div>
+          );
+        }
+        break;
+      case 'flag_reviewed':
+        // Show review result
+        const reviewResult = notification.metadata?.moderationResult;
+        if (reviewResult) {
+          return (
+            <div className="mt-2 p-2 bg-green-50 rounded border border-green-200">
+              <div className="flex items-center gap-2 mb-1">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <span className="font-medium text-sm">Review Complete</span>
+              </div>
+              <p className="text-xs text-gray-600">
+                {reviewResult.violatesPolicy 
+                  ? "The comment was found to violate our policies."
+                  : "The comment was found to comply with our policies."
+                }
+              </p>
+            </div>
+          );
+        }
+        break;
       default:
         return null;
     }
