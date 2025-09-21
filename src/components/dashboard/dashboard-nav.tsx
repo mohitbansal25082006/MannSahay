@@ -25,7 +25,8 @@ import {
   X,
   BarChart3,
   Bell,
-  UserCheck
+  UserCheck,
+  Bookmark
 } from 'lucide-react';
 import NotificationsDropdown from './notifications-dropdown';
 
@@ -54,6 +55,11 @@ const navItems = [
     href: '/dashboard/resources',
     label: 'Resources',
     icon: BookOpen,
+  },
+  {
+    href: '/dashboard/resources/bookmarks',
+    label: 'Bookmarks',
+    icon: Bookmark,
   },
   {
     href: '/dashboard/notifications',
