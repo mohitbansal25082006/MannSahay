@@ -5,12 +5,17 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  // Generate a simple placeholder avatar with initials
+  // Extract the id from params
   const id = params.id;
-  
+
+  // Validate the id to prevent potential errors
+  if (!id || typeof id !== 'string') {
+    return new NextResponse('Invalid ID', { status: 400 });
+  }
+
   // Create initials from the ID (first character)
   const initial = id.charAt(0).toUpperCase();
-  
+
   // Create a simple SVG avatar
   const svg = `
     <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
@@ -18,7 +23,7 @@ export async function GET(
       <text x="50" y="50" font-family="Arial" font-size="40" fill="white" text-anchor="middle" dominant-baseline="middle">${initial}</text>
     </svg>
   `;
-  
+
   return new NextResponse(svg, {
     headers: {
       'Content-Type': 'image/svg+xml',
