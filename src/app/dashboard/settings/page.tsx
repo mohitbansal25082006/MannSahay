@@ -486,7 +486,7 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label htmlFor="online-status" className="text-base">Show Online Status</Label>
-                    <p className="text-sm text-gray-500">Let others see when you're online</p>
+                    <p className="text-sm text-gray-500">Let others see when you&apos;re online</p>
                   </div>
                   <Switch
                     id="online-status"
