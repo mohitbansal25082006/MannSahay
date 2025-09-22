@@ -6,6 +6,15 @@ import GitHubProvider from "next-auth/providers/github"
 import { prisma } from "./db"
 import crypto from "crypto"
 
+// Define a proper type for GitHub profile that matches NextAuth's expectations
+interface GitHubProfileType {
+  id: number;
+  login: string;
+  name: string | null;
+  email: string | null;
+  avatar_url: string;
+}
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
@@ -22,11 +31,12 @@ export const authOptions: NextAuthOptions = {
           scope: "read:user user:email",
         },
       },
-      profile(profile: any) {
+      profile(profile: GitHubProfileType) {
+        // Use the built-in GitHub profile type by not specifying a custom type
         return {
           id: profile.id.toString(),
-          name: profile.name || profile.login,
-          email: profile.email,
+          name: profile.name || profile.login || 'GitHub User',
+          email: profile.email, // Allow null for email as per NextAuth expectations
           image: profile.avatar_url,
         }
       },
@@ -108,19 +118,4 @@ export const authOptions: NextAuthOptions = {
     error: "/auth/signin", // Redirect to signin on error
   },
   debug: process.env.NODE_ENV === 'development',
-  // Add events for better error handling with proper NextAuth types
-  events: {
-    async signIn(message: { user: User; account: Account | null; profile?: Profile }) {
-      console.log("User signed in:", message.user.email)
-    },
-    async signOut(message: { session: any }) {
-      console.log("User signed out:", message.session?.user.email)
-    },
-    async createUser(message: { user: User }) {
-      console.log("User created:", message.user.email)
-    },
-    async linkAccount(message: { user: User; account: Account; profile: User }) {
-      console.log("Account linked:", message.user.email, message.account.provider)
-    },
-  }
 }

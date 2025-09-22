@@ -53,7 +53,7 @@ export default function AuthButtons() {
 
       {/* GitHub specific info */}
       <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
-        <p>For GitHub: Make sure your email is public or you've added it to your GitHub account.</p>
+        <p>For GitHub: Make sure your email is public or you&apos;ve added it to your GitHub account.</p>
       </div>
     </div>
   )
