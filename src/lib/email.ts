@@ -18,18 +18,38 @@ export interface EmailOptions {
 
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   try {
-    const info = await transporter.sendMail({
-      from: process.env.EMAIL_FROM || 'mannsahay@example.com',
+    // Validate email configuration
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      console.error('Email configuration missing');
+      return false;
+    }
+
+    const mailOptions = {
+      from: process.env.EMAIL_FROM || `"MannSahay" <${process.env.EMAIL_USER}>`,
       to: options.to,
       subject: options.subject,
-      text: options.text || '',
+      text: options.text || options.html.replace(/<[^>]*>/g, ''), // Fallback to plain text
       html: options.html,
-    });
+    };
+
+    // Verify connection configuration
+    await transporter.verify();
+    
+    const info = await transporter.sendMail(mailOptions);
     
     console.log('Email sent successfully:', info.messageId);
     return true;
   } catch (error) {
     console.error('Error sending email:', error);
+    
+    // Log specific error details
+    if (error instanceof Error) {
+      console.error('Email error details:', {
+        message: error.message,
+        stack: error.stack
+      });
+    }
+    
     return false;
   }
 }
