@@ -217,8 +217,8 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Video Controls */}
-      <div className="fixed bottom-6 right-6 z-40">
+      {/* Video Controls - Visible only on laptop screens (lg and up) */}
+      <div className="fixed bottom-6 right-6 z-40 hidden lg:block">
         <button 
           onClick={toggleFullscreen}
           className="bg-black/50 backdrop-blur-md p-3 rounded-full text-white hover:bg-black/70 transition-all"
