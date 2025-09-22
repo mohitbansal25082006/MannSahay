@@ -16,11 +16,27 @@ export const authOptions: NextAuthOptions = {
     GitHubProvider({
       clientId: process.env.GITHUB_CLIENT_ID!,
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-      // Add authorization params to get user email
       authorization: {
         params: {
           scope: "read:user user:email",
         },
+      },
+      profile: async (profile, tokens) => {
+        // If email is null, fetch from GitHub API
+        if (profile.email == null) {
+          const res = await fetch("https://api.github.com/user/emails", {
+            headers: { Authorization: `token ${tokens.access_token}` },
+          });
+          if (res.ok) {
+            const emails = await res.json();
+            if (emails?.length > 0) {
+              // Find primary email or first one
+              const primaryEmail = emails.find((e: any) => e.primary);
+              profile.email = primaryEmail ? primaryEmail.email : emails[0].email;
+            }
+          }
+        }
+        return profile;
       },
     }),
   ],
@@ -30,16 +46,16 @@ export const authOptions: NextAuthOptions = {
       if (session?.user && token) {
         // Add user ID to session
         session.user.id = token.sub || token.id as string;
-        
+
         // Generate hashed ID for privacy if not already set
         if (!session.user.hashedId && session.user.email) {
           const hashedId = crypto
             .createHash('sha256')
             .update(session.user.email + process.env.NEXTAUTH_SECRET!)
             .digest('hex');
-          
+
           session.user.hashedId = hashedId;
-          
+
           // Update user with hashed ID if not exists
           await prisma.user.update({
             where: { email: session.user.email },
@@ -56,12 +72,12 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
       }
-      
+
       // Add provider info to token
       if (account) {
         token.provider = account.provider;
       }
-      
+
       return token
     },
   },
