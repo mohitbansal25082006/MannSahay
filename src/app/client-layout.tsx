@@ -10,7 +10,6 @@ export default function ClientLayout({
 }) {
   return (
     <SessionProvider>
-      <Navbar />
       {children}
       <Toaster />
     </SessionProvider>
