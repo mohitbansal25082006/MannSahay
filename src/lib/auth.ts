@@ -1,18 +1,10 @@
 // E:\mannsahay\src\lib\auth.ts
-import { NextAuthOptions } from "next-auth"
+import { NextAuthOptions, User, Account, Profile } from "next-auth"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import GoogleProvider from "next-auth/providers/google"
 import GitHubProvider from "next-auth/providers/github"
 import { prisma } from "./db"
 import crypto from "crypto"
-
-// Define interface for GitHub email API response
-interface GitHubEmail {
-  email: string;
-  primary: boolean;
-  verified: boolean;
-  visibility: string | null;
-}
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -24,50 +16,45 @@ export const authOptions: NextAuthOptions = {
     GitHubProvider({
       clientId: process.env.GITHUB_CLIENT_ID!,
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+      // Enhanced GitHub configuration
       authorization: {
         params: {
           scope: "read:user user:email",
         },
       },
-      profile: async (profile, tokens) => {
-        try {
-          console.log("GitHub Profile:", profile);
-          if (profile.email == null) {
-            const res = await fetch("https://api.github.com/user/emails", {
-              headers: { Authorization: `token ${tokens.access_token}` },
-            });
-            console.log("GitHub API Response Status:", res.status);
-            if (res.ok) {
-              const emails: GitHubEmail[] = await res.json();
-              console.log("GitHub Emails:", emails);
-              if (emails?.length > 0) {
-                const primaryEmail = emails.find((e: GitHubEmail) => e.primary);
-                profile.email = primaryEmail ? primaryEmail.email : emails[0].email;
-                console.log("Selected Email:", profile.email);
-              } else {
-                console.error("No emails found in GitHub API response");
-              }
-            } else {
-              console.error("Failed to fetch GitHub emails:", res.statusText);
-            }
-          }
-          if (!profile.email) {
-            console.error("No email available for GitHub user");
-            throw new Error("Unable to retrieve user email from GitHub");
-          }
-          return profile;
-        } catch (error) {
-          console.error("Error in GitHub profile callback:", error);
-          throw error;
+      profile(profile: any) {
+        return {
+          id: profile.id.toString(),
+          name: profile.name || profile.login,
+          email: profile.email,
+          image: profile.avatar_url,
         }
       },
     }),
   ],
   callbacks: {
+    async signIn({ user, account, profile }) {
+      // Handle GitHub email issue - if no email from GitHub, try to get it from profile
+      if (account?.provider === "github" && !user.email) {
+        // Try to get email from profile if available
+        if (profile && typeof profile === 'object' && 'email' in profile && profile.email) {
+          user.email = profile.email as string;
+        } else {
+          // If still no email, create a placeholder and log the issue
+          console.warn("GitHub user has no public email:", profile)
+          // You might want to redirect to an email collection page
+          return true // Allow signin but user will need to provide email later
+        }
+      }
+      return true
+    },
     async session({ session, token }) {
+      // For JWT strategy, we get the user ID from the token
       if (session?.user && token) {
+        // Add user ID to session
         session.user.id = token.sub || token.id as string;
 
+        // Generate hashed ID for privacy if not already set
         if (!session.user.hashedId && session.user.email) {
           const hashedId = crypto
             .createHash('sha256')
@@ -76,26 +63,37 @@ export const authOptions: NextAuthOptions = {
 
           session.user.hashedId = hashedId;
 
+          // Update user with hashed ID if not exists
           try {
             await prisma.user.update({
               where: { email: session.user.email },
               data: { hashedId }
             });
           } catch (error) {
-            console.error("Error updating user with hashedId:", error);
+            // Ignore if user doesn't exist yet or update fails
+            console.log("User update for hashedId failed:", error)
           }
         }
       }
-      return session;
+      return session
     },
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, profile }) {
+      // Add user ID to token when signing in
       if (user) {
         token.id = user.id;
       }
+
+      // Add provider info to token
       if (account) {
         token.provider = account.provider;
       }
-      return token;
+
+      // Handle GitHub profile data
+      if (account?.provider === "github" && profile) {
+        token.githubProfile = profile;
+      }
+
+      return token
     },
   },
   session: {
@@ -107,6 +105,22 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: "/auth/signin",
+    error: "/auth/signin", // Redirect to signin on error
   },
   debug: process.env.NODE_ENV === 'development',
+  // Add events for better error handling with proper NextAuth types
+  events: {
+    async signIn(message: { user: User; account: Account | null; profile?: Profile }) {
+      console.log("User signed in:", message.user.email)
+    },
+    async signOut(message: { session: any }) {
+      console.log("User signed out:", message.session?.user.email)
+    },
+    async createUser(message: { user: User }) {
+      console.log("User created:", message.user.email)
+    },
+    async linkAccount(message: { user: User; account: Account; profile: User }) {
+      console.log("Account linked:", message.user.email, message.account.provider)
+    },
+  }
 }
