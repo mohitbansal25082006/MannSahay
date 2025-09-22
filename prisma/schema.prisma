@@ -7,6 +7,36 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  message   String   @db.Text
+  urgency   String   @default("normal") // low, normal, high, critical
+  status    String   @default("pending") // pending, replied, resolved
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String?  // Optional relation to User
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  replies   ContactReply[]
+  
+  @@map("contact_messages")
+}
+
+model ContactReply {
+  id        String   @id @default(cuid())
+  messageId String
+  content   String   @db.Text
+  isManual  Boolean  @default(true) // true for manual, false for AI-generated
+  sentAt    DateTime @default(now())
+  
+  message   ContactMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  
+  @@map("contact_replies")
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -52,6 +82,7 @@ model User {
   resourceComments ResourceComment[]
   resourceCommentLikes ResourceCommentLike[]
   resourceCommentFlags ResourceCommentFlag[]
+  contactMessages ContactMessage[]
   @@map("users")
 }
 

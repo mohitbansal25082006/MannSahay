@@ -1,3 +1,4 @@
+// E:\mannsahay\src\lib\auth.ts
 import { NextAuthOptions } from "next-auth"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import GoogleProvider from "next-auth/providers/google"
@@ -15,6 +16,12 @@ export const authOptions: NextAuthOptions = {
     GitHubProvider({
       clientId: process.env.GITHUB_CLIENT_ID!,
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+      // Add authorization params to get user email
+      authorization: {
+        params: {
+          scope: "read:user user:email",
+        },
+      },
     }),
   ],
   callbacks: {
