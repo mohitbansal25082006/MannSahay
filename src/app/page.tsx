@@ -793,13 +793,13 @@ export default function Home() {
             
             <div className="flex space-x-4 mt-4 md:mt-0">
               {[
-                { icon: Shield, label: "Privacy" },
-                { icon: BookOpen, label: "Terms" },
-                { icon: MessageCircle, label: "Contact" }
+                { icon: Shield, label: "Privacy", href: "/privacy" },
+                { icon: BookOpen, label: "Terms", href: "/terms" },
+                { icon: MessageCircle, label: "Contact", href: "/contact" }
               ].map((item, index) => (
                 <motion.a
                   key={index}
-                  href="#"
+                  href={item.href}
                   className="text-gray-400 hover:text-white transition-colors flex items-center"
                   whileHover={{ scale: 1.1 }}
                 >
@@ -808,6 +808,13 @@ export default function Home() {
                 </motion.a>
               ))}
             </div>
+          </div>
+          
+          {/* Made with love line */}
+          <div className="mt-6 text-center">
+            <p className="text-gray-500 text-sm">
+              Made with ❤️ by Team BotZilla
+            </p>
           </div>
         </div>
       </footer>

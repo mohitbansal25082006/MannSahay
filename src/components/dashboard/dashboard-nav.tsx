@@ -1,4 +1,3 @@
-// E:\mannsahay\src\components\dashboard\dashboard-nav.tsx
 'use client';
 
 import { useState } from 'react';
@@ -26,7 +25,8 @@ import {
   BarChart3,
   Bell,
   Bookmark,
-  TrendingUp
+  TrendingUp,
+  Phone
 } from 'lucide-react';
 import NotificationsDropdown from './notifications-dropdown';
 
@@ -164,6 +164,12 @@ export default function DashboardNav() {
                   </div>
                 </div>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/contact" className="flex items-center cursor-pointer">
+                    <Phone className="mr-2 h-4 w-4" />
+                    <span>Contact</span>
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard/settings" className="flex items-center cursor-pointer">
                     <Settings className="mr-2 h-4 w-4" />
