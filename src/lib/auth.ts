@@ -6,6 +6,14 @@ import GitHubProvider from "next-auth/providers/github"
 import { prisma } from "./db"
 import crypto from "crypto"
 
+// Define interface for GitHub email API response
+interface GitHubEmail {
+  email: string;
+  primary: boolean;
+  verified: boolean;
+  visibility: string | null;
+}
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
@@ -22,32 +30,44 @@ export const authOptions: NextAuthOptions = {
         },
       },
       profile: async (profile, tokens) => {
-        // If email is null, fetch from GitHub API
-        if (profile.email == null) {
-          const res = await fetch("https://api.github.com/user/emails", {
-            headers: { Authorization: `token ${tokens.access_token}` },
-          });
-          if (res.ok) {
-            const emails = await res.json();
-            if (emails?.length > 0) {
-              // Find primary email or first one
-              const primaryEmail = emails.find((e: any) => e.primary);
-              profile.email = primaryEmail ? primaryEmail.email : emails[0].email;
+        try {
+          console.log("GitHub Profile:", profile);
+          if (profile.email == null) {
+            const res = await fetch("https://api.github.com/user/emails", {
+              headers: { Authorization: `token ${tokens.access_token}` },
+            });
+            console.log("GitHub API Response Status:", res.status);
+            if (res.ok) {
+              const emails: GitHubEmail[] = await res.json();
+              console.log("GitHub Emails:", emails);
+              if (emails?.length > 0) {
+                const primaryEmail = emails.find((e: GitHubEmail) => e.primary);
+                profile.email = primaryEmail ? primaryEmail.email : emails[0].email;
+                console.log("Selected Email:", profile.email);
+              } else {
+                console.error("No emails found in GitHub API response");
+              }
+            } else {
+              console.error("Failed to fetch GitHub emails:", res.statusText);
             }
           }
+          if (!profile.email) {
+            console.error("No email available for GitHub user");
+            throw new Error("Unable to retrieve user email from GitHub");
+          }
+          return profile;
+        } catch (error) {
+          console.error("Error in GitHub profile callback:", error);
+          throw error;
         }
-        return profile;
       },
     }),
   ],
   callbacks: {
     async session({ session, token }) {
-      // For JWT strategy, we get the user ID from the token
       if (session?.user && token) {
-        // Add user ID to session
         session.user.id = token.sub || token.id as string;
 
-        // Generate hashed ID for privacy if not already set
         if (!session.user.hashedId && session.user.email) {
           const hashedId = crypto
             .createHash('sha256')
@@ -56,29 +76,26 @@ export const authOptions: NextAuthOptions = {
 
           session.user.hashedId = hashedId;
 
-          // Update user with hashed ID if not exists
-          await prisma.user.update({
-            where: { email: session.user.email },
-            data: { hashedId }
-          }).catch(() => {
-            // Ignore if user doesn't exist yet
-          });
+          try {
+            await prisma.user.update({
+              where: { email: session.user.email },
+              data: { hashedId }
+            });
+          } catch (error) {
+            console.error("Error updating user with hashedId:", error);
+          }
         }
       }
-      return session
+      return session;
     },
     async jwt({ token, user, account }) {
-      // Add user ID to token when signing in
       if (user) {
         token.id = user.id;
       }
-
-      // Add provider info to token
       if (account) {
         token.provider = account.provider;
       }
-
-      return token
+      return token;
     },
   },
   session: {
