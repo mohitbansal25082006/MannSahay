@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { ReminderType } from '@/types';
+import { sendEmail, generateBookingConfirmationEmail } from '@/lib/email';
 
 // Define a type for Prisma errors that might have a code property
 interface PrismaError extends Error {
@@ -222,14 +223,30 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    // Skip creating notification for counselor since counselors don't have user accounts
-    // In a real implementation, you might want to:
-    // 1. Create a user account for each counselor
-    // 2. Send an email notification instead
-    // 3. Use a separate notification system for counselors
-    
-    // For now, we'll just log that we would send a notification
-    console.log(`Would send notification to counselor ${counselor.name} about new booking`);
+    // Send email confirmation
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: session.user.id }
+      });
+
+      if (user?.email) {
+        const emailHtml = generateBookingConfirmationEmail(
+          user.name || 'User',
+          booking.counselor.name,
+          new Date(slotTime),
+          videoSession.meetingUrl || undefined
+        );
+
+        await sendEmail({
+          to: user.email,
+          subject: 'Booking Confirmation - MannSahay',
+          html: emailHtml
+        });
+      }
+    } catch (emailError) {
+      console.error('Error sending booking confirmation email:', emailError);
+      // Continue with the booking process even if email fails
+    }
 
     return NextResponse.json({ ...booking, videoSession }, { status: 201 });
   } catch (error) {

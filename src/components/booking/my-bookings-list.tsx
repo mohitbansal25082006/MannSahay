@@ -1,3 +1,4 @@
+// E:\mannsahay\src\components\booking\my-bookings-list.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -5,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Clock, User, Video, MessageSquare, Star, MoreHorizontal, CalendarPlus } from 'lucide-react';
+import { Calendar, Clock, User, Video, MessageSquare, Star, MoreHorizontal, CalendarPlus, AlertCircle } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +17,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface Booking {
   id: string;
@@ -73,6 +75,7 @@ export default function MyBookingsList() {
   const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
   const [pastBookings, setPastBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [counselors, setCounselors] = useState<Counselor[]>([]);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(null);
@@ -88,18 +91,33 @@ export default function MyBookingsList() {
 
   const fetchBookings = async () => {
     setLoading(true);
+    setError(null);
+    
     try {
       // Fetch upcoming bookings
       const upcomingResponse = await fetch('/api/bookings?upcoming=true');
+      
+      if (!upcomingResponse.ok) {
+        const errorData = await upcomingResponse.json();
+        throw new Error(errorData.error || 'Failed to fetch upcoming bookings');
+      }
+      
       const upcomingData = await upcomingResponse.json();
       setUpcomingBookings(upcomingData);
       
       // Fetch past bookings
       const pastResponse = await fetch('/api/bookings?upcoming=false');
+      
+      if (!pastResponse.ok) {
+        const errorData = await pastResponse.json();
+        throw new Error(errorData.error || 'Failed to fetch past bookings');
+      }
+      
       const pastData = await pastResponse.json();
       setPastBookings(pastData);
-    } catch (error) {
-      console.error('Error fetching bookings:', error);
+    } catch (err) {
+      console.error('Error fetching bookings:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch bookings');
     } finally {
       setLoading(false);
     }
@@ -329,6 +347,28 @@ export default function MyBookingsList() {
       </CardContent>
     </Card>
   );
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Calendar className="h-5 w-5 mr-2" />
+              My Bookings
+            </CardTitle>
+          </CardHeader>
+        </Card>
+        
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {error}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

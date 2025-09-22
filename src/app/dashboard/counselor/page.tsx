@@ -7,10 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Clock, Users, Star, MessageSquare, Video, Plus } from 'lucide-react';
+import { Calendar, Clock, Users, Star, MessageSquare, Video, Plus, Brain } from 'lucide-react';
 import CounselorSchedule from '@/components/counselor/counselor-schedule';
 import ClientList from '@/components/counselor/client-list';
 import CounselorAnalytics from '@/components/counselor/counselor-analytics';
+import AIRecommendations from '@/components/counselor/ai-recommendations';
 
 export default function CounselorDashboard() {
   const { data: session } = useSession();
@@ -26,10 +27,11 @@ export default function CounselorDashboard() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="schedule">Schedule</TabsTrigger>
           <TabsTrigger value="clients">Clients</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="ai-insights">AI Insights</TabsTrigger>
         </TabsList>
 
         <TabsContent value="schedule" className="space-y-6">
@@ -42,6 +44,10 @@ export default function CounselorDashboard() {
 
         <TabsContent value="analytics" className="space-y-6">
           <CounselorAnalytics />
+        </TabsContent>
+
+        <TabsContent value="ai-insights" className="space-y-6">
+          <AIRecommendations />
         </TabsContent>
       </Tabs>
     </div>

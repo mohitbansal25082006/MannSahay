@@ -87,7 +87,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await context.params; // Await params to get the id
+    const { id } = await context.params;
 
     const participation = await prisma.groupSessionParticipant.findUnique({
       where: {
@@ -102,6 +102,11 @@ export async function DELETE(
       return NextResponse.json({ error: 'Not participating in this session' }, { status: 404 });
     }
 
+    // Get group session details for notification
+    const groupSession = await prisma.groupSession.findUnique({
+      where: { id }
+    });
+
     await prisma.groupSessionParticipant.delete({
       where: {
         groupSessionId_userId: {
@@ -110,6 +115,22 @@ export async function DELETE(
         }
       }
     });
+
+    // Create notification for leaving group session
+    if (groupSession) {
+      await prisma.notification.create({
+        data: {
+          title: 'Left Group Session',
+          message: `You have successfully left the group session: ${groupSession.title}`,
+          type: 'GROUP_SESSION_LEFT',
+          userId: session.user.id,
+          metadata: {
+            groupSessionId: groupSession.id,
+            sessionDate: groupSession.sessionDate
+          }
+        }
+      });
+    }
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {

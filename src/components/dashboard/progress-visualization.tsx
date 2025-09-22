@@ -163,24 +163,34 @@ export default function ProgressVisualization() {
             </CardHeader>
             <CardContent>
               <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={formattedMoodTrends}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis domain={[0, 10]} />
-                    <Tooltip 
-                      formatter={(value) => [`${value}`, 'Mood']}
-                      labelFormatter={(label) => `Date: ${label}`}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="mood" 
-                      stroke="#8884d8" 
-                      activeDot={{ r: 8 }} 
-                      strokeWidth={2}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                {formattedMoodTrends.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={formattedMoodTrends}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis domain={[0, 10]} />
+                      <Tooltip 
+                        formatter={(value) => [`${value}`, 'Mood']}
+                        labelFormatter={(label) => `Date: ${label}`}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="mood" 
+                        stroke="#8884d8" 
+                        activeDot={{ r: 8 }} 
+                        strokeWidth={2}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    <div className="text-center">
+                      <Activity className="h-12 w-12 mx-auto mb-2" />
+                      <p>No mood data available</p>
+                      <p className="text-sm mt-1">Start tracking your mood to see trends</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -222,27 +232,37 @@ export default function ProgressVisualization() {
             </CardHeader>
             <CardContent>
               <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={counselorDistributionData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="count"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {counselorDistributionData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      formatter={(value) => [`${value}`, 'Sessions']}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                {counselorDistributionData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={counselorDistributionData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="count"
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      >
+                        {counselorDistributionData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        formatter={(value) => [`${value}`, 'Sessions']}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-500">
+                    <div className="text-center">
+                      <Users className="h-12 w-12 mx-auto mb-2" />
+                      <p>No counselor data available</p>
+                      <p className="text-sm mt-1">Book sessions with counselors to see distribution</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

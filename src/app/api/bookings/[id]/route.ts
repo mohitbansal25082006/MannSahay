@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { Prisma } from '@prisma/client';
+import { sendEmail, generateSessionCancellationEmail } from '@/lib/email';
 
 export async function GET(
   request: NextRequest,
@@ -15,7 +16,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await context.params; // Await params to get the id
+    const { id } = await context.params;
 
     const booking = await prisma.booking.findUnique({
       where: { id },
@@ -68,7 +69,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await context.params; // Await params to get the id
+    const { id } = await context.params;
     const body = await request.json();
     const { status, slotTime, notes } = body;
 
@@ -162,6 +163,32 @@ export async function PATCH(
       } else {
         console.log(`Skipping notification for user ${notificationRecipient} as they don't exist in the users table`);
       }
+
+      // Send cancellation email if status is CANCELLED
+      if (status === 'CANCELLED') {
+        try {
+          const user = await prisma.user.findUnique({
+            where: { id: booking.userId }
+          });
+
+          if (user?.email) {
+            const emailHtml = generateSessionCancellationEmail(
+              user.name || 'User',
+              booking.counselor.name,
+              booking.slotTime
+            );
+
+            await sendEmail({
+              to: user.email,
+              subject: 'Session Cancelled - MannSahay',
+              html: emailHtml
+            });
+          }
+        } catch (emailError) {
+          console.error('Error sending cancellation email:', emailError);
+          // Continue with the booking process even if email fails
+        }
+      }
     }
 
     return NextResponse.json(updatedBooking);
@@ -190,7 +217,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await context.params; // Await params to get the id
+    const { id } = await context.params;
 
     const booking = await prisma.booking.findUnique({
       where: { id }
@@ -218,6 +245,33 @@ export async function DELETE(
         where: { id: booking.availabilitySlotId },
         data: { isBooked: false }
       });
+    }
+
+    // Send cancellation email
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: booking.userId }
+      });
+      const counselor = await prisma.counselor.findUnique({
+        where: { id: booking.counselorId }
+      });
+
+      if (user?.email && counselor) {
+        const emailHtml = generateSessionCancellationEmail(
+          user.name || 'User',
+          counselor.name,
+          booking.slotTime
+        );
+
+        await sendEmail({
+          to: user.email,
+          subject: 'Session Cancelled - MannSahay',
+          html: emailHtml
+        });
+      }
+    } catch (emailError) {
+      console.error('Error sending cancellation email:', emailError);
+      // Continue with the deletion process even if email fails
     }
 
     await prisma.booking.delete({
