@@ -14,7 +14,6 @@ import {
   Send, 
   Search,
   AlertTriangle,
-  CheckCircle,
   MessageCircle,
   Sparkles,
   Copy,
@@ -31,6 +30,45 @@ interface ContactMessage {
   urgency: string;
   status: string;
   createdAt: string;
+}
+
+// Component for individual AI suggestion items
+interface AISuggestionItemProps {
+  suggestion: string;
+  index: number;
+  onUseSuggestion: (suggestion: string) => void;
+  onCopyToClipboard: (text: string) => void;
+}
+
+function AISuggestionItem({ suggestion, index, onUseSuggestion, onCopyToClipboard }: AISuggestionItemProps) {
+  return (
+    <div className="bg-white border border-purple-100 rounded-lg p-3">
+      <div className="flex justify-between items-start mb-2">
+        <Badge variant="outline" className="bg-purple-50 text-purple-700">
+          Suggestion {index + 1}
+        </Badge>
+        <div className="flex space-x-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onUseSuggestion(suggestion)}
+            className="h-6 px-2 text-xs"
+          >
+            Use
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onCopyToClipboard(suggestion)}
+            className="h-6 px-2 text-xs"
+          >
+            <Copy className="h-3 w-3" />
+          </Button>
+        </div>
+      </div>
+      <p className="text-sm text-gray-700 whitespace-pre-wrap">{suggestion}</p>
+    </div>
+  );
 }
 
 export default function AdminContactPage() {
@@ -323,32 +361,13 @@ export default function AdminContactPage() {
                     <div className="space-y-3 mt-3">
                       <p className="text-sm text-purple-700 font-medium">AI Suggestions:</p>
                       {aiSuggestions.map((suggestion, index) => (
-                        <div key={index} className="bg-white border border-purple-100 rounded-lg p-3">
-                          <div className="flex justify-between items-start mb-2">
-                            <Badge variant="outline" className="bg-purple-50 text-purple-700">
-                              Suggestion {index + 1}
-                            </Badge>
-                            <div className="flex space-x-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => useAISuggestion(suggestion)}
-                                className="h-6 px-2 text-xs"
-                              >
-                                Use
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => copyToClipboard(suggestion)}
-                                className="h-6 px-2 text-xs"
-                              >
-                                <Copy className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </div>
-                          <p className="text-sm text-gray-700 whitespace-pre-wrap">{suggestion}</p>
-                        </div>
+                        <AISuggestionItem
+                          key={index}
+                          suggestion={suggestion}
+                          index={index}
+                          onUseSuggestion={useAISuggestion}
+                          onCopyToClipboard={copyToClipboard}
+                        />
                       ))}
                     </div>
                   )}
