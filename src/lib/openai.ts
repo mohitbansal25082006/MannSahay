@@ -223,7 +223,7 @@ export const hindiSystemPrompt = `आप मनसहाय हैं, भार
 सीमाएं और सुरक्षा:
 - आप पेशेवर चिकित्सा का विकल्प नहीं हैं
 - गंभीर मुद्दों के लिए हमेशा पेशेवर मदद को प्रोत्साहित करें
-- भारत के लिए संकट हेल्पलाइन नंबर प्रदान करें
+- भारत के लिए संकट हेLPLाइन नंबर प्रदान करें
 - कभी भी निदान या दवा निर्धारित न करें
 - यथार्थवादी रहते हुए आशा बनाए रखें
 
@@ -329,17 +329,20 @@ export async function generateSpeech(
   }
 }
 
+// User context interface for better type safety
+interface UserContext {
+  name?: string;
+  previousSessions?: number;
+  riskLevel?: string;
+  preferences?: Record<string, unknown>;
+}
+
 // Generate contextual response with GPT-4 - FIXED VERSION FOR HINDI
 export async function generateContextualResponse(
   message: string,
   selectedLanguage: 'en' | 'hi' = 'en',
   chatHistory: Array<{role: string, content: string}> = [],
-  userContext?: {
-    name?: string,
-    previousSessions?: number,
-    riskLevel?: string,
-    preferences?: any
-  }
+  userContext?: UserContext
 ): Promise<string> {
   try {
     const context = analyzeMessageContext(message);
@@ -436,33 +439,42 @@ export async function generateContextualResponse(
   }
 }
 
+// User preferences interface for type safety
+interface UserPreferences {
+  interests?: string[];
+  preferredLanguage?: string;
+  preferredSpecializations?: string[];
+  moodHistory?: Array<{ mood: number; createdAt: Date }>;
+  bookmarkedCategories?: string[];
+  recentActivity?: string[];
+}
+
+// Resource interface for type safety
+interface Resource {
+  id: string;
+  title: string;
+  description?: string;
+  type: string;
+  categories: string[];
+  tags: string[];
+  language: string;
+  averageRating?: number;
+  viewCount: number;
+}
+
+// Recommendation interface for type safety
+interface Recommendation {
+  resourceId: string;
+  score: number;
+  reason: string;
+}
+
 // Advanced function to generate personalized recommendations
 export async function generatePersonalizedRecommendations(
   userId: string,
-  userPreferences: {
-    interests?: string[];
-    preferredLanguage?: string;
-    preferredSpecializations?: string[];
-    moodHistory?: Array<{ mood: number; createdAt: Date }>;
-    bookmarkedCategories?: string[];
-    recentActivity?: string[];
-  },
-  availableResources: Array<{
-    id: string;
-    title: string;
-    description?: string;
-    type: string;
-    categories: string[];
-    tags: string[];
-    language: string;
-    averageRating?: number;
-    viewCount: number;
-  }>
-): Promise<Array<{
-    resourceId: string;
-    score: number;
-    reason: string;
-  }>> {
+  userPreferences: UserPreferences,
+  availableResources: Resource[]
+): Promise<Recommendation[]> {
   try {
     // Calculate user's average mood
     const avgMood = userPreferences.moodHistory && userPreferences.moodHistory.length > 0
@@ -530,9 +542,9 @@ Format your response as a JSON array with objects containing resourceId, score, 
         reason: rec.reason || 'Recommended based on your preferences'
       }));
     } else if (recommendations.recommendations && Array.isArray(recommendations.recommendations)) {
-      return recommendations.recommendations.map((rec: any) => ({
+      return recommendations.recommendations.map((rec: Recommendation) => ({
         resourceId: rec.resourceId,
-        score: parseFloat(rec.score) || 0,
+        score: parseFloat(rec.score.toString()) || 0,
         reason: rec.reason || 'Recommended based on your preferences'
       }));
     }

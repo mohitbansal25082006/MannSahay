@@ -36,7 +36,7 @@ import { useSession } from 'next-auth/react';
 import ReactMarkdown from 'react-markdown';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
-import { useChatSessions } from '@/hooks/useChatSessions';
+import { useChatSessions, type ChatSession } from '@/hooks/useChatSessions';
 import { ChatSessionSidebar } from '@/components/chat/ChatSessionSidebar';
 import {
   Dialog,
@@ -50,27 +50,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-
-interface ChatSession {
-  id: string;
-  title: string | null;
-  isActive: boolean;
-  isArchived: boolean;
-  language: string;
-  riskLevel: 'NONE' | 'LOW' | 'MEDIUM' | 'HIGH';
-  totalMessages: number;
-  lastMessageAt: string;
-  createdAt: string;
-  updatedAt: string;
-  _count: {
-    chats: number;
-  };
-  chats: Array<{
-    content: string;
-    role: string;
-    timestamp: string;
-  }>;
-}
 
 const suggestedMessages = [
   "I'm feeling really stressed about my exams",
@@ -225,8 +204,8 @@ export default function ChatPage() {
       const response = await fetch(`/api/chat/sessions/${sessionId}`);
       if (response.ok) {
         const data = await response.json();
-        const sessionMessages = data.session.chats.map((chat: any) => ({
-          id: chat.id,
+        const sessionMessages = data.session.chats.map((chat: { content: string; role: string; timestamp: string }) => ({
+          id: chat.timestamp, // Use timestamp as a fallback id if needed
           content: chat.content,
           role: chat.role,
           createdAt: new Date(chat.timestamp)
@@ -314,15 +293,15 @@ export default function ChatPage() {
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSubmit(e as any);
+      handleSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
     }
   };
 
-  const customHandleSubmit = (e: React.FormEvent) => {
+  const customHandleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!input.trim()) return;
     
-    handleSubmit(e as any);
+    handleSubmit(e);
   };
 
   const handleAudioSubmit = async () => {
@@ -472,7 +451,7 @@ export default function ChatPage() {
                             </CardHeader>
                             <CardContent className="space-y-3">
                               <p className="text-sm text-gray-600">
-                                If you're in crisis, please reach out immediately:
+                                If you&apos;re in crisis, please reach out immediately:
                               </p>
                               {emergencyContacts.map((contact, index) => (
                                 <div key={index} className="p-3 bg-red-50 rounded-lg">
@@ -522,7 +501,7 @@ export default function ChatPage() {
                                     Affirmation
                                   </h4>
                                   <p className="text-xs text-purple-700">
-                                    "This feeling is temporary. I am stronger than I know."
+                                    &quot;This feeling is temporary. I am stronger than I know.&quot;
                                   </p>
                                 </div>
                               </div>
@@ -637,7 +616,7 @@ export default function ChatPage() {
                           <DialogHeader>
                             <DialogTitle>Archive Conversation</DialogTitle>
                             <DialogDescription>
-                              This conversation will be moved to your archive and won't appear in the main list.
+                              This conversation will be moved to your archive and won&apos;t appear in the main list.
                             </DialogDescription>
                           </DialogHeader>
                           <div className="grid gap-4 py-4">
@@ -693,7 +672,7 @@ export default function ChatPage() {
                         Welcome to MannSahay Chat! 🌟
                       </h3>
                       <p className="text-gray-500 mb-4">
-                        I'm here to listen and support you. How are you feeling today?
+                        I&apos;m here to listen and support you. How are you feeling today?
                       </p>
                       
                       <div className="flex flex-wrap justify-center gap-2">
@@ -915,7 +894,7 @@ export default function ChatPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <p className="text-sm text-gray-600">
-                  If you're in crisis, please reach out immediately:
+                  If you&apos;re in crisis, please reach out immediately:
                 </p>
                 {emergencyContacts.map((contact, index) => (
                   <div key={index} className="p-3 bg-red-50 rounded-lg">
@@ -965,7 +944,7 @@ export default function ChatPage() {
                       Affirmation
                     </h4>
                     <p className="text-xs text-purple-700">
-                      "This feeling is temporary. I am stronger than I know."
+                      &quot;This feeling is temporary. I am stronger than I know.&quot;
                     </p>
                   </div>
                 </div>

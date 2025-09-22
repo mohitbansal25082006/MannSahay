@@ -4,7 +4,6 @@
 import { useState } from 'react';
 import { Resource } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -84,7 +83,7 @@ export default function ResourceActions({
           <DialogHeader>
             <DialogTitle>Share Resource</DialogTitle>
             <DialogDescription>
-              Share "{resource.title}" with others
+              Share &ldquo;{resource.title}&rdquo; with others
             </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-4 mt-4">

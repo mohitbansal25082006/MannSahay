@@ -1,4 +1,3 @@
-// E:\mannsahay\src\app\dashboard\page.tsx
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
@@ -6,38 +5,48 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { MessageCircle, Calendar, Users, BookOpen, Clock, TrendingUp, UserCheck } from 'lucide-react';
 import Link from 'next/link';
+import { Session } from 'next-auth';
+
+// Extend the Session type to include id
+interface ExtendedSession extends Session {
+  user: {
+    id: string; // Changed to string to match Session's user.id
+    name?: string | null;
+    email?: string | null;
+  };
+}
 
 async function getUserStats(userId: string) {
   const [chatCount, bookingCount, postCount] = await Promise.all([
     prisma.chat.count({
-      where: { userId }
+      where: { userId },
     }),
     prisma.booking.count({
-      where: { userId }
+      where: { userId },
     }),
     prisma.post.count({
-      where: { authorId: userId }
-    })
+      where: { authorId: userId },
+    }),
   ]);
 
   const recentChats = await prisma.chat.findMany({
     where: { userId },
     orderBy: { timestamp: 'desc' },
-    take: 3
+    take: 3,
   });
 
   const upcomingBookings = await prisma.booking.findMany({
     where: {
       userId,
       slotTime: {
-        gte: new Date()
-      }
+        gte: new Date(),
+      },
     },
     include: {
-      counselor: true
+      counselor: true,
     },
     orderBy: { slotTime: 'asc' },
-    take: 3
+    take: 3,
   });
 
   return {
@@ -45,7 +54,7 @@ async function getUserStats(userId: string) {
     bookingCount,
     postCount,
     recentChats,
-    upcomingBookings
+    upcomingBookings,
   };
 }
 
@@ -56,20 +65,20 @@ async function checkCounselorStatus(email: string) {
     process.env.COUNSELOR3,
     process.env.COUNSELOR4,
     process.env.COUNSELOR5,
-  ].filter(Boolean);
+  ].filter(Boolean) as string[];
 
   return authorizedCounselors.includes(email);
 }
 
 export default async function DashboardPage() {
   // Get the session
-  const session = await getServerSession(authOptions);
+  const session = await getServerSession(authOptions) as ExtendedSession | null;
 
   // If there's no session at all, show a sign-in CTA
   if (!session?.user) {
     return (
       <div className="max-w-2xl mx-auto p-8 text-center">
-        <h2 className="text-2xl font-semibold mb-2">You're not signed in</h2>
+        <h2 className="text-2xl font-semibold mb-2">You&apos;re not signed in</h2>
         <p className="text-gray-600 mb-4">Sign in to view your dashboard and recent activity.</p>
         <Link href="/api/auth/signin">
           <Button>Sign in</Button>
@@ -79,14 +88,14 @@ export default async function DashboardPage() {
   }
 
   // session.user may not include the DB id by default — try to resolve it from the DB using email
-  let userId: string | undefined = (session.user as any).id;
+  let userId: string | undefined = session.user.id;
 
   if (!userId && session.user.email) {
     const dbUser = await prisma.user.findUnique({
       where: { email: session.user.email },
-      select: { id: true }
+      select: { id: true },
     });
-    userId = dbUser?.id ?? undefined;
+    userId = dbUser?.id;
   }
 
   // If we still don't have a user id, render an error message
@@ -94,7 +103,7 @@ export default async function DashboardPage() {
     return (
       <div className="max-w-2xl mx-auto p-8 text-center">
         <h2 className="text-2xl font-semibold mb-2">Account not found</h2>
-        <p className="text-gray-600 mb-4">We couldn't find your account in the database. Try signing out and signing back in.</p>
+        <p className="text-gray-600 mb-4">We couldn&apos;t find your account in the database. Try signing out and signing back in.</p>
         <Link href="/api/auth/signout">
           <Button>Sign out</Button>
         </Link>
@@ -114,29 +123,29 @@ export default async function DashboardPage() {
       description: 'Talk to our AI companion',
       href: '/dashboard/chat',
       icon: MessageCircle,
-      color: 'bg-blue-500'
+      color: 'bg-blue-500',
     },
     {
       title: 'Book Session',
       description: 'Schedule with a counselor',
       href: '/dashboard/booking',
       icon: Calendar,
-      color: 'bg-green-500'
+      color: 'bg-green-500',
     },
     {
       title: 'Browse Forum',
       description: 'Connect with peers',
       href: '/dashboard/forum',
       icon: Users,
-      color: 'bg-purple-500'
+      color: 'bg-purple-500',
     },
     {
       title: 'Explore Resources',
       description: 'Learn and grow',
       href: '/dashboard/resources',
       icon: BookOpen,
-      color: 'bg-orange-500'
-    }
+      color: 'bg-orange-500',
+    },
   ];
 
   return (
@@ -151,7 +160,7 @@ export default async function DashboardPage() {
             How are you feeling today? Your mental wellness journey continues here.
           </p>
         </div>
-        
+
         {/* Counselor Dashboard Button */}
         {isCounselor && (
           <Button asChild className="bg-indigo-600 hover:bg-indigo-700">
@@ -172,9 +181,7 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.chatCount}</div>
-            <p className="text-xs text-muted-foreground">
-              Conversations with AI
-            </p>
+            <p className="text-xs text-muted-foreground">Conversations with AI</p>
           </CardContent>
         </Card>
 
@@ -185,9 +192,7 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.bookingCount}</div>
-            <p className="text-xs text-muted-foreground">
-              Counselor sessions
-            </p>
+            <p className="text-xs text-muted-foreground">Counselor sessions</p>
           </CardContent>
         </Card>
 
@@ -198,9 +203,7 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.postCount}</div>
-            <p className="text-xs text-muted-foreground">
-              Community contributions
-            </p>
+            <p className="text-xs text-muted-foreground">Community contributions</p>
           </CardContent>
         </Card>
 
@@ -213,9 +216,7 @@ export default async function DashboardPage() {
             <div className="text-2xl font-bold">
               {stats.chatCount > 0 ? Math.round((stats.chatCount / 10) * 100) : 0}%
             </div>
-            <p className="text-xs text-muted-foreground">
-              Journey completion
-            </p>
+            <p className="text-xs text-muted-foreground">Journey completion</p>
           </CardContent>
         </Card>
       </div>
@@ -224,9 +225,7 @@ export default async function DashboardPage() {
       <Card className="mb-8">
         <CardHeader>
           <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>
-            Start your wellness activities with one click
-          </CardDescription>
+          <CardDescription>Start your wellness activities with one click</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -319,11 +318,13 @@ export default async function DashboardPage() {
                         {new Date(booking.slotTime).toLocaleString()}
                       </p>
                     </div>
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      booking.status === 'CONFIRMED'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full ${
+                        booking.status === 'CONFIRMED'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}
+                    >
                       {booking.status}
                     </span>
                   </div>

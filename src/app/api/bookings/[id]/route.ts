@@ -94,7 +94,7 @@ export async function PATCH(
       }
     }
 
-    const updateData: any = {};
+    const updateData: Prisma.BookingUpdateInput = {};
     
     if (status) {
       updateData.status = status;

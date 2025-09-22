@@ -1,9 +1,15 @@
-// File: src/app/api/chat/route.ts
 import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { openai, assessRiskLevel, analyzeMessageContext, generateContextualResponse } from '@/lib/openai';
+import { assessRiskLevel, analyzeMessageContext, generateContextualResponse } from '@/lib/openai';
 import { prisma } from '@/lib/db';
+
+// Define RiskLevel enum for typing riskLevel
+enum RiskLevel {
+  LOW = 'LOW',
+  MEDIUM = 'MEDIUM',
+  HIGH = 'HIGH'
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     // Analyze message context and assess risk
     const messageContext = analyzeMessageContext(latestMessage);
-    const riskLevel = assessRiskLevel(latestMessage);
+    const riskLevel: RiskLevel = assessRiskLevel(latestMessage) as RiskLevel;
     console.log('Message analysis:', { messageContext, riskLevel });
 
     // Handle session management
@@ -71,7 +77,7 @@ export async function POST(request: NextRequest) {
             title: autoTitle,
             language,
             isActive: true,
-            riskLevel: riskLevel as any
+            riskLevel
           }
         });
         currentSessionId = newSession.id;
@@ -88,7 +94,7 @@ export async function POST(request: NextRequest) {
         content: latestMessage,
         role: 'user',
         language,
-        riskLevel: riskLevel as any,
+        riskLevel,
         context: messageContext
       }
     });
@@ -153,14 +159,14 @@ export async function POST(request: NextRequest) {
           }
 
           // Save AI response to database after streaming
-          const savedResponse = await prisma.chat.create({
+          await prisma.chat.create({
             data: {
               userId: user.id,
               sessionId: currentSessionId,
               content: aiResponse,
               role: 'assistant',
               language,
-              riskLevel: riskLevel as any,
+              riskLevel,
               context: messageContext
             }
           });
@@ -173,8 +179,8 @@ export async function POST(request: NextRequest) {
               totalMessages: {
                 increment: 2 // User message + AI response
               },
-              riskLevel: riskLevel === 'HIGH' ? 'HIGH' : 
-                        riskLevel === 'MEDIUM' ? 'MEDIUM' : 
+              riskLevel: riskLevel === RiskLevel.HIGH ? RiskLevel.HIGH : 
+                        riskLevel === RiskLevel.MEDIUM ? RiskLevel.MEDIUM : 
                         undefined // Only update if higher risk
             }
           });

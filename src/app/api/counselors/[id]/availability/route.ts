@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { Prisma } from '@prisma/client';
 
 export async function GET(
   request: NextRequest,
@@ -19,7 +20,10 @@ export async function GET(
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
 
-    let availabilityFilter: any = { counselorId: id, isBooked: false };
+    const availabilityFilter: Prisma.AvailabilitySlotWhereInput = { 
+      counselorId: id, 
+      isBooked: false 
+    };
     
     if (startDate && endDate) {
       // This would be more complex in a real implementation

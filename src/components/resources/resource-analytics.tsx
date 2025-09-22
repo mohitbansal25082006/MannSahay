@@ -1,11 +1,9 @@
-// E:\mannsahay\src\components\resources\resource-analytics.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -13,25 +11,29 @@ import {
   Eye, 
   Download, 
   Star, 
-  Clock,
-  BookOpen,
-  Target,
-  Brain,
-  Lightbulb,
-  Award,
-  CheckCircle,
-  AlertTriangle,
-  Info,
-  Loader2,
-  RefreshCw,
-  AlertCircle,
-  ExternalLink
+  Target, 
+  Brain, 
+  Lightbulb, 
+  Award, 
+  CheckCircle, 
+  AlertTriangle, 
+  Info, 
+  Loader2, 
+  RefreshCw, 
+  AlertCircle, 
+  ExternalLink 
 } from 'lucide-react';
 
 interface ResourceAnalyticsProps {
   resourceId: string;
-  resourceType: string;
   categories: string[];
+}
+
+interface MoodRecommendation {
+  resourceId?: string;
+  title: string;
+  reason: string;
+  mood: string;
 }
 
 interface AnalyticsData {
@@ -43,7 +45,7 @@ interface AnalyticsData {
     assessment: string;
     suggestions: string[];
   };
-  moodBasedRecommendations: any[];
+  moodBasedRecommendations: MoodRecommendation[];
   userEngagement: {
     uniqueUsers: number;
     completionRate: number;
@@ -60,7 +62,6 @@ interface ContentQualityData {
 
 export default function ResourceAnalytics({
   resourceId,
-  resourceType,
   categories,
 }: ResourceAnalyticsProps) {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
@@ -69,7 +70,7 @@ export default function ResourceAnalytics({
   const [moodRecommendationsLoading, setMoodRecommendationsLoading] = useState(false);
   const [contentQuality, setContentQuality] = useState<ContentQualityData | null>(null);
   const [moodError, setMoodError] = useState<string | null>(null);
-  const [moodRecommendations, setMoodRecommendations] = useState<any[]>([]);
+  const [moodRecommendations, setMoodRecommendations] = useState<MoodRecommendation[]>([]);
 
   useEffect(() => {
     const fetchAnalytics = async () => {

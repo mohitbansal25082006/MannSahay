@@ -277,7 +277,7 @@ export default function Home() {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="text-base sm:text-lg text-gray-400 mb-4 font-medium"
             >
-              "तुम्हारे साथ है, हर पल।"
+              &quot;तुम्हारे साथ है, हर पल।&quot;
             </motion.p>
 
             {/* CTA Button */}
@@ -509,7 +509,7 @@ export default function Home() {
                   transition={{ duration: 0.5 }}
                   className="text-xl text-gray-200 text-center mb-8 italic"
                 >
-                  "{testimonials[activeTestimonial].content}"
+                  &quot;{testimonials[activeTestimonial].content}&quot;
                 </motion.p>
                 
                 <div className="text-center">

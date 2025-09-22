@@ -30,24 +30,20 @@ import {
   RefreshCw,
   Volume2,
   VolumeX,
-  MessageSquare,
-  BarChart3,
   Accessibility,
-  TrendingUp,
   Brain,
-  BookOpen,
-  Headphones,
-  Mic,
-  Maximize,
-  Settings,
-  Lightbulb,
-  Award,
   Target,
-  CheckCircle,
-  AlertCircle,
-  Info
+  Award,
+  AlertCircle
 } from 'lucide-react';
 import Link from 'next/link';
+
+interface MoodBasedRecommendation {
+  resourceId?: string;
+  title: string;
+  reason: string;
+  mood: number;
+}
 
 export default function ResourceDetailPage() {
   const params = useParams();
@@ -62,7 +58,6 @@ export default function ResourceDetailPage() {
   const [summaryCached, setSummaryCached] = useState(false);
   const [activeTab, setActiveTab] = useState('content');
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
   const [highContrastMode, setHighContrastMode] = useState(false);
   const [contentQuality, setContentQuality] = useState<{
     score: number;
@@ -70,7 +65,7 @@ export default function ResourceDetailPage() {
     suggestions: string[];
   } | null>(null);
   const [readingTime, setReadingTime] = useState(0);
-  const [moodBasedRecommendations, setMoodBasedRecommendations] = useState<any[]>([]);
+  const [moodBasedRecommendations, setMoodBasedRecommendations] = useState<MoodBasedRecommendation[]>([]);
   const [recommendationsLoading, setRecommendationsLoading] = useState(false);
   const [recommendationsError, setRecommendationsError] = useState<string | null>(null);
   const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
@@ -357,7 +352,7 @@ export default function ResourceDetailPage() {
           <div className="text-center py-12">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Resource Not Found</h1>
             <p className="text-gray-600 mb-6">
-              The resource you're looking for doesn't exist or has been removed.
+              The resource you&apos;re looking for doesn&apos;t exist or has been removed.
             </p>
             <Link href="/dashboard/resources">
               <Button>Back to Resources</Button>
@@ -682,7 +677,6 @@ export default function ResourceDetailPage() {
                   <TabsContent value="analytics" className="mt-4">
                     <ResourceAnalytics 
                       resourceId={resource.id}
-                      resourceType={resource.type}
                       categories={resource.categories}
                     />
                   </TabsContent>
@@ -896,7 +890,7 @@ export default function ResourceDetailPage() {
               </CardHeader>
               <CardContent>
                 <p className={`text-sm mb-4 ${highContrastMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                  AI-powered assessment of this resource's quality and accuracy
+                  AI-powered assessment of this resource&apos;s quality and accuracy
                 </p>
                 <Button 
                   variant="outline" 

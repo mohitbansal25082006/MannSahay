@@ -39,7 +39,7 @@ export default function CommunityGuidelinesPage() {
           </CardHeader>
           <CardContent>
             <p className="text-gray-700">
-              Treat everyone with respect and kindness. We're here to support each other through difficult times.
+              Treat everyone with respect and kindness. We&apos;re here to support each other through difficult times.
             </p>
           </CardContent>
         </Card>
@@ -67,7 +67,7 @@ export default function CommunityGuidelinesPage() {
           </CardHeader>
           <CardContent>
             <p className="text-gray-700">
-              Share accurate information and be mindful of how your words might affect others. If you're sharing resources, make sure they're from reliable sources.
+              Share accurate information and be mindful of how your words might affect others. If you&apos;re sharing resources, make sure they&apos;re from reliable sources.
             </p>
           </CardContent>
         </Card>
@@ -123,7 +123,7 @@ export default function CommunityGuidelinesPage() {
           </CardHeader>
           <CardContent>
             <p className="text-gray-700">
-              Don't post spam, advertisements, or false information that could harm others. Always verify information before sharing.
+              Don&apos;t post spam, advertisements, or false information that could harm others. Always verify information before sharing.
             </p>
           </CardContent>
         </Card>
@@ -181,7 +181,7 @@ export default function CommunityGuidelinesPage() {
                 </div>
                 <div>
                   <h4 className="font-medium">First Violation</h4>
-                  <p className="text-sm text-gray-600">Your content will be removed and you'll receive a notification explaining why.</p>
+                  <p className="text-sm text-gray-600">Your content will be removed and you&apos;ll receive a notification explaining why.</p>
                 </div>
               </div>
               <div className="flex items-start">
@@ -215,7 +215,7 @@ export default function CommunityGuidelinesPage() {
           </CardHeader>
           <CardContent>
             <p className="text-gray-700 mb-4">
-              If you see content that violates these guidelines, please report it using the "Report" button on posts and replies. Our moderation team will review it promptly.
+              If you see content that violates these guidelines, please report it using the &quot;Report&quot; button on posts and replies. Our moderation team will review it promptly.
             </p>
             <Button asChild>
               <Link href="/dashboard/forum">

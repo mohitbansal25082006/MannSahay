@@ -1,4 +1,3 @@
-// E:\mannsahay\src\components\booking\booking-form.tsx (partial update)
 'use client';
 
 import { useState } from 'react';
@@ -10,25 +9,42 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, User, Video, MessageSquare, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, User, Video, AlertCircle } from 'lucide-react';
+
+interface Counselor {
+  id: string;
+  name: string;
+  specialties: string[];
+  languages: string[];
+}
+
+interface Slot {
+  id: string;
+  dateTime: Date;
+}
+
+interface RescheduleData {
+  bookingId: string;
+  counselorId: string;
+  originalSlotTime: string;
+}
 
 interface BookingFormProps {
-  counselor: any;
-  slot: any;
+  counselor: Counselor;
+  slot: Slot;
   onComplete: () => void;
-  rescheduleData?: {
-    bookingId: string;
-    counselorId: string;
-    originalSlotTime: string;
-  };
+  rescheduleData?: RescheduleData;
 }
+
+type SessionType = 'ONE_ON_ONE' | 'GROUP';
+type RecurringPattern = 'weekly' | 'biweekly' | 'monthly';
 
 export default function BookingForm({ counselor, slot, onComplete, rescheduleData }: BookingFormProps) {
   const { data: session } = useSession();
   const [notes, setNotes] = useState('');
-  const [sessionType, setSessionType] = useState('ONE_ON_ONE');
+  const [sessionType, setSessionType] = useState<SessionType>('ONE_ON_ONE');
   const [isRecurring, setIsRecurring] = useState(false);
-  const [recurringPattern, setRecurringPattern] = useState('');
+  const [recurringPattern, setRecurringPattern] = useState<RecurringPattern>('weekly');
   const [recurringEndDate, setRecurringEndDate] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -80,6 +96,23 @@ export default function BookingForm({ counselor, slot, onComplete, rescheduleDat
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const getLanguageDisplayName = (lang: string): string => {
+    const languageMap: Record<string, string> = {
+      'en': 'English',
+      'hi': 'Hindi',
+      'ta': 'Tamil',
+      'te': 'Telugu',
+      'bn': 'Bengali',
+      'mr': 'Marathi',
+      'gu': 'Gujarati',
+      'kn': 'Kannada',
+      'ml': 'Malayalam',
+      'pa': 'Punjabi'
+    };
+    
+    return languageMap[lang] || lang;
   };
 
   return (
@@ -155,7 +188,7 @@ export default function BookingForm({ counselor, slot, onComplete, rescheduleDat
                 <>
                   <div>
                     <h3 className="text-lg font-medium">Session Type</h3>
-                    <Select value={sessionType} onValueChange={setSessionType}>
+                    <Select value={sessionType} onValueChange={(value: SessionType) => setSessionType(value)}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -181,7 +214,7 @@ export default function BookingForm({ counselor, slot, onComplete, rescheduleDat
                     <div className="space-y-3 pl-6 border-l-2 border-gray-200">
                       <div>
                         <label className="text-sm font-medium">Recurring Pattern</label>
-                        <Select value={recurringPattern} onValueChange={setRecurringPattern}>
+                        <Select value={recurringPattern} onValueChange={(value: RecurringPattern) => setRecurringPattern(value)}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select pattern" />
                           </SelectTrigger>
@@ -228,7 +261,7 @@ export default function BookingForm({ counselor, slot, onComplete, rescheduleDat
               <div>
                 <h3 className="text-lg font-medium">Specialties</h3>
                 <div className="mt-2 flex flex-wrap gap-1">
-                  {counselor.specialties.map((specialty: string) => (
+                  {counselor.specialties.map((specialty) => (
                     <Badge key={specialty} variant="secondary">
                       {specialty}
                     </Badge>
@@ -239,18 +272,9 @@ export default function BookingForm({ counselor, slot, onComplete, rescheduleDat
               <div>
                 <h3 className="text-lg font-medium">Languages</h3>
                 <div className="mt-2 flex flex-wrap gap-1">
-                  {counselor.languages.map((lang: string) => (
+                  {counselor.languages.map((lang) => (
                     <Badge key={lang} variant="outline">
-                      {lang === 'en' ? 'English' : 
-                       lang === 'hi' ? 'Hindi' :
-                       lang === 'ta' ? 'Tamil' :
-                       lang === 'te' ? 'Telugu' :
-                       lang === 'bn' ? 'Bengali' :
-                       lang === 'mr' ? 'Marathi' :
-                       lang === 'gu' ? 'Gujarati' :
-                       lang === 'kn' ? 'Kannada' :
-                       lang === 'ml' ? 'Malayalam' :
-                       lang === 'pa' ? 'Punjabi' : lang}
+                      {getLanguageDisplayName(lang)}
                     </Badge>
                   ))}
                 </div>

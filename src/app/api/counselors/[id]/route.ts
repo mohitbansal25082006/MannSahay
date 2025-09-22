@@ -6,9 +6,12 @@ import { prisma } from '@/lib/db';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await the params Promise to get the actual params object
+    const resolvedParams = await params;
+    
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.id) {
@@ -16,7 +19,7 @@ export async function GET(
     }
 
     const counselor = await prisma.counselor.findUnique({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       include: {
         availability: {
           where: { isBooked: false },

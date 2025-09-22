@@ -6,9 +6,12 @@ import { ChatHistoryManager } from '@/lib/chatUtils';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
+    // Await the params Promise to get the actual params object
+    const resolvedParams = await params;
+    
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {
@@ -27,20 +30,20 @@ export async function GET(
     const format = searchParams.get('format') as 'json' | 'txt' | 'csv' || 'json';
 
     const exportData = await ChatHistoryManager.exportChatHistory(
-      params.sessionId,
+      resolvedParams.sessionId,
       user.id,
       format
     );
 
     let contentType = 'application/json';
-    let filename = `chat-${params.sessionId}.json`;
+    let filename = `chat-${resolvedParams.sessionId}.json`;
 
     if (format === 'txt') {
       contentType = 'text/plain';
-      filename = `chat-${params.sessionId}.txt`;
+      filename = `chat-${resolvedParams.sessionId}.txt`;
     } else if (format === 'csv') {
       contentType = 'text/csv';
-      filename = `chat-${params.sessionId}.csv`;
+      filename = `chat-${resolvedParams.sessionId}.csv`;
     }
 
     return new Response(exportData, {

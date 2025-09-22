@@ -1,4 +1,3 @@
-// E:\mannsahay\src\app\dashboard\unauthorized\page.tsx
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +15,7 @@ export default function UnauthorizedPage() {
           </div>
           <CardTitle className="text-red-700">Access Denied</CardTitle>
           <CardDescription>
-            You don't have permission to access the counselor dashboard.
+            You don&apos;t have permission to access the counselor dashboard.
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center">

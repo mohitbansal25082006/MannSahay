@@ -1,9 +1,8 @@
-// E:\mannsahay\src\app\api\bookings\route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { ReminderType } from '@/types';
+import { Prisma, ReminderType, BookingStatus } from '@prisma/client';
 import { sendEmail, generateBookingConfirmationEmail } from '@/lib/email';
 
 // Define a type for Prisma errors that might have a code property
@@ -23,10 +22,14 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
     const upcoming = searchParams.get('upcoming') === 'true';
 
-    const whereClause: any = { userId: session.user.id };
+    const whereClause: Prisma.BookingWhereInput = { userId: session.user.id };
     
-    if (status) {
-      whereClause.status = status;
+    // Validate status against BookingStatus enum
+    if (status && Object.values(BookingStatus).includes(status as BookingStatus)) {
+      whereClause.status = status as BookingStatus;
+    } else if (status) {
+      console.warn(`Invalid status value: ${status}`);
+      // Optionally, you could return an error or skip invalid status
     }
     
     if (upcoming) {
@@ -103,7 +106,6 @@ export async function POST(request: NextRequest) {
 
     // Default session duration is 50 minutes
     const sessionDuration = 50;
-    const bufferTime = counselorDetails.bufferTimeMinutes || 15;
     const endTime = new Date(new Date(slotTime).getTime() + sessionDuration * 60000);
 
     // Handle availability slot
@@ -149,9 +151,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the booking
-    const bookingData: any = {
-      userId: session.user.id,
-      counselorId,
+    const bookingData: Prisma.BookingCreateInput = {
+      user: { connect: { id: session.user.id } },
+      counselor: { connect: { id: counselorId } },
       slotTime: new Date(slotTime),
       endTime,
       notes,
@@ -161,9 +163,9 @@ export async function POST(request: NextRequest) {
       recurringEndDate: recurringEndDate ? new Date(recurringEndDate) : null
     };
 
-    // Only include availabilitySlotId if we found a valid slot
+    // Only include availabilitySlot if we found a valid slot
     if (slotToBook) {
-      bookingData.availabilitySlotId = slotToBook.id;
+      bookingData.availabilitySlot = { connect: { id: slotToBook.id } };
     }
 
     const booking = await prisma.booking.create({

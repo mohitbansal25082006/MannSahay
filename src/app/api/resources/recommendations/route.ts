@@ -1,9 +1,16 @@
-// E:\mannsahay\src\app\api\resources\recommendations\route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { ResourceType } from '@/types';
+import { ResourceType, Prisma } from '@prisma/client';
+
+// Define type for mood history entry based on Prisma schema
+interface MoodHistory {
+  id: string;
+  userId: string;
+  mood: number;
+  createdAt: Date;
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -69,11 +76,11 @@ export async function GET(request: NextRequest) {
     
     // Calculate average mood
     const avgMood = user.moodHistory.length > 0
-      ? user.moodHistory.reduce((sum: number, mood: any) => sum + mood.mood, 0) / user.moodHistory.length
+      ? user.moodHistory.reduce((sum: number, mood: MoodHistory) => sum + mood.mood, 0) / user.moodHistory.length
       : 5;
     
     // Build recommendation criteria
-    const where: any = {
+    const where: Prisma.ResourceWhereInput = {
       isPublished: true,
     };
     
@@ -152,8 +159,8 @@ export async function GET(request: NextRequest) {
         // User is feeling down, recommend uplifting content
         if (resource.categories.includes('wellness') || 
             resource.categories.includes('mindfulness') ||
-            resource.type === 'MUSIC' ||
-            resource.type === 'MEDITATION') {
+            resource.type === ResourceType.MUSIC ||
+            resource.type === ResourceType.MEDITATION) {
           score += 0.3;
           reasons.push('Content for emotional wellness');
         }

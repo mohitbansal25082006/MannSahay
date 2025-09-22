@@ -163,6 +163,21 @@ export interface VideoSession {
   bookingId: string
 }
 
+// Interface for writing suggestions
+export interface WritingSuggestion {
+  suggestion: string
+  type: 'grammar' | 'clarity' | 'tone' | 'other'
+  startIndex: number
+  endIndex: number
+}
+
+// Interface for tone analysis
+export interface ToneAnalysis {
+  sentiment: 'positive' | 'negative' | 'neutral' | 'mixed'
+  confidence: number
+  details?: string
+}
+
 export interface Chat {
   id: string
   content: string
@@ -172,7 +187,7 @@ export interface Chat {
   sessionId: string
   language?: string | null
   riskLevel: RiskLevel
-  context?: any
+  context?: Record<string, unknown>
   audioUrl?: string | null
 }
 
@@ -197,9 +212,9 @@ export interface Post {
   summaryGeneratedAt?: Date | null
   isHidden?: boolean
   language: string
-  translatedContent?: any
-  writingSuggestions?: any
-  toneAnalysis?: any
+  translatedContent?: Record<string, string>
+  writingSuggestions?: WritingSuggestion[]
+  toneAnalysis?: ToneAnalysis
 }
 
 export interface Reply {
@@ -219,9 +234,9 @@ export interface Reply {
   moderatedBy?: string | null
   isHidden?: boolean
   language: string
-  translatedContent?: any
-  writingSuggestions?: any
-  toneAnalysis?: any
+  translatedContent?: Record<string, string>
+  writingSuggestions?: WritingSuggestion[]
+  toneAnalysis?: ToneAnalysis
 }
 
 export interface Like {
@@ -269,7 +284,7 @@ export interface Notification {
   isRead: boolean
   createdAt: Date
   userId: string
-  metadata?: any
+  metadata?: Record<string, unknown>
 }
 
 export interface Resource {
@@ -292,7 +307,7 @@ export interface Resource {
   downloadCount: number
   createdAt: Date
   updatedAt: Date
-  translations?: any
+  translations?: Record<string, string>
   summary?: string | null
   summaryGeneratedAt?: Date | null
   averageRating?: number | null

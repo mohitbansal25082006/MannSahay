@@ -44,7 +44,6 @@ export default function UserPreferences({ onLanguageChange }: UserPreferencesPro
       if (response.ok) {
         const data = await response.json();
         setPreferredLanguage(data.preferredLanguage || 'en');
-        // Ensure interests is an array
         setInterests(Array.isArray(data.interests) ? data.interests : []);
       }
     } catch (error) {
@@ -60,13 +59,12 @@ export default function UserPreferences({ onLanguageChange }: UserPreferencesPro
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           preferredLanguage,
-          interests: interests // This is already an array
+          interests
         }),
       });
       
       if (response.ok) {
         toast.success('Preferences saved successfully');
-        // Notify parent component of language change
         if (onLanguageChange) {
           onLanguageChange(preferredLanguage);
         }
@@ -94,7 +92,6 @@ export default function UserPreferences({ onLanguageChange }: UserPreferencesPro
 
   const handleLanguageChange = (language: string) => {
     setPreferredLanguage(language);
-    // Notify parent component immediately when language changes
     if (onLanguageChange) {
       onLanguageChange(language);
     }
@@ -131,14 +128,14 @@ export default function UserPreferences({ onLanguageChange }: UserPreferencesPro
               Your Interests
             </Label>
             <p className="text-sm text-gray-600 mb-3">
-              Select topics you're interested in to get personalized recommendations
+              Select topics you&apos;re interested in to get personalized recommendations
             </p>
             
             <div className="flex flex-wrap gap-2 mb-3">
               {interestOptions.map((interest) => (
                 <Badge
                   key={interest}
-                  variant={interests.includes(interest) ? "default" : "outline"}
+                  variant={interests.includes(interest) ? 'default' : 'outline'}
                   className="cursor-pointer"
                   onClick={() => {
                     if (interests.includes(interest)) {

@@ -1,9 +1,15 @@
-// E:\mannsahay\src\app\api\counselors\recommendations\route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { openai } from '@/lib/openai';
+
+// Define the Recommendation interface to type the recommendation objects
+interface Recommendation {
+  counselorId: string;
+  score: string | number;
+  reason: string;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -101,11 +107,11 @@ export async function POST(request: NextRequest) {
     const recommendations = JSON.parse(content);
     
     // Ensure the response is in the expected format
-    let formattedRecommendations = [];
+    let formattedRecommendations: Recommendation[] = [];
     if (recommendations.recommendations && Array.isArray(recommendations.recommendations)) {
-      formattedRecommendations = recommendations.recommendations.map((rec: any) => ({
+      formattedRecommendations = recommendations.recommendations.map((rec: Recommendation) => ({
         counselorId: rec.counselorId,
-        score: parseFloat(rec.score) || 0,
+        score: parseFloat(rec.score.toString()) || 0,
         reason: rec.reason || 'Recommended based on your preferences'
       }));
     }

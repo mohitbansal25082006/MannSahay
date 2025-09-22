@@ -1,4 +1,3 @@
-// E:\mannsahay\src\components\counselor\resource-sharing.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,8 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, Video, Music, BookOpen, Plus, Search, Filter } from 'lucide-react';
+import { FileText, Video, Music, BookOpen, Plus, Search } from 'lucide-react';
 
 interface Resource {
   id: string;
@@ -22,6 +20,15 @@ interface Resource {
   createdAt: string;
 }
 
+interface NewResource {
+  title: string;
+  description: string;
+  type: 'ARTICLE' | 'VIDEO' | 'AUDIO' | 'PDF' | 'EXERCISE';
+  language: string;
+  tags: string;
+  content: string;
+}
+
 export default function ResourceSharing() {
   const [resources, setResources] = useState<Resource[]>([]);
   const [filteredResources, setFilteredResources] = useState<Resource[]>([]);
@@ -29,7 +36,7 @@ export default function ResourceSharing() {
   const [typeFilter, setTypeFilter] = useState('');
   const [languageFilter, setLanguageFilter] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newResource, setNewResource] = useState({
+  const [newResource, setNewResource] = useState<NewResource>({
     title: '',
     description: '',
     type: 'ARTICLE',
@@ -158,7 +165,7 @@ export default function ResourceSharing() {
         id: Date.now().toString(),
         title: newResource.title,
         description: newResource.description,
-        type: newResource.type as any,
+        type: newResource.type,
         language: newResource.language,
         tags: newResource.tags.split(',').map(tag => tag.trim()).filter(Boolean),
         isPublished: true,
@@ -250,7 +257,7 @@ export default function ResourceSharing() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Type
                 </label>
-                <Select value={newResource.type} onValueChange={(value) => setNewResource({...newResource, type: value})}>
+                <Select value={newResource.type} onValueChange={(value: 'ARTICLE' | 'VIDEO' | 'AUDIO' | 'PDF' | 'EXERCISE') => setNewResource({...newResource, type: value})}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

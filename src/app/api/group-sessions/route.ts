@@ -1,8 +1,8 @@
-// E:\mannsahay\src\app\api\group-sessions\route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { Prisma } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const upcoming = searchParams.get('upcoming') === 'true';
 
-    const whereClause: any = {};
+    const whereClause: Prisma.GroupSessionWhereInput = {};
     
     if (upcoming) {
       whereClause.sessionDate = { gte: new Date() };
@@ -36,12 +36,12 @@ export async function GET(request: NextRequest) {
 
     // Check if user is participating in each session
     const sessionsWithParticipation = await Promise.all(
-      groupSessions.map(async (sessionItem) => { // Renamed session to sessionItem to avoid confusion
+      groupSessions.map(async (sessionItem) => {
         const participation = await prisma.groupSessionParticipant.findUnique({
           where: {
             groupSessionId_userId: {
               groupSessionId: sessionItem.id,
-              userId: session.user.id // Use the NextAuth session user ID
+              userId: session.user.id
             }
           }
         });
@@ -81,12 +81,30 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { title, description, maxParticipants, sessionDate, duration, counselorId } = body;
 
+    // Input validation
+    if (!title || !description || !sessionDate || !counselorId) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    if (typeof maxParticipants !== 'number' || maxParticipants < 1) {
+      return NextResponse.json({ error: 'Invalid maxParticipants value' }, { status: 400 });
+    }
+
+    if (typeof duration !== 'number' || duration < 1) {
+      return NextResponse.json({ error: 'Invalid duration value' }, { status: 400 });
+    }
+
+    const parsedDate = new Date(sessionDate);
+    if (isNaN(parsedDate.getTime())) {
+      return NextResponse.json({ error: 'Invalid sessionDate' }, { status: 400 });
+    }
+
     const groupSession = await prisma.groupSession.create({
       data: {
         title,
         description,
         maxParticipants: maxParticipants || 10,
-        sessionDate: new Date(sessionDate),
+        sessionDate: parsedDate,
         duration: duration || 60,
         counselorId
       },

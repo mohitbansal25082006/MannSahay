@@ -1,4 +1,3 @@
-// E:\mannsahay\src\app\dashboard\counselor\page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Calendar, Clock, Users, Star, MessageSquare, Video, Plus, Brain } from 'lucide-react';
 import CounselorSchedule from '@/components/counselor/counselor-schedule';
 import ClientList from '@/components/counselor/client-list';
@@ -22,7 +21,7 @@ export default function CounselorDashboard() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Counselor Dashboard</h1>
         <p className="mt-2 text-gray-600">
-          Welcome back, {session?.user?.name || 'Counselor'}! Here's your overview.
+          Welcome back, {session?.user?.name || 'Counselor'}! Here&apos;s your overview.
         </p>
       </div>
 

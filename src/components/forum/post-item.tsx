@@ -27,6 +27,19 @@ import { toast } from 'sonner';
 import BookmarkButton from './bookmark-button';
 import TranslationToggle from '@/components/ui/translation-toggle';
 
+// Define interfaces for complex types
+interface WritingSuggestion {
+  suggestion: string;
+  reason?: string;
+  [key: string]: unknown; // Allow additional properties
+}
+
+interface ToneAnalysis {
+  tone: string;
+  confidence: number;
+  [key: string]: unknown; // Allow additional properties
+}
+
 interface PostItemProps {
   post: {
     id: string;
@@ -44,9 +57,9 @@ interface PostItemProps {
     isHidden?: boolean;
     summary?: string;
     language: string;
-    translatedContent?: any;
-    writingSuggestions?: any;
-    toneAnalysis?: any;
+    translatedContent?: string; // Changed from any to string
+    writingSuggestions?: WritingSuggestion[]; // Changed from any to WritingSuggestion[]
+    toneAnalysis?: ToneAnalysis; // Changed from any to ToneAnalysis
     author: {
       id: string;
       name?: string;
@@ -568,7 +581,14 @@ export default function PostItem({
               <Edit className="h-4 w-4 text-purple-600 mr-2" />
               <span className="text-sm font-medium text-purple-800">Writing Suggestions</span>
             </div>
-            <p className="text-sm text-purple-700">{JSON.stringify(post.writingSuggestions)}</p>
+            <ul className="text-sm text-purple-700">
+              {post.writingSuggestions.map((suggestion, index) => (
+                <li key={index} className="mb-1">
+                  - {suggestion.suggestion}
+                  {suggestion.reason && <span className="text-xs"> ({suggestion.reason})</span>}
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 
@@ -578,7 +598,9 @@ export default function PostItem({
               <Shield className="h-4 w-4 text-green-600 mr-2" />
               <span className="text-sm font-medium text-green-800">Tone Analysis</span>
             </div>
-            <p className="text-sm text-green-700">{JSON.stringify(post.toneAnalysis)}</p>
+            <p className="text-sm text-green-700">
+              Tone: {post.toneAnalysis.tone} (Confidence: {(post.toneAnalysis.confidence * 100).toFixed(2)}%)
+            </p>
           </div>
         )}
 

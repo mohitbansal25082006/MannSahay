@@ -5,6 +5,42 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { openai } from '@/lib/openai';
 
+interface MoodHistory {
+  mood: number;
+  createdAt: Date;
+}
+
+interface ResourceRating {
+  rating: number;
+}
+
+interface ResourceCount {
+  ratings: number;
+  bookmarks: number;
+}
+
+interface Resource {
+  id: string;
+  title: string;
+  categories: string[];
+  viewCount: number;
+  createdAt: Date;
+  isPublished: boolean;
+  _count: ResourceCount;
+  ratings: ResourceRating[];
+}
+
+interface AIRecommendation {
+  resourceId: string;
+  title: string;
+  reason: string;
+  mood: 'low' | 'medium' | 'high';
+}
+
+interface AIResponse {
+  recommendations: AIRecommendation[];
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { resourceId, categories, mood } = await request.json();
@@ -39,7 +75,7 @@ export async function POST(request: NextRequest) {
 
     // Calculate average mood
     const avgMood = user.moodHistory.length > 0
-      ? user.moodHistory.reduce((sum: number, mood: any) => sum + mood.mood, 0) / user.moodHistory.length
+      ? user.moodHistory.reduce((sum: number, mood: MoodHistory) => sum + mood.mood, 0) / user.moodHistory.length
       : 5;
 
     // Define mood-appropriate categories
@@ -98,9 +134,9 @@ export async function POST(request: NextRequest) {
     });
 
     // Calculate average ratings for resources
-    const resourcesWithRatings = existingResources.map(resource => {
+    const resourcesWithRatings = existingResources.map((resource: Resource) => {
       const avgRating = resource.ratings.length > 0
-        ? resource.ratings.reduce((sum, rating) => sum + rating.rating, 0) / resource.ratings.length
+        ? resource.ratings.reduce((sum: number, rating: ResourceRating) => sum + rating.rating, 0) / resource.ratings.length
         : 0;
       
       return {
@@ -165,7 +201,7 @@ Please respond with a JSON object containing:
     const content = response.choices[0]?.message?.content || '{}';
     console.log('AI Response:', content); // Log for debugging
     
-    let data;
+    let data: AIResponse;
     try {
       data = JSON.parse(content);
     } catch (parseError) {
@@ -192,7 +228,7 @@ Please respond with a JSON object containing:
     }
 
     // Ensure all recommended resources exist in our database
-    const validRecommendations = data.recommendations.filter((rec: any) => 
+    const validRecommendations = data.recommendations.filter((rec: AIRecommendation) => 
       resourcesWithRatings.some(r => r.id === rec.resourceId)
     );
 

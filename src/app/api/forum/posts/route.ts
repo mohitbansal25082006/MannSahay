@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { assessRiskLevel } from '@/lib/openai';
 import { moderateContent, summarizeContent } from '@/lib/ai-moderation';
-import { ModerationStatus } from '@prisma/client';
+import { ModerationStatus, Prisma } from '@prisma/client';
 
 export async function POST(request: NextRequest) {
   try {
@@ -202,7 +202,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Build where clause - exclude hidden posts for regular users
-    const where: any = {
+    const where: Prisma.PostWhereInput = {
       isHidden: false, // Only show non-hidden posts by default
     };
     
@@ -215,7 +215,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build orderBy
-    const orderBy: any = {};
+    const orderBy: Prisma.PostOrderByWithRelationInput = {};
     if (sort === 'latest') {
       orderBy.createdAt = 'desc';
     } else if (sort === 'popular') {

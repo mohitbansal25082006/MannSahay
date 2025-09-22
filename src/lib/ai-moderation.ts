@@ -43,6 +43,16 @@ export interface ContentSummary {
   topics: string[];
 }
 
+// Interface for OpenAI moderation response
+interface ModerationResponse {
+  violatesPolicy?: boolean;
+  violationTypes?: string[];
+  severity?: string;
+  confidence?: number;
+  explanation?: string;
+  recommendedAction?: string;
+}
+
 /**
  * Analyzes content for policy violations using AI
  */
@@ -91,7 +101,7 @@ Consider the context of a mental health support forum. Be sensitive to discussio
       temperature: 0.1,
     });
 
-    const result = JSON.parse(response.choices[0].message.content || '{}');
+    const result = JSON.parse(response.choices[0].message.content || '{}') as ModerationResponse;
     
     return {
       violatesPolicy: result.violatesPolicy || false,
@@ -117,7 +127,7 @@ Consider the context of a mental health support forum. Be sensitive to discussio
 /**
  * Determines the recommended action based on moderation results
  */
-function determineRecommendedAction(result: any): 'none' | 'flag' | 'hide' | 'remove' {
+function determineRecommendedAction(result: ModerationResponse): 'none' | 'flag' | 'hide' | 'remove' {
   if (!result.violatesPolicy) return 'none';
   
   const confidence = result.confidence || 0;
@@ -256,7 +266,7 @@ Consider the context of a mental health support forum - be sensitive to discussi
       temperature: 0.1,
     });
 
-    const result = JSON.parse(response.choices[0].message.content || '{}');
+    const result = JSON.parse(response.choices[0].message.content || '{}') as ModerationResponse;
     
     return {
       violatesPolicy: result.violatesPolicy || false,

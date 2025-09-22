@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, Clock, User, Search, Filter, Video, Users, Plus, Award } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
+import { Counselor, Booking } from '@/types';
 import CounselorCard from '@/components/booking/counselor-card';
 import BookingCalendar from '@/components/booking/booking-calendar';
 import BookingForm from '@/components/booking/booking-form';
@@ -17,16 +18,34 @@ import GroupSessionsList from '@/components/booking/group-sessions-list';
 import MyBookingsList from '@/components/booking/my-bookings-list';
 import WaitlistManager from '@/components/booking/waitlist-manager';
 
-interface Counselor {
+// Type that matches BookingCalendar's SelectedSlot interface
+interface SelectedSlot {
   id: string;
-  name: string;
-  email: string;
-  bio?: string;
-  specialties: string[];
-  languages: string[];
-  experience?: number;
-  isActive: boolean;
-  profileImage?: string;
+  dayOfWeek: number;
+  startTime: string; // HH:MM format
+  endTime: string; // HH:MM format
+  isBooked: boolean;
+  dateTime: Date; // Combined date and time
+}
+
+// Type that matches BookingForm's Slot interface
+interface BookingSlot {
+  id: string;
+  dateTime: Date;
+}
+
+// Type for reschedule data, using undefined instead of null to match BookingForm
+interface RescheduleData {
+  bookingId: string;
+  counselorId: string;
+  originalSlotTime: string;
+}
+
+// Type for AI recommendations
+interface Recommendation {
+  counselorId: string;
+  score: number;
+  reason: string;
 }
 
 export default function BookingPage() {
@@ -37,14 +56,14 @@ export default function BookingPage() {
   
   const [activeTab, setActiveTab] = useState(rescheduleBookingId ? 'calendar' : 'counselors');
   const [selectedCounselor, setSelectedCounselor] = useState<Counselor | null>(null);
-  const [selectedSlot, setSelectedSlot] = useState<any>(null);
+  const [selectedSlot, setSelectedSlot] = useState<BookingSlot | null>(null);
   const [specializationFilter, setSpecializationFilter] = useState<string>('all');
   const [languageFilter, setLanguageFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [counselors, setCounselors] = useState<Counselor[]>([]);
   const [loading, setLoading] = useState(true);
-  const [rescheduleData, setRescheduleData] = useState<any>(null);
-  const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [rescheduleData, setRescheduleData] = useState<RescheduleData | undefined>(undefined);
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [showRecommendations, setShowRecommendations] = useState(false);
 
   const specializations = [
@@ -82,7 +101,7 @@ export default function BookingPage() {
       
       const response = await fetch(`/api/counselors?${params.toString()}`);
       if (response.ok) {
-        const data = await response.json();
+        const data: Counselor[] = await response.json();
         setCounselors(data);
       } else {
         console.error('Failed to fetch counselors');
@@ -111,7 +130,7 @@ export default function BookingPage() {
       });
 
       if (response.ok) {
-        const data = await response.json();
+        const data: Recommendation[] = await response.json();
         setRecommendations(data);
         setShowRecommendations(true);
       }
@@ -153,11 +172,11 @@ export default function BookingPage() {
     try {
       const response = await fetch(`/api/bookings/${bookingId}`);
       if (response.ok) {
-        const booking = await response.json();
+        const booking: Booking = await response.json();
         setRescheduleData({
           bookingId: booking.id,
           counselorId: booking.counselorId,
-          originalSlotTime: booking.slotTime
+          originalSlotTime: booking.slotTime.toString()
         });
       }
     } catch (error) {
@@ -170,15 +189,21 @@ export default function BookingPage() {
     setActiveTab('calendar');
   };
 
-  const handleSlotSelect = (slot: any) => {
-    setSelectedSlot(slot);
+  // Updated handler to convert SelectedSlot to BookingSlot
+  const handleSlotSelect = (slot: SelectedSlot) => {
+    // Convert SelectedSlot to the BookingSlot format expected by BookingForm
+    const bookingSlot: BookingSlot = {
+      id: slot.id,
+      dateTime: slot.dateTime
+    };
+    setSelectedSlot(bookingSlot);
     setActiveTab('booking');
   };
 
   const handleBookingComplete = () => {
     setSelectedCounselor(null);
     setSelectedSlot(null);
-    setRescheduleData(null);
+    setRescheduleData(undefined);
     setActiveTab('my-bookings');
   };
 
@@ -290,10 +315,13 @@ export default function BookingPage() {
                         key={rec.counselorId}
                         id={counselor.id}
                         name={counselor.name}
+                        email={counselor.email}
                         specialties={counselor.specialties}
                         languages={counselor.languages}
                         experience={counselor.experience}
                         bio={counselor.bio}
+                        isActive={counselor.isActive}
+                        profileImage={counselor.profileImage}
                         onSelect={handleCounselorSelect}
                         isRecommended={true}
                         matchScore={rec.score}
@@ -315,10 +343,13 @@ export default function BookingPage() {
                   key={counselor.id}
                   id={counselor.id}
                   name={counselor.name}
+                  email={counselor.email}
                   specialties={counselor.specialties}
                   languages={counselor.languages}
                   experience={counselor.experience}
                   bio={counselor.bio}
+                  isActive={counselor.isActive}
+                  profileImage={counselor.profileImage}
                   onSelect={handleCounselorSelect}
                 />
               ))
@@ -343,8 +374,8 @@ export default function BookingPage() {
                     }
                   </CardTitle>
                   <CardDescription>
-                    {rescheduleBookingId
-                      ? `Current appointment: ${new Date(rescheduleData?.originalSlotTime).toLocaleString()}`
+                    {rescheduleBookingId && rescheduleData
+                      ? `Current appointment: ${new Date(rescheduleData.originalSlotTime).toLocaleString()}`
                       : 'Select an available time slot for your session'
                     }
                   </CardDescription>

@@ -5,6 +5,21 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { ResourceType } from '@/types';
 
+interface ResourceWhereInput {
+  isPublished: boolean;
+  categories?: {
+    has: string;
+  };
+  type?: ResourceType;
+  language?: string;
+  OR?: Array<{
+    title?: { contains: string; mode: 'insensitive' };
+    description?: { contains: string; mode: 'insensitive' };
+    tags?: { has: string };
+    categories?: { has: string };
+  }>;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -22,8 +37,8 @@ export async function GET(request: NextRequest) {
     
     const skip = (page - 1) * limit;
     
-    // Build filters
-    const where: any = {
+    // Build filters with proper typing
+    const where: ResourceWhereInput = {
       isPublished: true,
     };
     
@@ -87,7 +102,7 @@ export async function GET(request: NextRequest) {
           : 0;
         
         let isBookmarked = false;
-        let userRating = null;
+        let userRating: number | null = null;
         
         if (userId) {
           const [bookmark, rating] = await Promise.all([
@@ -142,6 +157,23 @@ export async function GET(request: NextRequest) {
   }
 }
 
+interface CreateResourceData {
+  title: string;
+  description?: string;
+  content?: string;
+  type: ResourceType;
+  language?: string;
+  fileUrl?: string;
+  fileKey?: string;
+  fileSize?: number;
+  duration?: number;
+  author?: string;
+  tags?: string[];
+  categories?: string[];
+  isPublished?: boolean;
+  isFeatured?: boolean;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -166,7 +198,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const data = await request.json();
+    const data: CreateResourceData = await request.json();
     const {
       title,
       description,

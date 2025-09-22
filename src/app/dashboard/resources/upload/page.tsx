@@ -1,4 +1,3 @@
-// E:\mannsahay\src\app\dashboard\resources\upload\page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -263,7 +262,7 @@ export default function UploadResourcePage() {
             <ShieldX className="h-16 w-16 text-red-500 mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
             <p className="text-gray-600 mb-6">
-              You don't have permission to access this page. Only administrators can upload resources.
+              You don&apos;t have permission to access this page. Only administrators can upload resources.
             </p>
             <Link href="/dashboard/resources">
               <Button>Back to Resources</Button>

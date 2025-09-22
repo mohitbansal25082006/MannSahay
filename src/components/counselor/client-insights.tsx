@@ -9,8 +9,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   TrendingUp, 
-  Users, 
-  Star, 
   Clock, 
   MessageSquare, 
   AlertTriangle,
@@ -135,15 +133,6 @@ export default function ClientInsights() {
     }
   };
 
-  const getRiskColor = (riskLevel: string) => {
-    switch (riskLevel) {
-      case 'HIGH': return 'bg-red-100 text-red-800';
-      case 'MEDIUM': return 'bg-yellow-100 text-yellow-800';
-      case 'LOW': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
   const getTrendIcon = (trend: string) => {
     switch (trend) {
       case 'IMPROVING': return <TrendingUp className="h-4 w-4 text-green-500" />;
@@ -233,7 +222,7 @@ export default function ClientInsights() {
                           </div>
                           
                           {insight.recentFeedback && (
-                            <p className="text-sm text-gray-600 italic">"{insight.recentFeedback}"</p>
+                            <p className="text-sm text-gray-600 italic">&ldquo;{insight.recentFeedback}&rdquo;</p>
                           )}
                         </div>
                       </div>

@@ -1,8 +1,8 @@
-// E:\mannsahay\src\app\api\counselors\route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { Prisma } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     const language = searchParams.get('language');
     const available = searchParams.get('available') === 'true';
 
-    const whereClause: any = { isActive: true };
+    const whereClause: Prisma.CounselorWhereInput = { isActive: true };
     
     if (specialization && specialization !== 'all') {
       whereClause.specialties = {

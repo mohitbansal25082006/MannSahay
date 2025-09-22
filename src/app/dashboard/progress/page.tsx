@@ -1,4 +1,3 @@
-// E:\mannsahay\src\app\dashboard\progress\page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -10,7 +9,7 @@ export default function ProgressPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Your Progress</h1>
         <p className="mt-2 text-gray-600">
-          Track your mental health journey and see how you're improving over time.
+          Track your mental health journey and see how you&apos;re improving over time.
         </p>
       </div>
       

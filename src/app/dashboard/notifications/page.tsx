@@ -319,7 +319,7 @@ export default function NotificationsPage() {
                 No notifications
               </h3>
               <p className="text-gray-500">
-                You don't have any notifications yet.
+                You don&apos;t have any notifications yet.
               </p>
             </div>
           </CardContent>

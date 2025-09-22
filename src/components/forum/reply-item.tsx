@@ -1,3 +1,4 @@
+// E:\mannsahay\src\components\resources\resource-actions.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -23,28 +24,30 @@ import CreateReplyForm from './create-reply-form';
 import { toast } from 'sonner';
 import TranslationToggle from '@/components/ui/translation-toggle';
 
-interface ReplyItemProps {
-  reply: {
+interface Reply {
+  id: string;
+  content: string;
+  flagged: boolean;
+  riskLevel: 'NONE' | 'LOW' | 'MEDIUM' | 'HIGH';
+  createdAt: string;
+  moderationStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'UNDER_REVIEW';
+  moderationReason?: string;
+  moderationNote?: string;
+  isHidden?: boolean;
+  language: string;
+  author: {
     id: string;
-    content: string;
-    flagged: boolean;
-    riskLevel: 'NONE' | 'LOW' | 'MEDIUM' | 'HIGH';
-    createdAt: string;
-    moderationStatus?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'UNDER_REVIEW';
-    moderationReason?: string;
-    moderationNote?: string;
-    isHidden?: boolean;
-    language: string;
-    author: {
-      id: string;
-      name?: string;
-      image?: string;
-      hashedId?: string;
-    };
-    _count: {
-      likes: number;
-    };
+    name?: string;
+    image?: string;
+    hashedId?: string;
   };
+  _count: {
+    likes: number;
+  };
+}
+
+interface ReplyItemProps {
+  reply: Reply;
   postId: string;
   currentUserId?: string;
   isLiked?: boolean;
@@ -77,7 +80,7 @@ export default function ReplyItem({
   const [isAdmin, setIsAdmin] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showReplyForm, setShowReplyForm] = useState(false);
-  const [replies, setReplies] = useState<any[]>([]);
+  const [replies, setReplies] = useState<Reply[]>([]);
   const [loadingReplies, setLoadingReplies] = useState(false);
   const [localIsDeleting, setLocalIsDeleting] = useState(false);
   

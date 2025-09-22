@@ -10,7 +10,7 @@ export interface ChatMessage {
   timestamp: string;
   language?: string;
   riskLevel: 'NONE' | 'LOW' | 'MEDIUM' | 'HIGH';
-  context?: any;
+  context?: Record<string, unknown>;
   audioUrl?: string;
 }
 

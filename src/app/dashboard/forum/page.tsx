@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,25 +14,19 @@ import {
 } from '@/components/ui/select';
 import { 
   Search, 
-  Filter, 
-  Plus,
   Grid,
   List,
   TrendingUp,
   Clock,
   Users,
   BookOpen,
-  User,
   MessageSquare,
   Heart,
-  ArrowUpRight,
   Shield,
   Bot,
   CheckCircle,
   XCircle,
   Bookmark,
-  Settings,
-  Languages,
   Globe
 } from 'lucide-react';
 import CreatePostForm from '@/components/forum/create-post-form';
@@ -41,7 +35,6 @@ import UserPreferences from '@/components/dashboard/user-preferences';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import DebugSession from '@/components/debug-session';
 
 interface Post {
   id: string;
@@ -64,7 +57,7 @@ interface Post {
     replies: number;
     bookmarks: number;
   };
-  language: string; // Changed from optional to required
+  language: string;
 }
 
 interface ForumStats {
@@ -132,7 +125,7 @@ function CommunityGuidelines() {
               Be Respectful and Supportive
             </h4>
             <p className="text-sm text-gray-600 ml-6">
-              Treat everyone with respect and kindness. We're here to support each other through difficult times.
+              Treat everyone with respect and kindness. We&apos;re here to support each other through difficult times.
             </p>
           </div>
           
@@ -152,7 +145,7 @@ function CommunityGuidelines() {
               Share Responsibly
             </h4>
             <p className="text-sm text-gray-600 ml-6">
-              Share accurate information and be mindful of how your words might affect others. If you're sharing resources, make sure they're from reliable sources.
+              Share accurate information and be mindful of how your words might affect others. If you&apos;re sharing resources, make sure they&apos;re from reliable sources.
             </p>
           </div>
           
@@ -192,7 +185,7 @@ function CommunityGuidelines() {
               No Spam or Misinformation
             </h4>
             <p className="text-sm text-gray-600 ml-6">
-              Don't post spam, advertisements, or false information that could harm others. Always verify information before sharing.
+              Don&apos;t post spam, advertisements, or false information that could harm others. Always verify information before sharing.
             </p>
           </div>
           
@@ -215,10 +208,6 @@ function CommunityGuidelines() {
               Our community is monitored by AI to ensure these guidelines are followed. Content that violates these guidelines may be removed automatically, and repeat violations may result in account suspension.
             </p>
           </div>
-          
-          <div className="text-center pt-2">
-            
-          </div>
         </div>
       </CardContent>
     </div>
@@ -238,35 +227,21 @@ export default function ForumPage() {
   const [viewMode, setViewMode] = useState('list');
   const [likedPosts, setLikedPosts] = useState<Record<string, boolean>>({});
   const [bookmarkedPosts, setBookmarkedPosts] = useState<Record<string, boolean>>({});
-  const [userLanguage, setUserLanguage] = useState('en');
 
-  useEffect(() => {
-    fetchUserLanguage();
-    fetchPosts();
-    fetchForumStats();
-  }, [category, sort]);
-
-  const fetchUserLanguage = async () => {
+  const fetchUserLanguage = useCallback(async () => {
     if (session?.user?.id) {
       try {
         const response = await fetch(`/api/user/preferences?userId=${session.user.id}`);
         if (response.ok) {
-          const data = await response.json();
-          setUserLanguage(data.preferredLanguage || 'en');
+          await response.json();
         }
       } catch (error) {
         console.error('Error fetching user language:', error);
       }
     }
-  };
+  }, [session?.user?.id]);
 
-  const handleLanguageChange = (language: string) => {
-    setUserLanguage(language);
-    // Refresh posts when language changes to get recommendations in the new language
-    fetchPosts();
-  };
-
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -289,9 +264,9 @@ export default function ForumPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [category, sort]);
 
-  const fetchForumStats = async () => {
+  const fetchForumStats = useCallback(async () => {
     setStatsLoading(true);
     try {
       const [forumResponse, moderationResponse] = await Promise.all([
@@ -318,7 +293,11 @@ export default function ForumPage() {
     } finally {
       setStatsLoading(false);
     }
-  };
+  }, []);
+
+  const handleLanguageChange = useCallback((language: string) => {
+    fetchPosts();
+  }, [fetchPosts]);
 
   const handleLike = async (postId: string) => {
     try {
@@ -396,7 +375,6 @@ export default function ForumPage() {
         const data = await response.json();
         toast.success(data.message);
         
-        // If action was taken, refresh the posts list
         if (data.actionTaken) {
           fetchPosts();
         }
@@ -429,6 +407,12 @@ export default function ForumPage() {
       toast.error('Failed to delete post');
     }
   };
+
+  useEffect(() => {
+    fetchUserLanguage();
+    fetchPosts();
+    fetchForumStats();
+  }, [fetchPosts, fetchForumStats, fetchUserLanguage]);
 
   const filteredPosts = posts.filter(post => {
     if (!searchTerm) return true;
@@ -597,12 +581,7 @@ export default function ForumPage() {
         </div>
 
         <div className="space-y-6">
-          {/* User Preferences Card */}
           <div className="forum-card card-hover">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-              </CardTitle>
-            </CardHeader>
             <CardContent>
               <UserPreferences onLanguageChange={handleLanguageChange} />
             </CardContent>
@@ -636,7 +615,7 @@ export default function ForumPage() {
                     <Badge variant="secondary">{forumStats.activeUsers}</Badge>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Today's Posts</span>
+                    <span className="text-sm text-gray-600">Today&apos;s Posts</span>
                     <Badge variant="secondary">{forumStats.todaysPosts}</Badge>
                   </div>
                 </div>

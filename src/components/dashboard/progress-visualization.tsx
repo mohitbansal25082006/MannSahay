@@ -1,12 +1,26 @@
-// E:\mannsahay\src\components\dashboard\progress-visualization.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, Calendar, Star, Users, Smile, Activity } from 'lucide-react';
+import { Calendar, Star, Users, Smile, Activity } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+
+interface Session {
+  id: string;
+  date: string;
+  counselor: string;
+  rating: number;
+  status: 'completed' | 'upcoming' | 'cancelled';
+}
+
+interface Note {
+  id: string;
+  date: string;
+  content: string;
+  counselor: string;
+}
 
 interface ProgressData {
   moodTrends: { date: string; mood: number }[];
@@ -18,8 +32,8 @@ interface ProgressData {
     averageRating: number;
   };
   counselorDistribution: Record<string, number>;
-  recentSessions: any[];
-  recentNotes: any[];
+  recentSessions: Session[];
+  recentNotes: Note[];
 }
 
 export default function ProgressVisualization() {
@@ -170,8 +184,8 @@ export default function ProgressVisualization() {
                       <XAxis dataKey="date" />
                       <YAxis domain={[0, 10]} />
                       <Tooltip 
-                        formatter={(value) => [`${value}`, 'Mood']}
-                        labelFormatter={(label) => `Date: ${label}`}
+                        formatter={(value: number) => [`${value}`, 'Mood']}
+                        labelFormatter={(label: string) => `Date: ${label}`}
                       />
                       <Line 
                         type="monotone" 
@@ -212,7 +226,7 @@ export default function ProgressVisualization() {
                     <XAxis dataKey="name" />
                     <YAxis />
                     <Tooltip 
-                      formatter={(value) => [`${value}`, 'Sessions']}
+                      formatter={(value: number) => [`${value}`, 'Sessions']}
                     />
                     <Bar dataKey="value" fill="#8884d8" />
                   </BarChart>
@@ -243,14 +257,14 @@ export default function ProgressVisualization() {
                         outerRadius={80}
                         fill="#8884d8"
                         dataKey="count"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        label={({ name, percent }: { name: string; percent: number }) => `${name} ${(percent * 100).toFixed(0)}%`}
                       >
                         {counselorDistributionData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
                       <Tooltip 
-                        formatter={(value) => [`${value}`, 'Sessions']}
+                        formatter={(value: number) => [`${value}`, 'Sessions']}
                       />
                     </PieChart>
                   </ResponsiveContainer>

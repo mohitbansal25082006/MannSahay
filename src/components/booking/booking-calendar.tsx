@@ -1,4 +1,3 @@
-// E:\mannsahay\src\components\booking\booking-calendar.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -7,17 +6,21 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 
-interface BookingCalendarProps {
-  counselorId: string;
-  onSlotSelect: (slot: any) => void;
-}
-
 interface TimeSlot {
   id: string;
   dayOfWeek: number;
   startTime: string; // HH:MM format
   endTime: string; // HH:MM format
   isBooked: boolean;
+}
+
+interface SelectedSlot extends TimeSlot {
+  dateTime: Date;
+}
+
+interface BookingCalendarProps {
+  counselorId: string;
+  onSlotSelect: (slot: SelectedSlot) => void;
 }
 
 export default function BookingCalendar({ counselorId, onSlotSelect }: BookingCalendarProps) {

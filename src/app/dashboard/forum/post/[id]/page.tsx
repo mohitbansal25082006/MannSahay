@@ -24,7 +24,7 @@ import {
   MessageSquare,
   TrendingUp,
   Languages,
-  SpellCheck, // Changed from Spellcheck to SpellCheck
+  SpellCheck,
   AlertTriangle
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -79,6 +79,29 @@ interface Reply {
   replies?: Reply[];
 }
 
+interface Summary {
+  summary: string;
+  keyPoints?: string[];
+  sentiment?: string;
+  topics?: string[];
+  isCached?: boolean;
+  generatedAt?: string;
+}
+
+interface Suggestions {
+  grammar?: string[];
+  clarity?: string[];
+  tone?: string[];
+  suggestedText?: string;
+}
+
+interface ToneAnalysis {
+  overallTone?: string;
+  respectfulness?: string;
+  emotions?: string[];
+  suggestions?: string[];
+}
+
 export default function PostPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -91,7 +114,7 @@ export default function PostPage() {
   const [showActions, setShowActions] = useState(false);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [summary, setSummary] = useState<any>(null);
+  const [summary, setSummary] = useState<Summary | null>(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [deletingReplyId, setDeletingReplyId] = useState<string | null>(null);
   
@@ -103,8 +126,8 @@ export default function PostPage() {
   const [userLanguage, setUserLanguage] = useState('en');
   
   // Writing suggestions and tone analysis states
-  const [suggestions, setSuggestions] = useState<any>(null);
-  const [toneAnalysis, setToneAnalysis] = useState<any>(null);
+  const [suggestions, setSuggestions] = useState<Suggestions | null>(null);
+  const [toneAnalysis, setToneAnalysis] = useState<ToneAnalysis | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showToneAnalysis, setShowToneAnalysis] = useState(false);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
@@ -195,7 +218,7 @@ export default function PostPage() {
     try {
       const response = await fetch(`/api/forum/posts/${id}/summarize`);
       if (response.ok) {
-        const data = await response.json();
+        const data: Summary = await response.json();
         setSummary(data);
       } else {
         toast.error('Failed to generate summary');
@@ -223,7 +246,7 @@ export default function PostPage() {
       });
       
       if (response.ok) {
-        const data = await response.json();
+        const data: Suggestions = await response.json();
         setSuggestions(data);
         setShowSuggestions(true);
       } else {
@@ -252,7 +275,7 @@ export default function PostPage() {
       });
       
       if (response.ok) {
-        const data = await response.json();
+        const data: ToneAnalysis = await response.json();
         setToneAnalysis(data);
         setShowToneAnalysis(true);
       } else {
@@ -704,7 +727,11 @@ export default function PostPage() {
                   </Badge>
                 </div>
                 <div className="flex items-center space-x-2 text-sm text-gray-500">
-                  <span>{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}</span>
+                  <span>
+                    {post.createdAt 
+                      ? formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })
+                      : 'Unknown date'}
+                  </span>
                   <span>•</span>
                   <span className="flex items-center">
                     <Eye className="h-3 w-3 mr-1" />
@@ -1026,7 +1053,7 @@ export default function PostPage() {
                   </div>
                 )}
                 
-                {summary.isCached && (
+                {summary.isCached && summary.generatedAt && (
                   <div className="text-xs text-blue-500 italic">
                     Cached from {new Date(summary.generatedAt).toLocaleString()}
                   </div>

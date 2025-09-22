@@ -31,6 +31,19 @@ import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
 
+interface ModerationResult {
+  violatesPolicy: boolean;
+  reason?: string;
+  actionTaken?: string;
+}
+
+interface NotificationMetadata {
+  bookingId?: string;
+  postId?: string;
+  moderationResult?: ModerationResult;
+  [key: string]: unknown; // For any additional metadata properties
+}
+
 interface Notification {
   id: string;
   title: string;
@@ -38,7 +51,7 @@ interface Notification {
   type: string;
   isRead: boolean;
   createdAt: string;
-  metadata?: Record<string, any>;
+  metadata?: NotificationMetadata;
 }
 
 interface ApiResponse {

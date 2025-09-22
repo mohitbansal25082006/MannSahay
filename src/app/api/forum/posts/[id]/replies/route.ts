@@ -1,5 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { Reply } from '@prisma/client';
+
+// Define interface for nested reply structure
+interface NestedReply extends Reply {
+  replies: NestedReply[];
+  author: {
+    id: string;
+    name: string | null;
+    image: string | null;
+    hashedId: string | null;
+  };
+  _count: {
+    likes: number;
+  };
+}
 
 export async function GET(
   request: NextRequest,
@@ -31,8 +46,8 @@ export async function GET(
     });
 
     // Organize replies in a nested structure
-    const replyMap = new Map();
-    const rootReplies: any[] = [];
+    const replyMap = new Map<string, NestedReply>();
+    const rootReplies: NestedReply[] = [];
 
     // First pass: create a map of all replies
     replies.forEach(reply => {
@@ -44,10 +59,10 @@ export async function GET(
       if (reply.parentId) {
         const parent = replyMap.get(reply.parentId);
         if (parent) {
-          parent.replies.push(replyMap.get(reply.id));
+          parent.replies.push(replyMap.get(reply.id)!);
         }
       } else {
-        rootReplies.push(replyMap.get(reply.id));
+        rootReplies.push(replyMap.get(reply.id)!);
       }
     });
 

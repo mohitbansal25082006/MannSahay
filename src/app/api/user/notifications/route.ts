@@ -1,13 +1,45 @@
-// E:\mannsahay\src\app\api\user\notifications\route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { Prisma } from '@prisma/client';
+
+// Define the shape of the Notification model for Prisma queries
+interface NotificationWhereInput {
+  userId: string;
+  isRead?: boolean;
+}
+
+// Define the shape of the Notification model for the response
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: string;
+  userId: string;
+  metadata: Prisma.JsonValue; // Use Prisma.JsonValue instead of JsonValue
+  isRead: boolean;
+  createdAt: Date; // Changed to match Prisma's Date type
+}
+
+// Define the response shape for the GET handler
+interface NotificationsResponse {
+  notifications: Notification[];
+  unreadCount: number;
+  totalCount: number;
+  hasMore: boolean;
+  pagination: {
+    total: number;
+    limit: number;
+    offset: number;
+    hasMore: boolean;
+  };
+}
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -17,7 +49,8 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10');
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    const where: any = {
+    // Define the where clause with proper typing
+    const where: NotificationWhereInput = {
       userId: session.user.id,
     };
 
@@ -45,11 +78,11 @@ export async function GET(request: NextRequest) {
       where: {
         userId: session.user.id,
         isRead: false,
-      }
+      },
     });
 
     // Return response matching the dropdown component's expected format
-    return NextResponse.json({
+    return NextResponse.json<NotificationsResponse>({
       notifications,
       unreadCount,
       totalCount,
@@ -70,7 +103,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -80,25 +113,27 @@ export async function PUT(request: NextRequest) {
 
     // Validate input
     if (!notificationIds || !Array.isArray(notificationIds)) {
-      return NextResponse.json({ 
-        error: 'notificationIds is required and must be an array' 
-      }, { status: 400 });
+      return NextResponse.json(
+        { error: 'notificationIds is required and must be an array' },
+        { status: 400 }
+      );
     }
 
     if (notificationIds.length === 0) {
-      return NextResponse.json({ 
-        error: 'notificationIds cannot be empty' 
-      }, { status: 400 });
+      return NextResponse.json(
+        { error: 'notificationIds cannot be empty' },
+        { status: 400 }
+      );
     }
 
     if (typeof isRead !== 'boolean') {
-      return NextResponse.json({ 
-        error: 'isRead must be a boolean value' 
-      }, { status: 400 });
+      return NextResponse.json(
+        { error: 'isRead must be a boolean value' },
+        { status: 400 }
+      );
     }
 
     // Update notifications - only update those belonging to the user
-    // Removed updatedAt as it's likely auto-managed by Prisma
     const result = await prisma.notification.updateMany({
       where: {
         id: {
@@ -121,16 +156,17 @@ export async function PUT(request: NextRequest) {
     });
   } catch (error) {
     console.error('Update notifications error:', error);
-    return NextResponse.json({ 
-      error: 'Failed to update notifications. Please try again.' 
-    }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to update notifications. Please try again.' },
+      { status: 500 }
+    );
   }
 }
 
 export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -147,20 +183,22 @@ export async function DELETE(request: NextRequest) {
           userId: session.user.id,
         },
       });
-      
+
       console.log(`User ${session.user.id} deleted all notifications (${result.count} total)`);
     } else {
       // Validate input for specific notification deletion
       if (!notificationIds || !Array.isArray(notificationIds)) {
-        return NextResponse.json({ 
-          error: 'notificationIds is required and must be an array' 
-        }, { status: 400 });
+        return NextResponse.json(
+          { error: 'notificationIds is required and must be an array' },
+          { status: 400 }
+        );
       }
 
       if (notificationIds.length === 0) {
-        return NextResponse.json({ 
-          error: 'notificationIds cannot be empty' 
-        }, { status: 400 });
+        return NextResponse.json(
+          { error: 'notificationIds cannot be empty' },
+          { status: 400 }
+        );
       }
 
       // Delete specific notifications - only delete those belonging to the user
@@ -179,22 +217,23 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({
       success: true,
       deletedCount: result.count,
-      message: deleteAll 
+      message: deleteAll
         ? `Successfully deleted all ${result.count} notification(s)`
         : `Successfully deleted ${result.count} notification(s)`,
     });
   } catch (error) {
     console.error('Delete notifications error:', error);
-    return NextResponse.json({ 
-      error: 'Failed to delete notifications. Please try again.' 
-    }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to delete notifications. Please try again.' },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -204,9 +243,10 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!title || !message) {
-      return NextResponse.json({ 
-        error: 'title and message are required' 
-      }, { status: 400 });
+      return NextResponse.json(
+        { error: 'title and message are required' },
+        { status: 400 }
+      );
     }
 
     // Create new notification
@@ -216,7 +256,7 @@ export async function POST(request: NextRequest) {
         message: message.substring(0, 1000), // Ensure message doesn't exceed database limit
         type,
         userId: session.user.id,
-        metadata,
+        metadata: metadata as Prisma.InputJsonValue, // Cast to Prisma.InputJsonValue for input
         isRead: false,
       },
     });
@@ -230,8 +270,9 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
   } catch (error) {
     console.error('Create notification error:', error);
-    return NextResponse.json({ 
-      error: 'Failed to create notification. Please try again.' 
-    }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to create notification. Please try again.' },
+      { status: 500 }
+    );
   }
 }

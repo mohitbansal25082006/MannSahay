@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
-import { ModerationNotification } from '@/components/moderation/moderation-notification'; // Added import
+import { ModerationNotification } from '@/components/moderation/moderation-notification';
 
 const categories = [
   { value: 'general', label: 'General' },
@@ -50,6 +50,20 @@ interface CreatePostFormProps {
   onPostCreated?: () => void;
 }
 
+interface Suggestions {
+  grammar?: string[];
+  clarity?: string[];
+  tone?: string[];
+  suggestedText?: string;
+}
+
+interface ToneAnalysis {
+  overallTone?: string;
+  respectfulness?: string;
+  emotions?: string[];
+  suggestions?: string[];
+}
+
 export default function CreatePostForm({ onPostCreated }: CreatePostFormProps) {
   const { data: session, status } = useSession();
   const [title, setTitle] = useState('');
@@ -58,8 +72,8 @@ export default function CreatePostForm({ onPostCreated }: CreatePostFormProps) {
   const [category, setCategory] = useState('general');
   const [language, setLanguage] = useState('en');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [suggestions, setSuggestions] = useState<any>(null);
-  const [toneAnalysis, setToneAnalysis] = useState<any>(null);
+  const [suggestions, setSuggestions] = useState<Suggestions | null>(null);
+  const [toneAnalysis, setToneAnalysis] = useState<ToneAnalysis | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showToneAnalysis, setShowToneAnalysis] = useState(false);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
@@ -106,7 +120,7 @@ export default function CreatePostForm({ onPostCreated }: CreatePostFormProps) {
       });
       
       if (response.ok) {
-        const data = await response.json();
+        const data: Suggestions = await response.json();
         setSuggestions(data);
         setShowSuggestions(true);
       } else {
@@ -132,7 +146,7 @@ export default function CreatePostForm({ onPostCreated }: CreatePostFormProps) {
       });
       
       if (response.ok) {
-        const data = await response.json();
+        const data: ToneAnalysis = await response.json();
         setToneAnalysis(data);
         setShowToneAnalysis(true);
       } else {

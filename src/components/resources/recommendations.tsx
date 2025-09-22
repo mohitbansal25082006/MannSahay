@@ -1,11 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Resource } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { RefreshCw, Sparkles, TrendingUp, Brain, Heart, BookOpen } from 'lucide-react';
+import { RefreshCw, Sparkles, Brain } from 'lucide-react';
+
+// Define the Resource type
+interface Resource {
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  averageRating?: number;
+  aiReason?: string;
+}
 
 export default function Recommendations() {
   const [recommendations, setRecommendations] = useState<Resource[]>([]);
@@ -16,12 +25,12 @@ export default function Recommendations() {
     try {
       setLoading(true);
       const response = await fetch('/api/resources/recommendations');
-      const data = await response.json();
+      const data: Resource[] = await response.json();
       setRecommendations(data);
       
       // Extract AI reasons for each recommendation
       const reasons: Record<string, string> = {};
-      data.forEach((rec: any) => {
+      data.forEach((rec: Resource) => {
         if (rec.aiReason) {
           reasons[rec.id] = rec.aiReason;
         }

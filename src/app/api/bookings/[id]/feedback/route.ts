@@ -1,4 +1,3 @@
-// E:\mannsahay\src\app\api\bookings\[id]\feedback\route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
@@ -6,9 +5,12 @@ import { prisma } from '@/lib/db';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params; // Await the params Promise to get the id
+    const { id } = resolvedParams;
+
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.id) {
@@ -19,7 +21,7 @@ export async function POST(
     const { rating, content } = body;
 
     const booking = await prisma.booking.findUnique({
-      where: { id: params.id }
+      where: { id }
     });
 
     if (!booking) {
@@ -33,7 +35,7 @@ export async function POST(
 
     // Check if feedback already exists
     const existingFeedback = await prisma.feedback.findFirst({
-      where: { bookingId: params.id }
+      where: { bookingId: id }
     });
 
     if (existingFeedback) {
@@ -45,7 +47,7 @@ export async function POST(
         rating,
         content,
         userId: session.user.id,
-        bookingId: params.id
+        bookingId: id
       }
     });
 

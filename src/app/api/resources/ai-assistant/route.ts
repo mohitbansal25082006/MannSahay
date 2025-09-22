@@ -4,6 +4,20 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { openai } from '@/lib/openai';
 
+// Define proper TypeScript interfaces
+interface ConversationMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+interface RequestBody {
+  question: string;
+  resourceId: string;
+  resourceTitle?: string;
+  resourceContent?: string;
+  conversationHistory?: ConversationMessage[];
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -15,7 +29,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { question, resourceId, resourceTitle, resourceContent, conversationHistory } = await request.json();
+    const { question, resourceId, resourceTitle, resourceContent, conversationHistory } = await request.json() as RequestBody;
 
     if (!question || !resourceId) {
       return NextResponse.json(
@@ -43,7 +57,7 @@ Your Guidelines:
 8. Use simple language that's easy to understand
 
 Conversation History:
-${conversationHistory ? conversationHistory.map((msg: any) => 
+${conversationHistory ? conversationHistory.map((msg: ConversationMessage) => 
   `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`
 ).join('\n') : 'No previous conversation'}
 

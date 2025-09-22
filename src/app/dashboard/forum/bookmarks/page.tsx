@@ -1,5 +1,3 @@
-// E:\mannsahay\src\app\dashboard\forum\bookmarks\page.tsx
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -258,7 +256,7 @@ export default function BookmarksPage() {
                       Your Bookmarks
                     </h1>
                     <p className="text-gray-600 mt-1">
-                      Posts you've saved for later reference
+                      Posts you&apos;ve saved for later reference
                     </p>
                   </div>
                 </div>

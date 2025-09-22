@@ -1,4 +1,3 @@
-// E:\mannsahay\src\components\counselor\ai-recommendations.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -7,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Brain, TrendingUp, Users, Star, Clock, MessageSquare } from 'lucide-react';
+import { Brain, TrendingUp, Star, Clock } from 'lucide-react';
 
 interface Recommendation {
   counselorId: string;
@@ -210,7 +209,7 @@ export default function AIRecommendations() {
                     <div>
                       <h3 className="font-semibold mb-2">Session Trends</h3>
                       <p className="text-sm text-gray-600">
-                        Based on recent data, there's a 15% increase in anxiety-related sessions 
+                        Based on recent data, there&apos;s a 15% increase in anxiety-related sessions 
                         compared to last month. Consider scheduling more stress management workshops.
                       </p>
                     </div>

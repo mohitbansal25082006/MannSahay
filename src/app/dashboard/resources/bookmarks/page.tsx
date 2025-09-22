@@ -1,4 +1,3 @@
-// E:\mannsahay\src\app\dashboard\resources\bookmarks\page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -70,7 +69,7 @@ export default function BookmarksPage() {
             <h1 className="text-3xl font-bold text-gray-900">Bookmarked Resources</h1>
           </div>
           <p className="text-gray-600">
-            Resources you've saved for later reference
+            Resources you&apos;ve saved for later reference
           </p>
         </div>
         
