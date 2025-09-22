@@ -220,7 +220,8 @@ export async function DELETE(
     const { id } = await context.params;
 
     const booking = await prisma.booking.findUnique({
-      where: { id }
+      where: { id },
+      include: { counselor: true }
     });
 
     if (!booking) {
@@ -247,19 +248,30 @@ export async function DELETE(
       });
     }
 
+    // Create cancellation notification
+    await prisma.notification.create({
+      data: {
+        title: 'Booking Cancelled',
+        message: `Your session with ${booking.counselor.name} has been cancelled`,
+        type: 'BOOKING_CANCELLED',
+        userId: booking.userId,
+        metadata: {
+          bookingId: booking.id,
+          counselorName: booking.counselor.name
+        }
+      }
+    });
+
     // Send cancellation email
     try {
       const user = await prisma.user.findUnique({
         where: { id: booking.userId }
       });
-      const counselor = await prisma.counselor.findUnique({
-        where: { id: booking.counselorId }
-      });
 
-      if (user?.email && counselor) {
+      if (user?.email) {
         const emailHtml = generateSessionCancellationEmail(
           user.name || 'User',
-          counselor.name,
+          booking.counselor.name,
           booking.slotTime
         );
 
@@ -271,7 +283,6 @@ export async function DELETE(
       }
     } catch (emailError) {
       console.error('Error sending cancellation email:', emailError);
-      // Continue with the deletion process even if email fails
     }
 
     await prisma.booking.delete({

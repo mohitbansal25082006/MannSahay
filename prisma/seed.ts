@@ -5,9 +5,9 @@ import { BookingStatus, SessionType, VideoPlatform } from '../src/types';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('Seeding counselors...');
+  console.log('Seeding database with comprehensive data...');
 
-  // Create 12 counselors (original 10 + 2 new ones)
+  // Create 12 counselors
   const counselors = [
     {
       name: 'Dr. Priya Sharma',
@@ -129,7 +129,6 @@ async function main() {
       maxDailySessions: 7,
       bufferTimeMinutes: 15
     },
-    // New counselors
     {
       name: 'Mohit',
       email: 'mohitsuper1@gmail.com',
@@ -156,12 +155,14 @@ async function main() {
     }
   ];
 
+  const createdCounselors = [];
   for (const counselor of counselors) {
     // Create counselor
     const createdCounselor = await prisma.counselor.create({
       data: counselor
     });
 
+    createdCounselors.push(createdCounselor);
     console.log(`Created counselor: ${createdCounselor.name}`);
 
     // Create availability slots for each counselor (Monday to Friday, 9 AM to 5 PM)
@@ -195,183 +196,373 @@ async function main() {
   const testUsers = [
     { name: 'Alex Johnson', email: 'alex@example.com', hashedId: 'alex123' },
     { name: 'Sam Smith', email: 'sam@example.com', hashedId: 'sam123' },
-    { name: 'Taylor Brown', email: 'taylor@example.com', hashedId: 'taylor123' }
+    { name: 'Taylor Brown', email: 'taylor@example.com', hashedId: 'taylor123' },
+    { name: 'Jordan Lee', email: 'jordan@example.com', hashedId: 'jordan123' },
+    { name: 'Casey Davis', email: 'casey@example.com', hashedId: 'casey123' }
   ];
 
+  const createdUsers = [];
   for (const user of testUsers) {
-    await prisma.user.upsert({
+    const createdUser = await prisma.user.upsert({
       where: { email: user.email },
       update: {},
       create: user
     });
+    createdUsers.push(createdUser);
+    console.log(`Created user: ${createdUser.name}`);
   }
 
-  // Create bookings for counselors
-  const counselor1 = await prisma.counselor.findUnique({ where: { email: 'priya.sharma@example.com' } });
-  const counselor2 = await prisma.counselor.findUnique({ where: { email: 'rajesh.kumar@example.com' } });
-  
-  if (counselor1 && counselor2) {
-    const user1 = await prisma.user.findUnique({ where: { email: 'alex@example.com' } });
-    const user2 = await prisma.user.findUnique({ where: { email: 'sam@example.com' } });
+  // Create bookings with realistic data
+  const bookings = [
+    // Alex's bookings with Dr. Priya Sharma
+    {
+      userId: createdUsers[0].id, // Alex
+      counselorId: createdCounselors[0].id, // Dr. Priya Sharma
+      slotTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
+      endTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000 + 50 * 60 * 1000),
+      status: BookingStatus.CONFIRMED,
+      sessionType: SessionType.ONE_ON_ONE,
+      notes: 'Struggling with exam anxiety'
+    },
+    {
+      userId: createdUsers[0].id, // Alex
+      counselorId: createdCounselors[0].id, // Dr. Priya Sharma
+      slotTime: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+      endTime: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000 + 50 * 60 * 1000),
+      status: BookingStatus.COMPLETED,
+      sessionType: SessionType.ONE_ON_ONE,
+      notes: 'Initial anxiety assessment'
+    },
+    {
+      userId: createdUsers[0].id, // Alex
+      counselorId: createdCounselors[0].id, // Dr. Priya Sharma
+      slotTime: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10 days ago
+      endTime: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000 + 50 * 60 * 1000),
+      status: BookingStatus.COMPLETED,
+      sessionType: SessionType.ONE_ON_ONE,
+      notes: 'Follow-up session, showing improvement'
+    },
     
-    if (user1 && user2) {
-      // Create bookings for counselor1 and get their IDs
-      const booking1 = await prisma.booking.create({
-        data: {
-          userId: user1.id,
-          counselorId: counselor1.id,
-          slotTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
-          endTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000 + 50 * 60 * 1000),
-          status: BookingStatus.CONFIRMED,
-          sessionType: SessionType.ONE_ON_ONE
-        }
-      });
-
-      const booking2 = await prisma.booking.create({
-        data: {
-          userId: user2.id,
-          counselorId: counselor1.id,
-          slotTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
-          endTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000 + 50 * 60 * 1000),
-          status: BookingStatus.CONFIRMED,
-          sessionType: SessionType.ONE_ON_ONE
-        }
-      });
-
-      const booking3 = await prisma.booking.create({
-        data: {
-          userId: user1.id,
-          counselorId: counselor1.id,
-          slotTime: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
-          endTime: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000 + 50 * 60 * 1000),
-          status: BookingStatus.COMPLETED,
-          sessionType: SessionType.ONE_ON_ONE
-        }
-      });
-
-      // Create mood entries
-      await prisma.moodEntry.createMany({
-        data: [
-          { mood: 5, userId: user1.id },
-          { mood: 6, userId: user1.id },
-          { mood: 7, userId: user1.id },
-          { mood: 4, userId: user2.id },
-          { mood: 5, userId: user2.id },
-          { mood: 6, userId: user2.id }
-        ]
-      });
-
-      // Create session notes using actual booking IDs
-      await prisma.sessionNote.createMany({
-        data: [
-          {
-            content: 'Client showed significant improvement in managing anxiety. Recommended mindfulness exercises.',
-            userId: user1.id,
-            counselorId: counselor1.id,
-            bookingId: booking1.id, // Use actual booking ID
-            isPrivate: false
-          },
-          {
-            content: 'Client reported increased anxiety related to upcoming exams. Discussed breathing techniques.',
-            userId: user2.id,
-            counselorId: counselor1.id,
-            bookingId: booking2.id, // Use actual booking ID
-            isPrivate: true
-          },
-          {
-            content: 'Completed session. Client showed good progress with CBT techniques.',
-            userId: user1.id,
-            counselorId: counselor1.id,
-            bookingId: booking3.id, // Use actual booking ID
-            isPrivate: false
-          }
-        ]
-      });
-
-      // Create feedback using actual booking IDs
-      await prisma.feedback.createMany({
-        data: [
-          {
-            rating: 5,
-            content: 'Excellent session, very helpful.',
-            userId: user1.id,
-            bookingId: booking1.id // Use actual booking ID
-          },
-          {
-            rating: 4,
-            content: 'Good session, would like more practical exercises.',
-            userId: user2.id,
-            bookingId: booking2.id // Use actual booking ID
-          },
-          {
-            rating: 5,
-            content: 'Very effective session, feeling much better now.',
-            userId: user1.id,
-            bookingId: booking3.id // Use actual booking ID
-          }
-        ]
-      });
-    }
-  }
-
-  // Create group sessions
-  const groupSessions = [
+    // Sam's bookings with Dr. Rajesh Kumar
     {
-      title: 'Managing Academic Stress',
-      description: 'Learn effective strategies to cope with academic pressure and exam stress.',
-      maxParticipants: 15,
-      sessionDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
-      duration: 60,
-      counselorEmail: 'priya.sharma@example.com'
+      userId: createdUsers[1].id, // Sam
+      counselorId: createdCounselors[1].id, // Dr. Rajesh Kumar
+      slotTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
+      endTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000 + 50 * 60 * 1000),
+      status: BookingStatus.CONFIRMED,
+      sessionType: SessionType.ONE_ON_ONE,
+      notes: 'Relationship issues with family'
     },
     {
-      title: 'Building Healthy Relationships',
-      description: 'Explore the foundations of healthy relationships and communication skills.',
-      maxParticipants: 12,
-      sessionDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
-      duration: 90,
-      counselorEmail: 'rajesh.kumar@example.com'
+      userId: createdUsers[1].id, // Sam
+      counselorId: createdCounselors[1].id, // Dr. Rajesh Kumar
+      slotTime: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
+      endTime: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000 + 50 * 60 * 1000),
+      status: BookingStatus.COMPLETED,
+      sessionType: SessionType.ONE_ON_ONE,
+      notes: 'Career counseling session'
+    },
+    
+    // Taylor's bookings with Dr. Ananya Reddy
+    {
+      userId: createdUsers[2].id, // Taylor
+      counselorId: createdCounselors[2].id, // Dr. Ananya Reddy
+      slotTime: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // 1 day from now
+      endTime: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000 + 50 * 60 * 1000),
+      status: BookingStatus.CONFIRMED,
+      sessionType: SessionType.ONE_ON_ONE,
+      notes: 'Trauma recovery session'
     },
     {
-      title: 'Digital Wellness Workshop',
-      description: 'Learn how to maintain a healthy relationship with technology and social media.',
-      maxParticipants: 20,
-      sessionDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), // 10 days from now
-      duration: 60,
-      counselorEmail: 'mohitsuper1@gmail.com'
+      userId: createdUsers[2].id, // Taylor
+      counselorId: createdCounselors[2].id, // Dr. Ananya Reddy
+      slotTime: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+      endTime: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 50 * 60 * 1000),
+      status: BookingStatus.COMPLETED,
+      sessionType: SessionType.ONE_ON_ONE,
+      notes: 'Depression symptoms improving'
     },
+    
+    // Jordan's bookings with Dr. Mohit (Digital Wellness)
     {
-      title: 'Career Planning for Students',
-      description: 'Guidance on making informed career decisions and planning for the future.',
-      maxParticipants: 15,
-      sessionDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days from now
-      duration: 75,
-      counselorEmail: 'mohitbansal25082006@gmail.com'
+      userId: createdUsers[3].id, // Jordan
+      counselorId: createdCounselors[10].id, // Mohit
+      slotTime: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000), // 4 days from now
+      endTime: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000 + 50 * 60 * 1000),
+      status: BookingStatus.CONFIRMED,
+      sessionType: SessionType.ONE_ON_ONE,
+      notes: 'Social media addiction concerns'
+    },
+    
+    // Casey's bookings with Dr. Mohit Bansal (Career Guidance)
+    {
+      userId: createdUsers[4].id, // Casey
+      counselorId: createdCounselors[11].id, // Mohit Bansal
+      slotTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
+      endTime: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000 + 50 * 60 * 1000),
+      status: BookingStatus.CONFIRMED,
+      sessionType: SessionType.ONE_ON_ONE,
+      notes: 'Career planning confusion'
     }
   ];
 
-  for (const session of groupSessions) {
-    const counselor = await prisma.counselor.findUnique({
-      where: { email: session.counselorEmail }
-    });
+  const createdBookings = [];
+  for (const booking of bookings) {
+    const createdBooking = await prisma.booking.create({ data: booking });
+    createdBookings.push(createdBooking);
+    console.log(`Created booking for user ${booking.userId} with counselor ${booking.counselorId}`);
+  }
 
-    if (counselor) {
-      await prisma.groupSession.create({
+  // Create mood entries with realistic data showing different trends
+  await prisma.moodEntry.createMany({
+    data: [
+      // Alex's mood entries (improving trend)
+      { mood: 4, userId: createdUsers[0].id, bookingId: createdBookings[1].id }, // Initial anxiety
+      { mood: 5, userId: createdUsers[0].id, bookingId: createdBookings[2].id }, // Slight improvement
+      { mood: 6, userId: createdUsers[0].id, bookingId: createdBookings[0].id }, // Current improvement
+      { mood: 7, userId: createdUsers[0].id }, // Latest mood
+      
+      // Sam's mood entries (stable with slight improvement)
+      { mood: 6, userId: createdUsers[1].id, bookingId: createdBookings[4].id }, // Career stress
+      { mood: 7, userId: createdUsers[1].id, bookingId: createdBookings[3].id }, // Relationship session
+      { mood: 7, userId: createdUsers[1].id }, // Stable mood
+      
+      // Taylor's mood entries (declining then improving)
+      { mood: 5, userId: createdUsers[2].id, bookingId: createdBookings[6].id }, // Depression symptoms
+      { mood: 4, userId: createdUsers[2].id }, // Before last session
+      { mood: 5, userId: createdUsers[2].id, bookingId: createdBookings[5].id }, // After session
+      
+      // Jordan's mood entries (concerned about digital wellness)
+      { mood: 5, userId: createdUsers[3].id }, // Initial mood
+      { mood: 4, userId: createdUsers[3].id }, // Worsening
+      
+      // Casey's mood entries (confused about career)
+      { mood: 6, userId: createdUsers[4].id }, // Initial mood
+      { mood: 5, userId: createdUsers[4].id }  // Slightly concerned
+    ]
+  });
+
+  // Create session notes with realistic content
+  await prisma.sessionNote.createMany({
+    data: [
+      {
+        content: 'Client shows significant anxiety related to upcoming exams. Recommended breathing exercises and study schedule adjustments. Noted improvement in self-awareness.',
+        userId: createdUsers[0].id,
+        counselorId: createdCounselors[0].id,
+        bookingId: createdBookings[0].id,
+        isPrivate: false
+      },
+      {
+        content: 'Family conflicts causing stress. Suggested communication strategies and boundary setting. Client seems receptive to advice.',
+        userId: createdUsers[1].id,
+        counselorId: createdCounselors[1].id,
+        bookingId: createdBookings[3].id,
+        isPrivate: true
+      },
+      {
+        content: 'Depression symptoms showing improvement. Client reports better sleep and appetite. Continue current treatment plan and monitor progress.',
+        userId: createdUsers[2].id,
+        counselorId: createdCounselors[2].id,
+        bookingId: createdBookings[5].id,
+        isPrivate: false
+      },
+      {
+        content: 'Initial assessment completed. Client experiencing trauma symptoms. Will begin trauma-focused CBT in next session.',
+        userId: createdUsers[2].id,
+        counselorId: createdCounselors[2].id,
+        bookingId: createdBookings[6].id,
+        isPrivate: true
+      },
+      {
+        content: 'Social media usage affecting daily functioning. Discussed digital detox strategies and healthy online habits.',
+        userId: createdUsers[3].id,
+        counselorId: createdCounselors[10].id,
+        bookingId: createdBookings[7].id,
+        isPrivate: false
+      },
+      {
+        content: 'Client confused about career path. Administered career assessment test. Will review results in next session.',
+        userId: createdUsers[4].id,
+        counselorId: createdCounselors[11].id,
+        bookingId: createdBookings[8].id,
+        isPrivate: false
+      }
+    ]
+  });
+
+  // Create feedback with realistic comments
+  await prisma.feedback.createMany({
+    data: [
+      {
+        rating: 4,
+        content: 'Very helpful session. Practical techniques for managing anxiety. Dr. Sharma is very understanding.',
+        userId: createdUsers[0].id,
+        bookingId: createdBookings[0].id
+      },
+      {
+        rating: 5,
+        content: 'Excellent counselor. Really understands my situation and provides actionable advice.',
+        userId: createdUsers[1].id,
+        bookingId: createdBookings[3].id
+      },
+      {
+        rating: 5,
+        content: 'Feeling much better after our sessions. Dr. Reddy is compassionate and professional.',
+        userId: createdUsers[2].id,
+        bookingId: createdBookings[5].id
+      },
+      {
+        rating: 4,
+        content: 'Good session, would like more practical exercises for digital wellness.',
+        userId: createdUsers[3].id,
+        bookingId: createdBookings[7].id
+      },
+      {
+        rating: 5,
+        content: 'Mohit Bansal provided great career insights. Feeling more confident about my path now.',
+        userId: createdUsers[4].id,
+        bookingId: createdBookings[8].id
+      }
+    ]
+  });
+
+  // Create video sessions for all bookings
+  for (const booking of createdBookings) {
+    await prisma.videoSession.create({
+      data: {
+        platform: VideoPlatform.GOOGLE_MEET,
+        bookingId: booking.id,
+        meetingUrl: `https://meet.google.com/abc-defg-hij-${booking.id}`
+      }
+    });
+  }
+
+  // Create group sessions with different counselors
+  const groupSessions = [
+    {
+      title: 'Managing Academic Stress',
+      description: 'Learn effective strategies to cope with academic pressure and exam stress. This session will provide practical tools for time management, study techniques, and stress reduction.',
+      maxParticipants: 15,
+      sessionDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
+      duration: 60,
+      counselorId: createdCounselors[0].id // Dr. Priya Sharma
+    },
+    {
+      title: 'Building Healthy Relationships',
+      description: 'Explore the foundations of healthy relationships and communication skills. This session will cover boundary setting, effective communication, and conflict resolution.',
+      maxParticipants: 12,
+      sessionDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+      duration: 90,
+      counselorId: createdCounselors[1].id // Dr. Rajesh Kumar
+    },
+    {
+      title: 'Digital Wellness Workshop',
+      description: 'Learn how to maintain a healthy relationship with technology and social media. This workshop will cover digital detox strategies and healthy online habits.',
+      maxParticipants: 20,
+      sessionDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), // 10 days from now
+      duration: 60,
+      counselorId: createdCounselors[10].id // Mohit
+    },
+    {
+      title: 'Career Planning for Students',
+      description: 'Guidance on making informed career decisions and planning for the future. This session will help students identify their strengths and explore career options.',
+      maxParticipants: 15,
+      sessionDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days from now
+      duration: 75,
+      counselorId: createdCounselors[11].id // Mohit Bansal
+    },
+    {
+      title: 'Trauma Recovery Support Group',
+      description: 'A supportive space for individuals recovering from trauma. This session will focus on healing strategies and building resilience.',
+      maxParticipants: 10,
+      sessionDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
+      duration: 90,
+      counselorId: createdCounselors[2].id // Dr. Ananya Reddy
+    },
+    {
+      title: 'Women\'s Mental Health Circle',
+      description: 'A safe space for women to discuss mental health challenges unique to their experiences. This session will focus on empowerment and support.',
+      maxParticipants: 12,
+      sessionDate: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000), // 12 days from now
+      duration: 75,
+      counselorId: createdCounselors[5].id // Dr. Sneha Desai
+    }
+  ];
+
+  const createdGroupSessions = [];
+  for (const session of groupSessions) {
+    const createdGroupSession = await prisma.groupSession.create({
+      data: session
+    });
+    createdGroupSessions.push(createdGroupSession);
+    console.log(`Created group session: ${session.title}`);
+  }
+
+  // Add participants to group sessions
+  for (let i = 0; i < Math.min(createdGroupSessions.length, createdUsers.length); i++) {
+    // Add first 3 users to first group session
+    if (i < 3) {
+      await prisma.groupSessionParticipant.create({
         data: {
-          title: session.title,
-          description: session.description,
-          maxParticipants: session.maxParticipants,
-          sessionDate: session.sessionDate,
-          duration: session.duration,
-          counselorId: counselor.id
+          groupSessionId: createdGroupSessions[0].id,
+          userId: createdUsers[i].id
         }
       });
-
-      console.log(`Created group session: ${session.title}`);
+    }
+    
+    // Add users 1, 2, 3 to second group session
+    if (i < 3 && i > 0) {
+      await prisma.groupSessionParticipant.create({
+        data: {
+          groupSessionId: createdGroupSessions[1].id,
+          userId: createdUsers[i].id
+        }
+      });
+    }
+    
+    // Add users 0, 3, 4 to third group session (Digital Wellness)
+    if (i === 0 || i === 3 || i === 4) {
+      await prisma.groupSessionParticipant.create({
+        data: {
+          groupSessionId: createdGroupSessions[2].id,
+          userId: createdUsers[i].id
+        }
+      });
     }
   }
 
+  // Create notifications for users
+  await prisma.notification.createMany({
+    data: [
+      {
+        title: 'Booking Confirmed',
+        message: 'Your session with Dr. Priya Sharma has been confirmed for next week',
+        type: 'BOOKING_CONFIRMED',
+        userId: createdUsers[0].id,
+        metadata: { bookingId: createdBookings[0].id }
+      },
+      {
+        title: 'Group Session Reminder',
+        message: 'Reminder: Digital Wellness Workshop starts in 2 days',
+        type: 'GROUP_SESSION_REMINDER',
+        userId: createdUsers[0].id,
+        metadata: { groupSessionId: createdGroupSessions[2].id }
+      },
+      {
+        title: 'Session Feedback Request',
+        message: 'Please rate your recent session with Dr. Rajesh Kumar',
+        type: 'FEEDBACK_REQUEST',
+        userId: createdUsers[1].id,
+        metadata: { bookingId: createdBookings[3].id }
+      }
+    ]
+  });
+
   console.log('Seeding completed successfully!');
+  console.log(`Created ${createdCounselors.length} counselors`);
+  console.log(`Created ${createdUsers.length} users`);
+  console.log(`Created ${createdBookings.length} bookings`);
+  console.log(`Created ${createdGroupSessions.length} group sessions`);
 }
 
 main()

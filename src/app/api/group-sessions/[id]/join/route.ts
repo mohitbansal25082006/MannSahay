@@ -1,7 +1,9 @@
+// E:\mannsahay\src\app\api\group-sessions\[id]\join\route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { sendEmail, generateGroupSessionJoinEmail, generateGroupSessionLeaveEmail } from '@/lib/email';
 
 export async function POST(
   request: NextRequest,
@@ -14,7 +16,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = await context.params; // Await params to get the id
+    const { id } = await context.params;
 
     const groupSession = await prisma.groupSession.findUnique({
       where: { id },
@@ -68,6 +70,29 @@ export async function POST(
         }
       }
     });
+
+    // Send email notification
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: session.user.id }
+      });
+
+      if (user?.email) {
+        const emailHtml = generateGroupSessionJoinEmail(
+          user.name || 'User',
+          groupSession.title,
+          groupSession.sessionDate
+        );
+
+        await sendEmail({
+          to: user.email,
+          subject: 'Group Session Joined - MannSahay',
+          html: emailHtml
+        });
+      }
+    } catch (emailError) {
+      console.error('Error sending group session join email:', emailError);
+    }
 
     return NextResponse.json(participation, { status: 201 });
   } catch (error) {
@@ -130,6 +155,29 @@ export async function DELETE(
           }
         }
       });
+
+      // Send email notification
+      try {
+        const user = await prisma.user.findUnique({
+          where: { id: session.user.id }
+        });
+
+        if (user?.email) {
+          const emailHtml = generateGroupSessionLeaveEmail(
+            user.name || 'User',
+            groupSession.title,
+            groupSession.sessionDate
+          );
+
+          await sendEmail({
+            to: user.email,
+            subject: 'Group Session Left - MannSahay',
+            html: emailHtml
+          });
+        }
+      } catch (emailError) {
+        console.error('Error sending group session leave email:', emailError);
+      }
     }
 
     return NextResponse.json({ success: true }, { status: 200 });

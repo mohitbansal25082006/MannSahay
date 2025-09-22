@@ -11,7 +11,7 @@ import { Calendar, Clock, Users, Star, MessageSquare, Video, Plus, Brain } from 
 import CounselorSchedule from '@/components/counselor/counselor-schedule';
 import ClientList from '@/components/counselor/client-list';
 import CounselorAnalytics from '@/components/counselor/counselor-analytics';
-import AIRecommendations from '@/components/counselor/ai-recommendations';
+import ClientInsights from '@/components/counselor/client-insights';
 
 export default function CounselorDashboard() {
   const { data: session } = useSession();
@@ -31,7 +31,7 @@ export default function CounselorDashboard() {
           <TabsTrigger value="schedule">Schedule</TabsTrigger>
           <TabsTrigger value="clients">Clients</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="ai-insights">AI Insights</TabsTrigger>
+          <TabsTrigger value="insights">Client Insights</TabsTrigger>
         </TabsList>
 
         <TabsContent value="schedule" className="space-y-6">
@@ -46,8 +46,8 @@ export default function CounselorDashboard() {
           <CounselorAnalytics />
         </TabsContent>
 
-        <TabsContent value="ai-insights" className="space-y-6">
-          <AIRecommendations />
+        <TabsContent value="insights" className="space-y-6">
+          <ClientInsights />
         </TabsContent>
       </Tabs>
     </div>
