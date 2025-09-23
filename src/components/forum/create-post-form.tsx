@@ -410,19 +410,27 @@ export default function CreatePostForm({ onPostCreated }: CreatePostFormProps) {
             </div>
             
             <div>
-              <div className="flex justify-between items-center mb-1">
-                <Label htmlFor="content">Content *</Label>
-                <div className="flex space-x-2">
+              {/* Mobile-responsive header section */}
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 space-y-2 sm:space-y-0">
+                <Label htmlFor="content" className="text-sm font-medium">
+                  Content *
+                </Label>
+                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     onClick={fetchSuggestions}
                     disabled={isLoadingSuggestions || !content.trim()}
-                    className="text-xs"
+                    className="text-xs w-full sm:w-auto"
                   >
                     <SpellCheck className="h-3 w-3 mr-1" />
-                    {isLoadingSuggestions ? 'Checking...' : 'Check Writing'}
+                    <span className="hidden sm:inline">
+                      {isLoadingSuggestions ? 'Checking...' : 'Check Writing'}
+                    </span>
+                    <span className="sm:hidden">
+                      {isLoadingSuggestions ? 'Checking...' : 'Check'}
+                    </span>
                   </Button>
                   <Button
                     type="button"
@@ -430,10 +438,15 @@ export default function CreatePostForm({ onPostCreated }: CreatePostFormProps) {
                     size="sm"
                     onClick={fetchToneAnalysis}
                     disabled={isLoadingToneAnalysis || !content.trim()}
-                    className="text-xs"
+                    className="text-xs w-full sm:w-auto"
                   >
                     <AlertTriangle className="h-3 w-3 mr-1" />
-                    {isLoadingToneAnalysis ? 'Analyzing...' : 'Analyze Tone'}
+                    <span className="hidden sm:inline">
+                      {isLoadingToneAnalysis ? 'Analyzing...' : 'Analyze Tone'}
+                    </span>
+                    <span className="sm:hidden">
+                      {isLoadingToneAnalysis ? 'Analyzing...' : 'Tone'}
+                    </span>
                   </Button>
                 </div>
               </div>
@@ -623,10 +636,15 @@ export default function CreatePostForm({ onPostCreated }: CreatePostFormProps) {
             {/* Translation Preview */}
             {language !== 'en' && (translatedTitle || translatedContent) && (
               <div className="p-3 bg-green-50 rounded-md border border-green-200">
-                <div className="flex justify-between items-center mb-2">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 space-y-2 sm:space-y-0">
                   <h4 className="font-medium text-green-800 flex items-center">
                     <Languages className="h-4 w-4 mr-1" />
-                    {languages.find(l => l.code === language)?.name || language} Translation Preview
+                    <span className="hidden sm:inline">
+                      {languages.find(l => l.code === language)?.name || language} Translation Preview
+                    </span>
+                    <span className="sm:hidden">
+                      Translation Preview
+                    </span>
                   </h4>
                   <Button
                     type="button"
@@ -634,17 +652,19 @@ export default function CreatePostForm({ onPostCreated }: CreatePostFormProps) {
                     size="sm"
                     onClick={translateContent}
                     disabled={isTranslating}
-                    className="text-xs"
+                    className="text-xs w-full sm:w-auto"
                   >
                     {isTranslating ? (
                       <>
                         <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                        Translating...
+                        <span className="hidden sm:inline">Translating...</span>
+                        <span className="sm:hidden">Loading...</span>
                       </>
                     ) : (
                       <>
                         <Languages className="h-3 w-3 mr-1" />
-                        Refresh Translation
+                        <span className="hidden sm:inline">Refresh Translation</span>
+                        <span className="sm:hidden">Refresh</span>
                       </>
                     )}
                   </Button>
@@ -687,13 +707,14 @@ export default function CreatePostForm({ onPostCreated }: CreatePostFormProps) {
               </div>
             )}
             
-            <div className="flex items-center justify-between pt-2">
-              <div className="flex items-center text-sm text-gray-500">
+            <div className="flex flex-col sm:flex-row items-center justify-between pt-2 space-y-3 sm:space-y-0">
+              <div className="flex items-center text-sm text-gray-500 order-2 sm:order-1">
                 <AlertTriangle className="h-4 w-4 mr-1" />
-                All posts are moderated for safety
+                <span className="hidden sm:inline">All posts are moderated for safety</span>
+                <span className="sm:hidden">Moderated for safety</span>
               </div>
               
-              <Button type="submit" disabled={isSubmitting || !content.trim()}>
+              <Button type="submit" disabled={isSubmitting || !content.trim()} className="w-full sm:w-auto order-1 sm:order-2">
                 {isSubmitting ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />

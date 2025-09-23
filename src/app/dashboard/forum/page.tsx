@@ -502,7 +502,8 @@ export default function ForumPage() {
                     </SelectContent>
                   </Select>
                   
-                  <div className="flex border rounded-md overflow-hidden">
+                  {/* Grid/List toggle - only visible on large screens (laptop and above) */}
+                  <div className="hidden lg:flex border rounded-md overflow-hidden">
                     <Button
                       variant={viewMode === 'list' ? 'default' : 'ghost'}
                       size="sm"
@@ -542,7 +543,7 @@ export default function ForumPage() {
                 ))}
               </div>
             ) : filteredPosts.length > 0 ? (
-              <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 gap-4' : 'space-y-4'}>
+              <div className={viewMode === 'grid' && window?.innerWidth >= 1024 ? 'hidden lg:grid lg:grid-cols-1 xl:grid-cols-2 gap-4' : 'space-y-4'}>
                 {filteredPosts.map((post) => (
                   <div key={post.id} className="bg-white rounded-xl shadow-md transition-all duration-300 hover:shadow-lg border border-blue-100 fade-in">
                     <PostItem

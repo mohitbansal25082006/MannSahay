@@ -207,14 +207,26 @@ export default function ProgressVisualization() {
 
       <Tabs defaultValue="mood" className="space-y-4">
         <TabsList className="grid w-full grid-cols-3 bg-white p-1 rounded-lg shadow-sm">
-          <TabsTrigger value="mood" className="text-sm font-medium data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 rounded-md transition-all">
-            Mood Trends
+          <TabsTrigger 
+            value="mood" 
+            className="text-xs sm:text-sm font-medium data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 rounded-md transition-all px-2 sm:px-3 py-2 min-h-[44px] flex items-center justify-center text-center leading-tight"
+          >
+            <span className="block sm:hidden">Mood</span>
+            <span className="hidden sm:block">Mood Trends</span>
           </TabsTrigger>
-          <TabsTrigger value="sessions" className="text-sm font-medium data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 rounded-md transition-all">
-            Session History
+          <TabsTrigger 
+            value="sessions" 
+            className="text-xs sm:text-sm font-medium data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 rounded-md transition-all px-2 sm:px-3 py-2 min-h-[44px] flex items-center justify-center text-center leading-tight"
+          >
+            <span className="block sm:hidden">Sessions</span>
+            <span className="hidden sm:block">Session History</span>
           </TabsTrigger>
-          <TabsTrigger value="counselors" className="text-sm font-medium data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 rounded-md transition-all">
-            Counselor Distribution
+          <TabsTrigger 
+            value="counselors" 
+            className="text-xs sm:text-sm font-medium data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 rounded-md transition-all px-2 sm:px-3 py-2 min-h-[44px] flex items-center justify-center text-center leading-tight"
+          >
+            <span className="block sm:hidden">Counselors</span>
+            <span className="hidden sm:block">Counselor Distribution</span>
           </TabsTrigger>
         </TabsList>
         

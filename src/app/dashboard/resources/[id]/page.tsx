@@ -369,9 +369,9 @@ export default function ResourceDetailPage() {
   }
 
   return (
-    <div className={`min-h-screen py-8 ${highContrastMode ? 'bg-black text-white' : 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50'}`}>
+    <div className={`min-h-screen py-4 sm:py-8 ${highContrastMode ? 'bg-black text-white' : 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <Link href="/dashboard/resources">
             <Button variant="ghost" className="mb-4 text-blue-600 hover:text-blue-800">
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -380,11 +380,11 @@ export default function ResourceDetailPage() {
           </Link>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           <div className="lg:col-span-2 space-y-6">
             <Card className={`${highContrastMode ? 'bg-gray-900 border-gray-700' : 'bg-white shadow-md hover:shadow-lg transition-all duration-300'}`}>
               <CardHeader className="pb-4">
-                <div className="flex flex-wrap justify-between items-start gap-4">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
                   <div className="space-y-2">
                     <div className="flex flex-wrap gap-2">
                       <Badge variant="secondary" className="bg-blue-100 text-blue-800">
@@ -399,10 +399,10 @@ export default function ResourceDetailPage() {
                         </Badge>
                       )}
                     </div>
-                    <CardTitle className={`text-2xl ${highContrastMode ? 'text-white' : 'text-gray-900'}`}>
+                    <CardTitle className={`text-xl sm:text-2xl ${highContrastMode ? 'text-white' : 'text-gray-900'}`}>
                       {resource.title}
                     </CardTitle>
-                    <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                    <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4 text-sm text-gray-600">
                       {resource.author && (
                         <div className="flex items-center gap-1">
                           <User className="h-4 w-4" />
@@ -420,7 +420,7 @@ export default function ResourceDetailPage() {
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 sm:mt-0">
                     <ResourceRating
                       resourceId={resource.id}
                       currentRating={resource.userRating || null}
@@ -446,34 +446,52 @@ export default function ResourceDetailPage() {
               
               <CardContent>
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-4">
-                  <TabsList className="grid w-full grid-cols-5 bg-gray-100 p-1 rounded-lg">
-                    <TabsTrigger value="content" className="data-[state=active]:bg-white data-[state=active]:shadow rounded-md transition-all">
-                      Content
-                    </TabsTrigger>
-                    <TabsTrigger value="details" className="data-[state=active]:bg-white data-[state=active]:shadow rounded-md transition-all">
-                      Details
-                    </TabsTrigger>
-                    <TabsTrigger value="summary" className="data-[state=active]:bg-white data-[state=active]:shadow rounded-md transition-all">
-                      AI Summary
-                    </TabsTrigger>
-                    <TabsTrigger value="analytics" className="data-[state=active]:bg-white data-[state=active]:shadow rounded-md transition-all">
-                      Analytics
-                    </TabsTrigger>
-                    <TabsTrigger value="comments" className="data-[state=active]:bg-white data-[state=active]:shadow rounded-md transition-all">
-                      Comments
-                    </TabsTrigger>
-                  </TabsList>
+                  {/* Mobile-first responsive TabsList */}
+                  <div className="w-full overflow-x-auto">
+                    <TabsList className="inline-flex h-10 items-center justify-center rounded-md bg-gray-100 p-1 text-muted-foreground min-w-full sm:min-w-0 sm:grid sm:grid-cols-5">
+                      <TabsTrigger 
+                        value="content" 
+                        className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white data-[state=active]:text-foreground data-[state=active]:shadow-sm min-w-[80px] sm:min-w-0"
+                      >
+                        Content
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="details" 
+                        className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white data-[state=active]:text-foreground data-[state=active]:shadow-sm min-w-[80px] sm:min-w-0"
+                      >
+                        Details
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="summary" 
+                        className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white data-[state=active]:text-foreground data-[state=active]:shadow-sm min-w-[95px] sm:min-w-0"
+                      >
+                        AI Summary
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="analytics" 
+                        className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white data-[state=active]:text-foreground data-[state=active]:shadow-sm min-w-[85px] sm:min-w-0"
+                      >
+                        Analytics
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="comments" 
+                        className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white data-[state=active]:text-foreground data-[state=active]:shadow-sm min-w-[90px] sm:min-w-0"
+                      >
+                        Comments
+                      </TabsTrigger>
+                    </TabsList>
+                  </div>
                   
                   <TabsContent value="content" className="mt-4">
                     <div className="space-y-4">
-                      <div className="flex justify-between items-center">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                         <div className="flex items-center gap-2">
                           <Badge variant="outline" className="text-xs bg-blue-100 text-blue-800 border-blue-200">
                             {getLanguageName(resource.language)}
                           </Badge>
                         </div>
                         
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -563,7 +581,7 @@ export default function ResourceDetailPage() {
                   <TabsContent value="details" className="mt-4 space-y-6">
                     <div>
                       <h3 className="font-medium mb-2">Resource Information</h3>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <div className="flex items-center gap-2 text-sm">
                             <Eye className="h-4 w-4 text-gray-500" />
@@ -635,7 +653,7 @@ export default function ResourceDetailPage() {
                   
                   <TabsContent value="summary" className="mt-4">
                     <div className="space-y-4">
-                      <div className="flex justify-between items-center">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                         <h3 className="text-lg font-semibold flex items-center gap-2">
                           <div className="bg-yellow-100 p-2 rounded-lg">
                             <Sparkles className="h-5 w-5 text-yellow-600" />

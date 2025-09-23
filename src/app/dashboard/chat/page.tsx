@@ -30,7 +30,9 @@ import {
   Archive,
   ArchiveRestore,
   Menu,
-  X
+  X,
+  ChevronDown,
+  Languages
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import ReactMarkdown from 'react-markdown';
@@ -50,6 +52,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useRouter } from 'next/navigation';
 
 const suggestedMessages = [
@@ -87,6 +95,11 @@ const emergencyContacts = [
     number: "9999666555",
     description: "Mental health support in India"
   }
+];
+
+const languageOptions = [
+  { value: 'en', label: 'English', icon: '🇺🇸' },
+  { value: 'hi', label: 'हिन्दी', icon: '🇮🇳' }
 ];
 
 export default function ChatPage() {
@@ -385,6 +398,8 @@ export default function ChatPage() {
     });
   };
 
+  const currentLanguage = languageOptions.find(opt => opt.value === language) || languageOptions[0];
+
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <div className="flex-1 flex overflow-hidden">
@@ -397,14 +412,14 @@ export default function ChatPage() {
         </div>
         
         {/* Chat Interface */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-w-0">
           <Card className="flex-1 flex flex-col m-0 border-0 rounded-none bg-transparent shadow-none">
             <CardHeader className="pb-3 border-b border-gray-200/50 dark:border-gray-700/50 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 min-w-0">
                   <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
                     <SheetTrigger asChild>
-                      <Button variant="outline" size="sm" className="lg:hidden bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+                      <Button variant="outline" size="sm" className="lg:hidden bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex-shrink-0">
                         <Menu className="h-4 w-4" />
                       </Button>
                     </SheetTrigger>
@@ -417,11 +432,11 @@ export default function ChatPage() {
                       </div>
                     </SheetContent>
                   </Sheet>
-                  <div className="flex items-center min-w-0 space-x-2">
-                    <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-500 shadow-md">
+                  <div className="flex items-center min-w-0 space-x-2 flex-1">
+                    <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-500 shadow-md flex-shrink-0">
                       <Bot className="h-5 w-5 text-white" />
                     </div>
-                    <CardTitle className="flex items-center truncate text-sm sm:text-base text-gray-900 dark:text-white">
+                    <CardTitle className="flex items-center min-w-0 text-sm sm:text-base text-gray-900 dark:text-white">
                       <span className="truncate">
                         {currentSession?.title || 'New Conversation'}
                       </span>
@@ -541,6 +556,30 @@ export default function ChatPage() {
                     </SheetContent>
                   </Sheet>
 
+                  {/* Language Dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+                        <Languages className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                        <span className="hidden sm:inline">{currentLanguage.label}</span>
+                        <span className="sm:hidden">{currentLanguage.icon}</span>
+                        <ChevronDown className="h-3 w-3 ml-1" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50">
+                      {languageOptions.map((option) => (
+                        <DropdownMenuItem
+                          key={option.value}
+                          onClick={() => setLanguage(option.value as 'en' | 'hi')}
+                          className="flex items-center space-x-2"
+                        >
+                          <span>{option.icon}</span>
+                          <span>{option.label}</span>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
                   <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
                     <DialogTrigger asChild>
                       <Button variant="outline" size="sm" disabled={!currentSessionId} className="hidden sm:flex bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
@@ -579,26 +618,6 @@ export default function ChatPage() {
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
-
-                  <div className="flex items-center space-x-1 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg p-1">
-                    <span className="text-xs text-gray-500 dark:text-gray-400 hidden sm:inline">Language:</span>
-                    <Button
-                      variant={language === 'en' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setLanguage('en')}
-                      className="h-7 px-2 text-xs"
-                    >
-                      En
-                    </Button>
-                    <Button
-                      variant={language === 'hi' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setLanguage('hi')}
-                      className="h-7 px-2 text-xs"
-                    >
-                      हि
-                    </Button>
-                  </div>
 
                   {/* Conditional Archive/Unarchive Button */}
                   {currentSession && (
@@ -903,6 +922,7 @@ export default function ChatPage() {
           </Card>
         </div>
         
+        {/* Right Sidebar - Desktop only */}
         <div className="hidden lg:block w-80 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-l border-gray-200/50 dark:border-gray-700/50">
           <div className="h-full p-4 space-y-4 overflow-y-auto">
             <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 shadow-lg overflow-hidden">

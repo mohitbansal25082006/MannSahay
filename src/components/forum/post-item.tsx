@@ -390,8 +390,8 @@ export default function PostItem({
     >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
-          <div className="flex items-center space-x-3">
-            <Avatar className="h-10 w-10">
+          <div className="flex items-center space-x-3 min-w-0 flex-1">
+            <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
               {post.isAnonymous ? (
                 <AvatarFallback className="bg-gray-200">A</AvatarFallback>
               ) : (
@@ -401,35 +401,37 @@ export default function PostItem({
                 </>
               )}
             </Avatar>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="font-medium text-sm">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2">
+                <span className="font-medium text-sm truncate">
                   {post.isAnonymous ? 'Anonymous' : post.author.name || 'User'}
                 </span>
-                {post.flagged && (
-                  <Badge variant="destructive" className="text-xs">
-                    Flagged
-                  </Badge>
-                )}
-                <Badge className={`text-xs ${getRiskColor(post.riskLevel)}`}>{post.riskLevel}</Badge>
-                {post.moderationStatus && post.moderationStatus !== 'APPROVED' && (
-                  <Badge className={`text-xs ${getModerationStatusColor(post.moderationStatus)}`}>
-                    {post.moderationStatus === 'REJECTED' ? 'Removed' : post.moderationStatus}
-                  </Badge>
-                )}
+                <div className="flex flex-wrap items-center gap-1">
+                  {post.flagged && (
+                    <Badge variant="destructive" className="text-xs">
+                      Flagged
+                    </Badge>
+                  )}
+                  <Badge className={`text-xs ${getRiskColor(post.riskLevel)}`}>{post.riskLevel}</Badge>
+                  {post.moderationStatus && post.moderationStatus !== 'APPROVED' && (
+                    <Badge className={`text-xs ${getModerationStatusColor(post.moderationStatus)}`}>
+                      {post.moderationStatus === 'REJECTED' ? 'Removed' : post.moderationStatus}
+                    </Badge>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center space-x-2 text-xs text-gray-500">
-                <span>{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}</span>
-                <span>•</span>
+              <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2 text-xs text-gray-500">
+                <span className="truncate">{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}</span>
+                <span className="hidden sm:inline">•</span>
                 <span className="flex items-center">
-                  <Eye className="h-3 w-3 mr-1" />
-                  {post.views}
+                  <Eye className="h-3 w-3 mr-1 flex-shrink-0" />
+                  <span>{post.views}</span>
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="relative">
+          <div className="relative flex-shrink-0">
             <Button
               variant="ghost"
               size="sm"
@@ -437,6 +439,7 @@ export default function PostItem({
                 e.stopPropagation();
                 setShowActions(!showActions);
               }}
+              className="h-8 w-8 p-0"
             >
               <MoreHorizontal className="h-4 w-4" />
             </Button>
@@ -486,7 +489,7 @@ export default function PostItem({
           </div>
         </div>
 
-        <div className="flex items-center space-x-2 mt-2">
+        <div className="flex flex-wrap items-center gap-2 mt-2">
           <Badge className={`text-xs ${getCategoryColor(post.category)}`}>{post.category}</Badge>
           {post.summary && (
             <Button
@@ -496,7 +499,7 @@ export default function PostItem({
               className="text-xs h-6 px-2"
             >
               <FileText className="h-3 w-3 mr-1" />
-              Summary
+              <span className="hidden sm:inline">Summary</span>
             </Button>
           )}
           {(post.writingSuggestions || post.toneAnalysis) && (
@@ -509,7 +512,8 @@ export default function PostItem({
                   className="text-xs h-6 px-2"
                 >
                   <Edit className="h-3 w-3 mr-1" />
-                  Suggestions
+                  <span className="hidden sm:inline">Suggestions</span>
+                  <span className="sm:hidden">Suggest</span>
                 </Button>
               )}
               {post.toneAnalysis && (
@@ -520,7 +524,7 @@ export default function PostItem({
                   className="text-xs h-6 px-2"
                 >
                   <Shield className="h-3 w-3 mr-1" />
-                  Tone
+                  <span className="hidden sm:inline">Tone</span>
                 </Button>
               )}
             </>
@@ -532,10 +536,10 @@ export default function PostItem({
         {/* Show flagged status to the author even if the post is hidden */}
         {post.flagged && isAuthor && (
           <div className="mb-3 p-3 bg-yellow-50 rounded-md border border-yellow-200 flex items-start">
-            <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2 mt-0.5" />
-            <div>
+            <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
+            <div className="min-w-0">
               <span className="text-sm font-medium text-yellow-800">Your post has been flagged</span>
-              <p className="text-xs text-yellow-700 mt-1">
+              <p className="text-xs text-yellow-700 mt-1 break-words">
                 {post.moderationNote || 'Our moderators are reviewing this content for compliance with community guidelines.'}
               </p>
             </div>
@@ -543,9 +547,9 @@ export default function PostItem({
         )}
 
         {post.isHidden && (
-          <div className="mb-3 p-2 bg-yellow-50 rounded-md border border-yellow-200 flex items-center">
-            <AlertTriangle className="h-4 w-4 text-yellow-600 mr-2" />
-            <span className="text-sm text-yellow-700">
+          <div className="mb-3 p-2 bg-yellow-50 rounded-md border border-yellow-200 flex items-start">
+            <AlertTriangle className="h-4 w-4 text-yellow-600 mr-2 flex-shrink-0 mt-0.5" />
+            <span className="text-sm text-yellow-700 break-words">
               This content has been {post.moderationStatus === 'REJECTED' ? 'removed' : 'hidden'} by our moderation system.
               {post.moderationNote && ` Reason: ${post.moderationNote}`}
             </span>
@@ -555,11 +559,11 @@ export default function PostItem({
         <Link href={`/dashboard/forum/post/${post.id}`}>
           <div className="cursor-pointer">
             {post.title && (
-              <h3 className="font-semibold text-lg mb-2 hover:text-blue-600 transition-colors">
+              <h3 className="font-semibold text-base sm:text-lg mb-2 hover:text-blue-600 transition-colors break-words">
                 {isTranslated && translatedTitle ? translatedTitle : post.title}
               </h3>
             )}
-            <p className="text-gray-700 mb-4 line-clamp-3">
+            <p className="text-gray-700 mb-4 line-clamp-3 text-sm sm:text-base break-words">
               {isTranslated && translatedContent ? translatedContent : post.content}
             </p>
           </div>
@@ -568,22 +572,22 @@ export default function PostItem({
         {showSummary && post.summary && (
           <div className="mb-4 p-3 bg-blue-50 rounded-md border border-blue-200">
             <div className="flex items-center mb-2">
-              <Bot className="h-4 w-4 text-blue-600 mr-2" />
+              <Bot className="h-4 w-4 text-blue-600 mr-2 flex-shrink-0" />
               <span className="text-sm font-medium text-blue-800">AI Summary</span>
             </div>
-            <p className="text-sm text-blue-700">{post.summary}</p>
+            <p className="text-sm text-blue-700 break-words">{post.summary}</p>
           </div>
         )}
 
         {showSuggestions && post.writingSuggestions && (
           <div className="mb-4 p-3 bg-purple-50 rounded-md border border-purple-200">
             <div className="flex items-center mb-2">
-              <Edit className="h-4 w-4 text-purple-600 mr-2" />
+              <Edit className="h-4 w-4 text-purple-600 mr-2 flex-shrink-0" />
               <span className="text-sm font-medium text-purple-800">Writing Suggestions</span>
             </div>
-            <ul className="text-sm text-purple-700">
+            <ul className="text-sm text-purple-700 space-y-1">
               {post.writingSuggestions.map((suggestion, index) => (
-                <li key={index} className="mb-1">
+                <li key={index} className="break-words">
                   - {suggestion.suggestion}
                   {suggestion.reason && <span className="text-xs"> ({suggestion.reason})</span>}
                 </li>
@@ -595,64 +599,69 @@ export default function PostItem({
         {showToneAnalysis && post.toneAnalysis && (
           <div className="mb-4 p-3 bg-green-50 rounded-md border border-green-200">
             <div className="flex items-center mb-2">
-              <Shield className="h-4 w-4 text-green-600 mr-2" />
+              <Shield className="h-4 w-4 text-green-600 mr-2 flex-shrink-0" />
               <span className="text-sm font-medium text-green-800">Tone Analysis</span>
             </div>
-            <p className="text-sm text-green-700">
+            <p className="text-sm text-green-700 break-words">
               Tone: {post.toneAnalysis.tone} (Confidence: {(post.toneAnalysis.confidence * 100).toFixed(2)}%)
             </p>
           </div>
         )}
 
-        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-          <div className="flex items-center space-x-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pt-3 border-t border-gray-100 space-y-3 sm:space-y-0">
+          <div className="flex items-center space-x-2 sm:space-x-4 w-full sm:w-auto overflow-x-auto">
             <Button
               variant="ghost"
               size="sm"
               onClick={onLike}
-              className={`flex items-center space-x-1 transition-colors ${
+              className={`flex items-center space-x-1 transition-colors flex-shrink-0 ${
                 isLiked ? 'text-red-500 hover:text-red-600' : 'text-gray-500 hover:text-red-500'
               }`}
             >
               <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
-              <span>{post._count.likes}</span>
+              <span className="text-xs sm:text-sm">{post._count.likes}</span>
             </Button>
 
             <Link href={`/dashboard/forum/post/${post.id}`}>
               <Button
                 variant="ghost"
                 size="sm"
-                className="flex items-center space-x-1 text-gray-500 hover:text-blue-500 transition-colors"
+                className="flex items-center space-x-1 text-gray-500 hover:text-blue-500 transition-colors flex-shrink-0"
               >
                 <MessageCircle className="h-4 w-4" />
-                <span>{post._count.replies}</span>
+                <span className="text-xs sm:text-sm">{post._count.replies}</span>
               </Button>
             </Link>
 
-            <BookmarkButton
-              postId={post.id}
-              initialBookmarked={isBookmarked}
-              onBookmarkChange={(bookmarked) => {
-                setBookmarkedPosts((prev) => ({ ...prev, [post.id]: bookmarked }));
-              }}
-              showCount={true}
-              count={post._count.bookmarks}
-            />
+            <div className="flex-shrink-0">
+              <BookmarkButton
+                postId={post.id}
+                initialBookmarked={isBookmarked}
+                onBookmarkChange={(bookmarked) => {
+                  setBookmarkedPosts((prev) => ({ ...prev, [post.id]: bookmarked }));
+                }}
+                showCount={true}
+                count={post._count.bookmarks}
+              />
+            </div>
 
-            <TranslationToggle
-              onTranslate={handleTranslate}
-              isTranslated={isTranslated}
-              isLoading={isTranslating}
-            />
+            <div className="flex-shrink-0">
+              <TranslationToggle
+                onTranslate={handleTranslate}
+                isTranslated={isTranslated}
+                isLoading={isTranslating}
+              />
+            </div>
           </div>
 
           <Button
             variant="ghost"
             size="sm"
             onClick={handleShare}
-            className="text-gray-500 hover:text-blue-500 transition-colors"
+            className="text-gray-500 hover:text-blue-500 transition-colors flex-shrink-0 w-full sm:w-auto justify-center sm:justify-start"
           >
             <Share2 className="h-4 w-4" />
+            <span className="ml-1 sm:hidden">Share</span>
           </Button>
         </div>
       </CardContent>
