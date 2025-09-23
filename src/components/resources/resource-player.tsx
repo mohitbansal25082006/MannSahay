@@ -1,4 +1,3 @@
-// E:\mannsahay\src\components\resources\resource-player.tsx
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -163,7 +162,7 @@ export default function ResourcePlayer({ resource }: ResourcePlayerProps) {
           <video
             ref={videoRef}
             src={resource.fileUrl || ''}
-            className="w-full max-h-[70vh] rounded-lg"
+            className="w-full max-h-[70vh] rounded-lg shadow-lg"
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
             onEnded={() => setIsPlaying(false)}
@@ -177,7 +176,7 @@ export default function ResourcePlayer({ resource }: ResourcePlayerProps) {
                 variant="ghost"
                 size="sm"
                 onClick={togglePlay}
-                className="h-10 w-10 rounded-full p-0 text-white hover:bg-white/20"
+                className="h-10 w-10 rounded-full p-0 text-white hover:bg-white/20 transition-colors"
               >
                 {isPlaying ? (
                   <Pause className="h-5 w-5" />
@@ -205,7 +204,7 @@ export default function ResourcePlayer({ resource }: ResourcePlayerProps) {
                   variant="ghost"
                   size="sm"
                   onClick={restart}
-                  className="h-8 w-8 p-0 text-white hover:bg-white/20"
+                  className="h-8 w-8 p-0 text-white hover:bg-white/20 transition-colors"
                 >
                   <RotateCcw className="h-4 w-4" />
                 </Button>
@@ -214,7 +213,7 @@ export default function ResourcePlayer({ resource }: ResourcePlayerProps) {
                   variant="ghost"
                   size="sm"
                   onClick={() => skip(-10)}
-                  className="h-8 w-8 p-0 text-white hover:bg-white/20"
+                  className="h-8 w-8 p-0 text-white hover:bg-white/20 transition-colors"
                 >
                   <SkipBack className="h-4 w-4" />
                 </Button>
@@ -223,7 +222,7 @@ export default function ResourcePlayer({ resource }: ResourcePlayerProps) {
                   variant="ghost"
                   size="sm"
                   onClick={() => skip(10)}
-                  className="h-8 w-8 p-0 text-white hover:bg-white/20"
+                  className="h-8 w-8 p-0 text-white hover:bg-white/20 transition-colors"
                 >
                   <SkipForward className="h-4 w-4" />
                 </Button>
@@ -232,7 +231,7 @@ export default function ResourcePlayer({ resource }: ResourcePlayerProps) {
                   variant="ghost"
                   size="sm"
                   onClick={toggleMute}
-                  className="h-8 w-8 p-0 text-white hover:bg-white/20"
+                  className="h-8 w-8 p-0 text-white hover:bg-white/20 transition-colors"
                 >
                   {isMuted ? (
                     <VolumeX className="h-4 w-4" />
@@ -254,7 +253,7 @@ export default function ResourcePlayer({ resource }: ResourcePlayerProps) {
                   variant="ghost"
                   size="sm"
                   onClick={toggleFullscreen}
-                  className="h-8 w-8 p-0 text-white hover:bg-white/20"
+                  className="h-8 w-8 p-0 text-white hover:bg-white/20 transition-colors"
                 >
                   <Maximize className="h-4 w-4" />
                 </Button>
@@ -263,7 +262,7 @@ export default function ResourcePlayer({ resource }: ResourcePlayerProps) {
                   variant="ghost"
                   size="sm"
                   onClick={handleDownload}
-                  className="h-8 w-8 p-0 text-white hover:bg-white/20"
+                  className="h-8 w-8 p-0 text-white hover:bg-white/20 transition-colors"
                 >
                   <Download className="h-4 w-4" />
                 </Button>
@@ -272,7 +271,7 @@ export default function ResourcePlayer({ resource }: ResourcePlayerProps) {
           </div>
         </div>
       ) : (
-        <div className="bg-gray-100 rounded-lg p-8">
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-8 shadow-md">
           <audio
             ref={audioRef}
             src={resource.fileUrl || ''}
@@ -282,7 +281,7 @@ export default function ResourcePlayer({ resource }: ResourcePlayerProps) {
             preload="metadata"
           />
           <div className="flex flex-col items-center justify-center space-y-6">
-            <div className="w-32 h-32 bg-blue-100 rounded-full flex items-center justify-center">
+            <div className="w-32 h-32 bg-gradient-to-br from-blue-100 to-indigo-200 rounded-full flex items-center justify-center shadow-lg">
               <div className="text-blue-600">
                 {resource.type === ResourceType.MUSIC ? (
                   <svg
@@ -303,21 +302,21 @@ export default function ResourcePlayer({ resource }: ResourcePlayerProps) {
                 )}
               </div>
             </div>
-            <h3 className="text-xl font-semibold text-center">
+            <h3 className="text-xl font-semibold text-center text-gray-900">
               {resource.title}
             </h3>
             <p className="text-gray-600 text-center max-w-md">
               {resource.description}
             </p>
             
-            <Card className="w-full max-w-md">
+            <Card className="w-full max-w-md bg-white shadow-md">
               <CardContent className="p-4">
                 <div className="flex items-center space-x-4">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={togglePlay}
-                    className="h-10 w-10 rounded-full p-0"
+                    className="h-10 w-10 rounded-full p-0 text-blue-600 hover:bg-blue-100 transition-colors"
                   >
                     {isPlaying ? (
                       <Pause className="h-5 w-5" />
@@ -345,7 +344,7 @@ export default function ResourcePlayer({ resource }: ResourcePlayerProps) {
                       variant="ghost"
                       size="sm"
                       onClick={restart}
-                      className="h-8 w-8 p-0"
+                      className="h-8 w-8 p-0 text-gray-600 hover:bg-gray-100 transition-colors"
                     >
                       <RotateCcw className="h-4 w-4" />
                     </Button>
@@ -354,7 +353,7 @@ export default function ResourcePlayer({ resource }: ResourcePlayerProps) {
                       variant="ghost"
                       size="sm"
                       onClick={() => skip(-10)}
-                      className="h-8 w-8 p-0"
+                      className="h-8 w-8 p-0 text-gray-600 hover:bg-gray-100 transition-colors"
                     >
                       <SkipBack className="h-4 w-4" />
                     </Button>
@@ -363,7 +362,7 @@ export default function ResourcePlayer({ resource }: ResourcePlayerProps) {
                       variant="ghost"
                       size="sm"
                       onClick={() => skip(10)}
-                      className="h-8 w-8 p-0"
+                      className="h-8 w-8 p-0 text-gray-600 hover:bg-gray-100 transition-colors"
                     >
                       <SkipForward className="h-4 w-4" />
                     </Button>
@@ -372,7 +371,7 @@ export default function ResourcePlayer({ resource }: ResourcePlayerProps) {
                       variant="ghost"
                       size="sm"
                       onClick={toggleMute}
-                      className="h-8 w-8 p-0"
+                      className="h-8 w-8 p-0 text-gray-600 hover:bg-gray-100 transition-colors"
                     >
                       {isMuted ? (
                         <VolumeX className="h-4 w-4" />
@@ -394,7 +393,7 @@ export default function ResourcePlayer({ resource }: ResourcePlayerProps) {
                       variant="ghost"
                       size="sm"
                       onClick={handleDownload}
-                      className="h-8 w-8 p-0"
+                      className="h-8 w-8 p-0 text-gray-600 hover:bg-gray-100 transition-colors"
                     >
                       <Download className="h-4 w-4" />
                     </Button>
@@ -404,7 +403,7 @@ export default function ResourcePlayer({ resource }: ResourcePlayerProps) {
             </Card>
             
             {resource.fileUrl && (
-              <Button variant="outline" asChild>
+              <Button variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50" asChild>
                 <a href={resource.fileUrl} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="mr-2 h-4 w-4" />
                   Open in New Tab

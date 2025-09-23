@@ -159,28 +159,28 @@ export default function BookmarksPage() {
   const getRiskColor = (riskLevel: string) => {
     switch (riskLevel) {
       case 'HIGH':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 text-red-800 border-red-200';
       case 'MEDIUM':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'LOW':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 text-blue-800 border-blue-200';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
   const getCategoryColor = (category: string) => {
     switch (category) {
       case 'academic':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-purple-100 text-purple-800 border-purple-200';
       case 'relationships':
-        return 'bg-pink-100 text-pink-800';
+        return 'bg-pink-100 text-pink-800 border-pink-200';
       case 'mental-health':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 border-green-200';
       case 'lifestyle':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 text-blue-800 border-blue-200';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
@@ -217,320 +217,333 @@ export default function BookmarksPage() {
   ];
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 forum-gradient min-h-screen">
-      {loading ? (
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
-          <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="forum-card">
-                <CardHeader>
-                  <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="h-4 bg-gray-200 rounded"></div>
-                    <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                    <div className="h-4 bg-gray-200 rounded w-4/6"></div>
-                  </div>
-                </CardContent>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <>
-          <div className="mb-8 fade-in">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center space-x-4">
-                  <Link href="/dashboard/forum">
-                    <Button variant="ghost" size="sm">
-                      <ArrowLeft className="h-4 w-4 mr-2" />
-                      Back to Forum
-                    </Button>
-                  </Link>
-                  <div>
-                    <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-                      <Bookmark className="h-8 w-8 mr-3 text-blue-600" />
-                      Your Bookmarks
-                    </h1>
-                    <p className="text-gray-600 mt-1">
-                      Posts you&apos;ve saved for later reference
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {selectedBookmarks.length > 0 && (
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleBulkRemove}
-                    className="text-red-600 border-red-300 hover:bg-red-50"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Remove Selected ({selectedBookmarks.length})
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedBookmarks([]);
-                      setShowBulkActions(false);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {bookmarks.length === 0 ? (
-            <div className="forum-card card-hover text-center py-16">
-              <CardContent>
-                <Bookmark className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">No bookmarks yet</h3>
-                <p className="text-gray-500 mb-6 max-w-md mx-auto">
-                  Save posts that you find interesting or helpful by clicking the bookmark icon on any post.
-                </p>
-                <Link href="/dashboard/forum">
-                  <Button>Browse Forum</Button>
-                </Link>
-              </CardContent>
-            </div>
-          ) : (
-            <>
-              {/* Search and Filters */}
-              <div className="forum-card card-hover mb-6">
-                <CardContent className="pt-6">
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <div className="relative flex-1">
-                      <Search
-                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4"
-                      />
-                      <Input
-                        placeholder="Search bookmarks..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-
-                    <Select value={category} onValueChange={setCategory}>
-                      <SelectTrigger className="w-full sm:w-[180px]">
-                        <SelectValue placeholder="Category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((cat) => (
-                          <SelectItem key={cat.value} value={cat.value}>
-                            {cat.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    <Select value={sortBy} onValueChange={handleSortChange}>
-                      <SelectTrigger className="w-full sm:w-[160px]">
-                        <SelectValue placeholder="Sort by" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="newest">Newest First</SelectItem>
-                        <SelectItem value="oldest">Oldest First</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <div className="flex border rounded-md">
-                      <Button
-                        variant={viewMode === 'list' ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => setViewMode('list')}
-                        className="rounded-r-none"
-                      >
-                        <List className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => setViewMode('grid')}
-                        className="rounded-l-none"
-                      >
-                        <Grid className="h-4 w-4" />
-                      </Button>
-                    </div>
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowBulkActions(!showBulkActions)}
-                      className="flex items-center"
-                    >
-                      <Filter className="h-4 w-4 mr-2" />
-                      Select
-                    </Button>
-                  </div>
-
-                  {showBulkActions && (
-                    <div className="mt-4 flex items-center space-x-4 p-3 bg-gray-50 rounded-md">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleSelectAll}
-                        className="text-sm"
-                      >
-                        {selectedBookmarks.length === filteredBookmarks.length
-                          ? 'Deselect All'
-                          : 'Select All'}
-                      </Button>
-                      <span className="text-sm text-gray-600">
-                        {selectedBookmarks.length} of {filteredBookmarks.length} selected
-                      </span>
-                    </div>
-                  )}
-                </CardContent>
-              </div>
-
-              {/* Bookmarks Grid/List */}
-              {filteredBookmarks.length > 0 ? (
-                <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 gap-4' : 'space-y-4'}>
-                  {filteredBookmarks.map((post) => (
-                    <div key={post.id} className="forum-card card-hover fade-in relative">
-                      {showBulkActions && (
-                        <div className="absolute top-4 left-4 z-10">
-                          <input
-                            type="checkbox"
-                            checked={selectedBookmarks.includes(post.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedBookmarks((prev) => [...prev, post.id]);
-                              } else {
-                                setSelectedBookmarks((prev) => prev.filter((id) => id !== post.id));
-                              }
-                            }}
-                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          />
-                        </div>
-                      )}
-
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className="bg-blue-100 p-2 rounded-full">
-                              <Bookmark className="h-4 w-4 text-blue-600" />
-                            </div>
-                            <div>
-                              <div className="flex items-center space-x-2">
-                                <span className="font-medium text-sm">
-                                  {post.isAnonymous ? 'Anonymous' : post.author.name || 'User'}
-                                </span>
-                                {post.flagged && (
-                                  <Badge variant="destructive" className="text-xs">
-                                    Flagged
-                                  </Badge>
-                                )}
-                                <Badge className={`text-xs ${getRiskColor(post.riskLevel)}`}>
-                                  {post.riskLevel}
-                                </Badge>
-                              </div>
-                              <div className="flex items-center space-x-2 text-xs text-gray-500">
-                                <span>
-                                  Bookmarked {formatDistanceToNow(new Date(post.bookmark.createdAt), { addSuffix: true })}
-                                </span>
-                                <span>•</span>
-                                <span className="flex items-center">
-                                  <Eye className="h-3 w-3 mr-1" />
-                                  {post.views}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center space-x-2">
-                            <Badge className={`text-xs ${getCategoryColor(post.category)}`}>{post.category}</Badge>
-                          </div>
-                        </div>
-
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveBookmark(post.id)}
-                          className="text-gray-500 hover:text-red-500"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </CardHeader>
-
-                      <CardContent className="pt-0">
-                        <Link href={`/dashboard/forum/post/${post.id}`}>
-                          <div className="cursor-pointer">
-                            {post.title && (
-                              <h3 className="font-semibold text-lg mb-2 hover:text-blue-600 transition-colors">
-                                {post.title}
-                              </h3>
-                            )}
-                            <p className="text-gray-700 mb-4 line-clamp-3">{post.content}</p>
-                          </div>
-                        </Link>
-
-                        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                          <div className="flex items-center space-x-4">
-                            <div className="flex items-center space-x-1 text-gray-500">
-                              <Heart className="h-4 w-4" />
-                              <span>{post._count.likes}</span>
-                            </div>
-
-                            <Link href={`/dashboard/forum/post/${post.id}`}>
-                              <div className="flex items-center space-x-1 text-gray-500 hover:text-blue-500">
-                                <MessageCircle className="h-4 w-4" />
-                                <span>{post._count.replies}</span>
-                              </div>
-                            </Link>
-
-                            <div className="flex items-center space-x-1 text-blue-500">
-                              <Bookmark className="h-4 w-4 fill-current" />
-                              <span>{post._count.bookmarks}</span>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center text-xs text-gray-500">
-                            <Calendar className="h-3 w-3 mr-1" />
-                            {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="forum-card card-hover">
-                  <CardContent className="pt-6 text-center">
-                    <div className="py-12">
-                      <Search className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">No bookmarks found</h3>
-                      <p className="text-gray-500 mb-4">
-                        {searchTerm || category !== 'all' || sortBy !== 'newest'
-                          ? 'Try adjusting your search or filters'
-                          : 'Your bookmarks will appear here'}
-                      </p>
-                      <Button
-                        onClick={() => {
-                          setSearchTerm('');
-                          setCategory('all');
-                          setSortBy('newest');
-                        }}
-                      >
-                        Clear Filters
-                      </Button>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+        {loading ? (
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="bg-white rounded-xl shadow-sm">
+                  <CardHeader>
+                    <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="h-4 bg-gray-200 rounded"></div>
+                      <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                      <div className="h-4 bg-gray-200 rounded w-4/6"></div>
                     </div>
                   </CardContent>
                 </div>
-              )}
-            </>
-          )}
-        </>
-      )}
+              ))}
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="mb-8 md:mb-12">
+              <div className="bg-white rounded-2xl p-6 md:p-8 shadow-lg">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div className="flex items-center space-x-4">
+                    <Link href="/dashboard/forum">
+                      <Button variant="ghost" size="sm" className="text-gray-600 hover:text-blue-600">
+                        <ArrowLeft className="h-4 w-4 mr-2" />
+                        Back to Forum
+                      </Button>
+                    </Link>
+                    <div>
+                      <h1 className="text-3xl md:text-4xl font-bold text-gray-900 flex items-center">
+                        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-2 rounded-lg mr-3">
+                          <Bookmark className="h-6 w-6 text-white" />
+                        </div>
+                        Your <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-700">Bookmarks</span>
+                      </h1>
+                      <p className="text-gray-600 mt-1 max-w-2xl">
+                        Posts you&apos;ve saved for later reference
+                      </p>
+                    </div>
+                  </div>
+
+                  {selectedBookmarks.length > 0 && (
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleBulkRemove}
+                        className="text-red-600 border-red-300 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Remove Selected ({selectedBookmarks.length})
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedBookmarks([]);
+                          setShowBulkActions(false);
+                        }}
+                        className="text-gray-600 hover:text-gray-900"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                <div className="mt-4 h-1 w-24 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full"></div>
+              </div>
+            </div>
+
+            {bookmarks.length === 0 ? (
+              <div className="bg-white rounded-2xl shadow-md p-8 md:p-12 text-center border border-gray-100">
+                <CardContent className="pt-0">
+                  <div className="bg-gradient-to-r from-blue-100 to-indigo-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Bookmark className="h-10 w-10 text-blue-600" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-3">No bookmarks yet</h3>
+                  <p className="text-gray-500 mb-8 max-w-md mx-auto text-lg">
+                    Save posts that you find interesting or helpful by clicking the bookmark icon on any post.
+                  </p>
+                  <Link href="/dashboard/forum">
+                    <Button className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white shadow-md hover:shadow-lg transition-all duration-300">
+                      Browse Forum
+                    </Button>
+                  </Link>
+                </CardContent>
+              </div>
+            ) : (
+              <>
+                {/* Search and Filters */}
+                <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 p-6 mb-6 border border-blue-100">
+                  <CardContent className="pt-0">
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <div className="relative flex-1">
+                        <Search
+                          className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4"
+                        />
+                        <Input
+                          placeholder="Search bookmarks..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                        />
+                      </div>
+
+                      <Select value={category} onValueChange={setCategory}>
+                        <SelectTrigger className="w-full sm:w-[180px] border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                          <SelectValue placeholder="Category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((cat) => (
+                            <SelectItem key={cat.value} value={cat.value}>
+                              {cat.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <Select value={sortBy} onValueChange={handleSortChange}>
+                        <SelectTrigger className="w-full sm:w-[160px] border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                          <SelectValue placeholder="Sort by" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="newest">Newest First</SelectItem>
+                          <SelectItem value="oldest">Oldest First</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      <div className="flex border rounded-md overflow-hidden">
+                        <Button
+                          variant={viewMode === 'list' ? 'default' : 'ghost'}
+                          size="sm"
+                          onClick={() => setViewMode('list')}
+                          className="rounded-r-none"
+                        >
+                          <List className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                          size="sm"
+                          onClick={() => setViewMode('grid')}
+                          className="rounded-l-none"
+                        >
+                          <Grid className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowBulkActions(!showBulkActions)}
+                        className="flex items-center border-gray-300 text-gray-700 hover:bg-gray-50"
+                      >
+                        <Filter className="h-4 w-4 mr-2" />
+                        Select
+                      </Button>
+                    </div>
+
+                    {showBulkActions && (
+                      <div className="mt-4 flex items-center space-x-4 p-3 bg-blue-50 rounded-md border border-blue-100">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleSelectAll}
+                          className="text-sm border-blue-300 text-blue-700 hover:bg-blue-100"
+                        >
+                          {selectedBookmarks.length === filteredBookmarks.length
+                            ? 'Deselect All'
+                            : 'Select All'}
+                        </Button>
+                        <span className="text-sm text-gray-600">
+                          {selectedBookmarks.length} of {filteredBookmarks.length} selected
+                        </span>
+                      </div>
+                    )}
+                  </CardContent>
+                </div>
+
+                {/* Bookmarks Grid/List */}
+                {filteredBookmarks.length > 0 ? (
+                  <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 gap-6' : 'space-y-6'}>
+                    {filteredBookmarks.map((post) => (
+                      <div key={post.id} className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 fade-in relative overflow-hidden">
+                        {showBulkActions && (
+                          <div className="absolute top-4 left-4 z-10">
+                            <input
+                              type="checkbox"
+                              checked={selectedBookmarks.includes(post.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedBookmarks((prev) => [...prev, post.id]);
+                                } else {
+                                  setSelectedBookmarks((prev) => prev.filter((id) => id !== post.id));
+                                }
+                              }}
+                              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                          </div>
+                        )}
+
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center space-x-3">
+                              <div className="bg-gradient-to-r from-blue-100 to-indigo-100 p-2 rounded-full">
+                                <Bookmark className="h-4 w-4 text-blue-600" />
+                              </div>
+                              <div>
+                                <div className="flex items-center space-x-2 mb-1">
+                                  <span className="font-medium text-sm text-gray-900">
+                                    {post.isAnonymous ? 'Anonymous' : post.author.name || 'User'}
+                                  </span>
+                                  {post.flagged && (
+                                    <Badge variant="destructive" className="text-xs bg-red-100 text-red-800 border-red-200">
+                                      Flagged
+                                    </Badge>
+                                  )}
+                                  <Badge className={`text-xs ${getRiskColor(post.riskLevel)}`}>
+                                    {post.riskLevel}
+                                  </Badge>
+                                </div>
+                                <div className="flex items-center space-x-2 text-xs text-gray-500">
+                                  <span className="bg-gray-100 px-2 py-1 rounded">
+                                    Bookmarked {formatDistanceToNow(new Date(post.bookmark.createdAt), { addSuffix: true })}
+                                  </span>
+                                  <span>•</span>
+                                  <span className="flex items-center">
+                                    <Eye className="h-3 w-3 mr-1" />
+                                    {post.views}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center space-x-2">
+                              <Badge className={`text-xs ${getCategoryColor(post.category)}`}>{post.category}</Badge>
+                            </div>
+                          </div>
+
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveBookmark(post.id)}
+                            className="text-gray-500 hover:text-red-500 absolute top-4 right-4"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </CardHeader>
+
+                        <CardContent className="pt-0">
+                          <Link href={`/dashboard/forum/post/${post.id}`}>
+                            <div className="cursor-pointer">
+                              {post.title && (
+                                <h3 className="font-semibold text-lg mb-2 text-gray-900 hover:text-blue-600 transition-colors">
+                                  {post.title}
+                                </h3>
+                              )}
+                              <p className="text-gray-700 mb-4 line-clamp-3 bg-gray-50 p-3 rounded-lg">{post.content}</p>
+                            </div>
+                          </Link>
+
+                          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                            <div className="flex items-center space-x-4">
+                              <div className="flex items-center space-x-1 text-gray-500">
+                                <Heart className="h-4 w-4" />
+                                <span>{post._count.likes}</span>
+                              </div>
+
+                              <Link href={`/dashboard/forum/post/${post.id}`}>
+                                <div className="flex items-center space-x-1 text-gray-500 hover:text-blue-500">
+                                  <MessageCircle className="h-4 w-4" />
+                                  <span>{post._count.replies}</span>
+                                </div>
+                              </Link>
+
+                              <div className="flex items-center space-x-1 text-blue-500">
+                                <Bookmark className="h-4 w-4 fill-current" />
+                                <span>{post._count.bookmarks}</span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center text-xs text-gray-500">
+                              <Calendar className="h-3 w-3 mr-1" />
+                              {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-xl shadow-md p-8 md:p-12 text-center border border-gray-100">
+                    <CardContent className="pt-0">
+                      <div className="py-6">
+                        <div className="bg-gradient-to-r from-gray-100 to-gray-200 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                          <Search className="h-10 w-10 text-gray-500" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-gray-900 mb-3">No bookmarks found</h3>
+                        <p className="text-gray-500 mb-6 max-w-md mx-auto text-lg">
+                          {searchTerm || category !== 'all' || sortBy !== 'newest'
+                            ? 'Try adjusting your search or filters'
+                            : 'Your bookmarks will appear here'}
+                        </p>
+                        <Button
+                          onClick={() => {
+                            setSearchTerm('');
+                            setCategory('all');
+                            setSortBy('newest');
+                          }}
+                          className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white shadow-md hover:shadow-lg transition-all duration-300"
+                        >
+                          Clear Filters
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </div>
+                )}
+              </>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

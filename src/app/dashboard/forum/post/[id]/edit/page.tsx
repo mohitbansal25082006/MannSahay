@@ -19,7 +19,9 @@ import {
   ArrowLeft, 
   Save, 
   AlertTriangle,
-  Loader2
+  Loader2,
+  FileEdit,
+  ShieldX
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
@@ -144,21 +146,19 @@ export default function EditPostPage() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
-          <Card>
-            <CardHeader>
-              <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-            </CardHeader>
-            <CardContent>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
+            <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+              <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
               <div className="space-y-4">
                 <div className="h-4 bg-gray-200 rounded"></div>
                 <div className="h-4 bg-gray-200 rounded w-5/6"></div>
                 <div className="h-20 bg-gray-200 rounded"></div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -166,11 +166,16 @@ export default function EditPostPage() {
 
   if (!post) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
-        <h2 className="text-2xl font-semibold mb-4">Post not found</h2>
-        <Button onClick={() => router.push('/dashboard/forum')}>
-          Back to Forum
-        </Button>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center py-8">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-md p-8 text-center">
+          <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="h-8 w-8 text-red-500" />
+          </div>
+          <h2 className="text-2xl font-semibold mb-4">Post not found</h2>
+          <Button onClick={() => router.push('/dashboard/forum')} className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white">
+            Back to Forum
+          </Button>
+        </div>
       </div>
     );
   }
@@ -179,64 +184,83 @@ export default function EditPostPage() {
 
   if (!isAuthor && !isAdmin) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
-        <h2 className="text-2xl font-semibold mb-4">Access Denied</h2>
-        <p className="text-gray-600 mb-4">You can only edit your own posts.</p>
-        <Button onClick={() => router.push('/dashboard/forum')}>
-          Back to Forum
-        </Button>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center py-8">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-md p-8 text-center">
+          <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+            <ShieldX className="h-8 w-8 text-red-500" />
+          </div>
+          <h2 className="text-2xl font-semibold mb-4">Access Denied</h2>
+          <p className="text-gray-600 mb-6">You can only edit your own posts.</p>
+          <Button onClick={() => router.push('/dashboard/forum')} className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white">
+            Back to Forum
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <Button 
-        variant="ghost" 
-        onClick={() => router.back()}
-        className="mb-6"
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Back
-      </Button>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+        <Button 
+          variant="ghost" 
+          onClick={() => router.back()}
+          className="mb-6 flex items-center text-gray-600 hover:text-gray-900"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <AlertTriangle className="h-5 w-5 mr-2 text-yellow-500" />
-            Edit Post
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit}>
-            <div className="space-y-4">
+        <div className="mb-8 md:mb-12">
+          <div className="bg-white rounded-2xl p-6 md:p-8 shadow-lg">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-700">Edit Post</span>
+            </h1>
+            <p className="text-gray-600 max-w-2xl">
+              Make changes to your post and update the community with your thoughts
+            </p>
+            <div className="mt-6 h-1 w-24 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full"></div>
+          </div>
+        </div>
+
+        <Card className="bg-white shadow-md hover:shadow-lg transition-all duration-300 border border-blue-100 overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100 pb-4">
+            <CardTitle className="flex items-center text-lg md:text-xl font-bold text-gray-900">
+              <div className="bg-yellow-100 p-2 rounded-lg mr-3">
+                <FileEdit className="h-5 w-5 text-yellow-600" />
+              </div>
+              Edit Post
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 md:p-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <Label htmlFor="title">Title (Optional)</Label>
+                <Label htmlFor="title" className="text-gray-700 font-medium">Title (Optional)</Label>
                 <Input
                   id="title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Give your post a title..."
-                  className="mt-1"
+                  className="mt-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
               
               <div>
-                <Label htmlFor="content">Content *</Label>
+                <Label htmlFor="content" className="text-gray-700 font-medium">Content *</Label>
                 <Textarea
                   id="content"
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="Share your thoughts, feelings, or questions..."
-                  className="mt-1 min-h-[200px]"
+                  className="mt-1 min-h-[200px] border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                   required
                 />
               </div>
               
               <div>
-                <Label htmlFor="category">Category</Label>
+                <Label htmlFor="category" className="text-gray-700 font-medium">Category</Label>
                 <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger className="mt-1">
+                  <SelectTrigger className="mt-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -249,13 +273,19 @@ export default function EditPostPage() {
                 </Select>
               </div>
               
-              <div className="flex items-center justify-between pt-2">
-                <div className="flex items-center text-sm text-gray-500">
-                  <AlertTriangle className="h-4 w-4 mr-1" />
-                  All posts are moderated for safety
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t border-gray-100">
+                <div className="flex items-start p-3 bg-blue-50 rounded-lg">
+                  <AlertTriangle className="h-4 w-4 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" />
+                  <span className="text-sm text-blue-700">
+                    All posts are moderated for safety and community guidelines
+                  </span>
                 </div>
                 
-                <Button type="submit" disabled={isSubmitting || !content.trim()}>
+                <Button 
+                  type="submit" 
+                  disabled={isSubmitting || !content.trim()}
+                  className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white shadow-md hover:shadow-lg transition-all duration-300"
+                >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -269,10 +299,10 @@ export default function EditPostPage() {
                   )}
                 </Button>
               </div>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

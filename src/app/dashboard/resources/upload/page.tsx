@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { Upload, X, Plus, File, Loader2, ArrowLeft, ShieldX } from 'lucide-react';
+import { Upload, X, Plus, File, Loader2, ArrowLeft, ShieldX, FileText, Tag, FolderOpen, Star } from 'lucide-react';
 import Link from 'next/link';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -244,7 +244,7 @@ export default function UploadResourcePage() {
 
   if (checkingAdmin) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-8">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -256,69 +256,81 @@ export default function UploadResourcePage() {
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center py-12">
-            <ShieldX className="h-16 w-16 text-red-500 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-            <p className="text-gray-600 mb-6">
-              You don&apos;t have permission to access this page. Only administrators can upload resources.
-            </p>
-            <Link href="/dashboard/resources">
-              <Button>Back to Resources</Button>
-            </Link>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center py-8">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-md p-8 text-center">
+          <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+            <ShieldX className="h-8 w-8 text-red-500" />
           </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
+          <p className="text-gray-600 mb-6">
+            You don&apos;t have permission to access this page. Only administrators can upload resources.
+          </p>
+          <Link href="/dashboard/resources">
+            <Button className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white">
+              Back to Resources
+            </Button>
+          </Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+        <div className="mb-8 md:mb-12">
           <Link href="/dashboard/resources">
-            <Button variant="ghost" className="mb-4">
+            <Button variant="ghost" className="mb-4 flex items-center text-gray-600 hover:text-gray-900">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Resources
             </Button>
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Upload Resource</h1>
-          <p className="text-gray-600 mt-2">
-            Share valuable mental health resources with the community
-          </p>
+          <div className="bg-white rounded-2xl p-6 md:p-8 shadow-lg">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-700">Upload Resource</span>
+            </h1>
+            <p className="text-gray-600 max-w-2xl">
+              Share valuable mental health resources with the community
+            </p>
+            <div className="mt-6 h-1 w-24 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full"></div>
+          </div>
         </div>
         
         <form onSubmit={handleSubmit} className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
+          <Card className="bg-white shadow-md hover:shadow-lg transition-all duration-300 border border-blue-100 overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100 pb-4">
+              <CardTitle className="flex items-center text-lg md:text-xl font-bold text-gray-900">
+                <FileText className="h-5 w-5 mr-2 text-blue-600" />
+                Basic Information
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 p-4 md:p-6">
               <div>
-                <Label htmlFor="title">Title *</Label>
+                <Label htmlFor="title" className="text-gray-700 font-medium">Title *</Label>
                 <Input
                   id="title"
                   name="title"
                   value={formData.title}
                   onChange={handleInputChange}
                   required
+                  className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
               
               <div>
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description" className="text-gray-700 font-medium">Description</Label>
                 <Textarea
                   id="description"
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
                   rows={3}
+                  className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
               
               <div>
-                <Label htmlFor="content">Content</Label>
+                <Label htmlFor="content" className="text-gray-700 font-medium">Content</Label>
                 <Textarea
                   id="content"
                   name="content"
@@ -326,14 +338,15 @@ export default function UploadResourcePage() {
                   onChange={handleInputChange}
                   rows={6}
                   placeholder="For articles, worksheets, and guides. Leave empty if uploading a file."
+                  className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="type">Resource Type *</Label>
+                  <Label htmlFor="type" className="text-gray-700 font-medium">Resource Type *</Label>
                   <Select value={formData.type} onValueChange={(value) => handleSelectChange('type', value)}>
-                    <SelectTrigger>
+                    <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                       <SelectValue placeholder="Select resource type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -347,9 +360,9 @@ export default function UploadResourcePage() {
                 </div>
                 
                 <div>
-                  <Label htmlFor="language">Language</Label>
+                  <Label htmlFor="language" className="text-gray-700 font-medium">Language</Label>
                   <Select value={formData.language} onValueChange={(value) => handleSelectChange('language', value)}>
-                    <SelectTrigger>
+                    <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                       <SelectValue placeholder="Select language" />
                     </SelectTrigger>
                     <SelectContent>
@@ -364,32 +377,36 @@ export default function UploadResourcePage() {
               </div>
               
               <div>
-                <Label htmlFor="author">Author</Label>
+                <Label htmlFor="author" className="text-gray-700 font-medium">Author</Label>
                 <Input
                   id="author"
                   name="author"
                   value={formData.author}
                   onChange={handleInputChange}
                   placeholder="Resource author or creator"
+                  className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardHeader>
-              <CardTitle>File Upload</CardTitle>
+          <Card className="bg-white shadow-md hover:shadow-lg transition-all duration-300 border border-blue-100 overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100 pb-4">
+              <CardTitle className="flex items-center text-lg md:text-xl font-bold text-gray-900">
+                <Upload className="h-5 w-5 mr-2 text-blue-600" />
+                File Upload
+              </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 md:p-6">
               <div className="space-y-4">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50">
                   {file ? (
                     <div className="space-y-4">
                       <div className="flex items-center justify-center">
                         <File className="h-12 w-12 text-blue-600" />
                       </div>
-                      <div>
-                        <p className="font-medium">{file.name}</p>
+                      <div className="bg-white p-4 rounded-lg border border-blue-100 shadow-sm">
+                        <p className="font-medium text-gray-900">{file.name}</p>
                         <p className="text-sm text-gray-500">
                           {(file.size / 1024 / 1024).toFixed(2)} MB
                         </p>
@@ -398,6 +415,7 @@ export default function UploadResourcePage() {
                         type="button"
                         variant="outline"
                         onClick={() => setFile(null)}
+                        className="border-red-200 text-red-700 hover:bg-red-50"
                       >
                         <X className="mr-2 h-4 w-4" />
                         Remove File
@@ -409,13 +427,13 @@ export default function UploadResourcePage() {
                         <Upload className="h-12 w-12 text-gray-400" />
                       </div>
                       <div>
-                        <p className="font-medium">Upload a file</p>
+                        <p className="font-medium text-gray-900">Upload a file</p>
                         <p className="text-sm text-gray-500">
                           PDF, MP4, MP3, or other supported formats
                         </p>
                       </div>
                       <Label htmlFor="file-upload" className="cursor-pointer">
-                        <div className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                        <div className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-md">
                           Select File
                         </div>
                         <Input
@@ -430,34 +448,43 @@ export default function UploadResourcePage() {
                   )}
                 </div>
                 
-                <p className="text-sm text-gray-500">
-                  Note: For articles, worksheets, and guides, you can either upload a file or enter content directly in the Content field above.
-                </p>
+                <Alert className="bg-blue-50 border-blue-200">
+                  <AlertDescription className="text-blue-700">
+                    Note: For articles, worksheets, and guides, you can either upload a file or enter content directly in the Content field above.
+                  </AlertDescription>
+                </Alert>
               </div>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardHeader>
-              <CardTitle>Tags & Categories</CardTitle>
+          <Card className="bg-white shadow-md hover:shadow-lg transition-all duration-300 border border-blue-100 overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100 pb-4">
+              <CardTitle className="flex items-center text-lg md:text-xl font-bold text-gray-900">
+                <Tag className="h-5 w-5 mr-2 text-blue-600" />
+                Tags & Categories
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 p-4 md:p-6">
               <div>
-                <Label>Tags</Label>
+                <Label className="text-gray-700 font-medium flex items-center">
+                  <Tag className="h-4 w-4 mr-2 text-blue-600" />
+                  Tags
+                </Label>
                 <div className="flex gap-2 mt-2">
                   <Input
                     value={newTag}
                     onChange={(e) => setNewTag(e.target.value)}
                     placeholder="Add a tag"
                     onKeyPress={(e) => e.key === 'Enter' && addTag()}
+                    className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                   />
-                  <Button type="button" onClick={addTag}>
+                  <Button type="button" onClick={addTag} className="bg-blue-600 hover:bg-blue-700 text-white">
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className="flex flex-wrap gap-2 mt-2">
+                <div className="flex flex-wrap gap-2 mt-3">
                   {formData.tags.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="cursor-pointer">
+                    <Badge key={tag} variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-200 cursor-pointer">
                       {tag}
                       <X
                         className="h-3 w-3 ml-1"
@@ -471,21 +498,25 @@ export default function UploadResourcePage() {
               <Separator />
               
               <div>
-                <Label>Categories</Label>
+                <Label className="text-gray-700 font-medium flex items-center">
+                  <FolderOpen className="h-4 w-4 mr-2 text-blue-600" />
+                  Categories
+                </Label>
                 <div className="flex gap-2 mt-2">
                   <Input
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value)}
                     placeholder="Add a category"
                     onKeyPress={(e) => e.key === 'Enter' && addCategory()}
+                    className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                   />
-                  <Button type="button" onClick={addCategory}>
+                  <Button type="button" onClick={addCategory} className="bg-blue-600 hover:bg-blue-700 text-white">
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className="flex flex-wrap gap-2 mt-2">
+                <div className="flex flex-wrap gap-2 mt-3">
                   {formData.categories.map((category) => (
-                    <Badge key={category} variant="secondary" className="cursor-pointer">
+                    <Badge key={category} variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-200 cursor-pointer">
                       {category}
                       <X
                         className="h-3 w-3 ml-1"
@@ -497,13 +528,13 @@ export default function UploadResourcePage() {
               </div>
               
               <div>
-                <Label>Suggested Categories</Label>
-                <div className="flex flex-wrap gap-2 mt-2">
+                <Label className="text-gray-700 font-medium">Suggested Categories</Label>
+                <div className="flex flex-wrap gap-2 mt-3">
                   {suggestedCategories.map((category) => (
                     <Badge
                       key={category}
                       variant="outline"
-                      className="cursor-pointer"
+                      className="border-blue-200 text-blue-700 hover:bg-blue-100 cursor-pointer"
                       onClick={() => addSuggestedCategory(category)}
                     >
                       {category}
@@ -514,14 +545,17 @@ export default function UploadResourcePage() {
             </CardContent>
           </Card>
           
-          <Card>
-            <CardHeader>
-              <CardTitle>Publishing Options</CardTitle>
+          <Card className="bg-white shadow-md hover:shadow-lg transition-all duration-300 border border-blue-100 overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100 pb-4">
+              <CardTitle className="flex items-center text-lg md:text-xl font-bold text-gray-900">
+                <Star className="h-5 w-5 mr-2 text-blue-600" />
+                Publishing Options
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
+            <CardContent className="space-y-4 p-4 md:p-6">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div>
-                  <Label htmlFor="published">Publish Immediately</Label>
+                  <Label htmlFor="published" className="text-gray-700 font-medium">Publish Immediately</Label>
                   <p className="text-sm text-gray-500">
                     Make this resource visible to all users
                   </p>
@@ -533,9 +567,9 @@ export default function UploadResourcePage() {
                 />
               </div>
               
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div>
-                  <Label htmlFor="featured">Featured Resource</Label>
+                  <Label htmlFor="featured" className="text-gray-700 font-medium">Featured Resource</Label>
                   <p className="text-sm text-gray-500">
                     Show on homepage and in recommendations
                   </p>
@@ -551,9 +585,11 @@ export default function UploadResourcePage() {
           
           <div className="flex justify-end gap-4">
             <Link href="/dashboard/resources">
-              <Button variant="outline">Cancel</Button>
+              <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-100">
+                Cancel
+              </Button>
             </Link>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white shadow-md hover:shadow-lg">
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

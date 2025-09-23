@@ -13,6 +13,10 @@ interface ResourceListProps {
   searchQuery: string;
   sortBy: string;
   sortOrder: string;
+  setSelectedCategory: (category: string) => void;
+  setSelectedType: (type: ResourceType | 'all') => void;
+  setSelectedLanguage: (language: string) => void;
+  setSearchQuery: (query: string) => void;
 }
 
 export default function ResourceList({
@@ -22,6 +26,10 @@ export default function ResourceList({
   searchQuery,
   sortBy,
   sortOrder,
+  setSelectedCategory,
+  setSelectedType,
+  setSelectedLanguage,
+  setSearchQuery,
 }: ResourceListProps) {
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -88,14 +96,19 @@ export default function ResourceList({
 
   if (error) {
     return (
-      <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-        <h3 className="text-lg font-medium text-gray-900 mb-2">
+      <div className="bg-white rounded-xl shadow-md p-8 md:p-12 text-center border border-red-100">
+        <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <h3 className="text-lg md:text-xl font-medium text-gray-900 mb-2">
           Error Loading Resources
         </h3>
-        <p className="text-gray-500 mb-6">
+        <p className="text-gray-500 mb-6 max-w-md mx-auto">
           {error}
         </p>
-        <Button onClick={() => fetchResources(1)}>
+        <Button onClick={() => fetchResources(1)} className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white">
           Try Again
         </Button>
       </div>
@@ -104,9 +117,9 @@ export default function ResourceList({
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white rounded-xl p-4 shadow-sm border border-gray-100">
         <p className="text-gray-600">
-          {resources.length} {resources.length === 1 ? 'resource' : 'resources'} found
+          <span className="font-medium">{resources.length}</span> {resources.length === 1 ? 'resource' : 'resources'} found
         </p>
         
         <div className="flex items-center gap-2">
@@ -114,6 +127,7 @@ export default function ResourceList({
             variant={viewMode === 'grid' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setViewMode('grid')}
+            className="border-gray-300"
           >
             <Grid className="h-4 w-4" />
           </Button>
@@ -121,6 +135,7 @@ export default function ResourceList({
             variant={viewMode === 'list' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setViewMode('list')}
+            className="border-gray-300"
           >
             <List className="h-4 w-4" />
           </Button>
@@ -128,14 +143,14 @@ export default function ResourceList({
       </div>
       
       {loading && resources.length === 0 ? (
-        <div className="flex justify-center items-center h-64">
+        <div className="flex justify-center items-center h-64 bg-white rounded-xl shadow-sm border border-gray-100">
           <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
         </div>
       ) : resources.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-          <div className="text-gray-400 mb-4">
+        <div className="bg-white rounded-xl shadow-md p-8 md:p-12 text-center border border-gray-100">
+          <div className="text-gray-300 mb-6">
             <svg
-              className="mx-auto h-12 w-12"
+              className="mx-auto h-16 w-16"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -148,12 +163,23 @@ export default function ResourceList({
               />
             </svg>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <h3 className="text-lg md:text-xl font-medium text-gray-900 mb-2">
             No resources found
           </h3>
-          <p className="text-gray-500 mb-4">
+          <p className="text-gray-500 mb-6 max-w-md mx-auto">
             Try adjusting your filters or search terms
           </p>
+          <Button 
+            onClick={() => {
+              setSelectedCategory('all');
+              setSelectedType('all');
+              setSelectedLanguage('all');
+              setSearchQuery('');
+            }}
+            className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white"
+          >
+            Clear Filters
+          </Button>
         </div>
       ) : (
         <>
@@ -180,7 +206,7 @@ export default function ResourceList({
                 onClick={loadMore}
                 disabled={loading}
                 variant="outline"
-                className="w-full sm:w-auto"
+                className="w-full sm:w-auto border-blue-200 text-blue-700 hover:bg-blue-50"
               >
                 {loading ? (
                   <>

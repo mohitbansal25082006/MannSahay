@@ -384,10 +384,10 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar - Desktop only */}
-        <div className="hidden lg:block w-80 bg-white border-r">
+        <div className="hidden lg:block w-80 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-r border-gray-200/50 dark:border-gray-700/50">
           <ChatSessionSidebar 
             onSessionSelect={handleSessionSelect}
             language={language}
@@ -396,17 +396,17 @@ export default function ChatPage() {
         
         {/* Chat Interface */}
         <div className="flex-1 flex flex-col">
-          <Card className="flex-1 flex flex-col m-0 border-0 rounded-none">
-            <CardHeader className="pb-3 border-b">
+          <Card className="flex-1 flex flex-col m-0 border-0 rounded-none bg-transparent shadow-none">
+            <CardHeader className="pb-3 border-b border-gray-200/50 dark:border-gray-700/50 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
                     <SheetTrigger asChild>
-                      <Button variant="outline" size="sm" className="lg:hidden">
+                      <Button variant="outline" size="sm" className="lg:hidden bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
                         <Menu className="h-4 w-4" />
                       </Button>
                     </SheetTrigger>
-                    <SheetContent side="left" className="w-80 p-0">
+                    <SheetContent side="left" className="w-80 p-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm">
                       <div className="h-full">
                         <ChatSessionSidebar 
                           onSessionSelect={handleSessionSelect}
@@ -416,18 +416,20 @@ export default function ChatPage() {
                     </SheetContent>
                   </Sheet>
                   <div className="flex items-center min-w-0 space-x-2">
-                    <Bot className="h-5 w-5 text-blue-600 flex-shrink-0" />
-                    <CardTitle className="flex items-center truncate text-sm sm:text-base">
+                    <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-500 shadow-md">
+                      <Bot className="h-5 w-5 text-white" />
+                    </div>
+                    <CardTitle className="flex items-center truncate text-sm sm:text-base text-gray-900 dark:text-white">
                       <span className="truncate">
                         {currentSession?.title || 'New Conversation'}
                       </span>
                       {currentSession?.isArchived && (
-                        <Badge variant="outline" className="ml-1 sm:ml-2 flex-shrink-0 text-xs">
+                        <Badge variant="outline" className="ml-1 sm:ml-2 flex-shrink-0 text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 border-amber-200 dark:border-amber-800">
                           <Archive className="h-3 w-3 mr-1" />
                           Archived
                         </Badge>
                       )}
-                      <Badge variant="secondary" className="ml-1 sm:ml-2 flex-shrink-0 text-xs">Online</Badge>
+                      <Badge className="ml-1 sm:ml-2 flex-shrink-0 text-xs bg-green-500 hover:bg-green-600 text-white">Online</Badge>
                     </CardTitle>
                   </div>
                 </div>
@@ -435,33 +437,34 @@ export default function ChatPage() {
                 <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
                   <Sheet open={rightSidebarOpen} onOpenChange={setRightSidebarOpen}>
                     <SheetTrigger asChild>
-                      <Button variant="outline" size="sm" className="lg:hidden">
+                      <Button variant="outline" size="sm" className="lg:hidden bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
                         <AlertTriangle className="h-4 w-4" />
                       </Button>
                     </SheetTrigger>
-                    <SheetContent side="right" className="w-80 p-0">
+                    <SheetContent side="right" className="w-80 p-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm">
                       <ScrollArea className="h-full p-4">
                         <div className="space-y-4">
-                          <Card>
-                            <CardHeader className="pb-3">
+                          <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 shadow-lg overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 to-orange-500"></div>
+                            <CardHeader className="pb-3 pt-5">
                               <CardTitle className="flex items-center text-red-600">
                                 <AlertTriangle className="h-4 w-4 mr-2" />
                                 Crisis Support
                               </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-3">
-                              <p className="text-sm text-gray-600">
+                              <p className="text-sm text-gray-600 dark:text-gray-300">
                                 If you&apos;re in crisis, please reach out immediately:
                               </p>
                               {emergencyContacts.map((contact, index) => (
-                                <div key={index} className="p-3 bg-red-50 rounded-lg">
-                                  <h4 className="font-medium text-sm text-red-800">
+                                <div key={index} className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-100 dark:border-red-800/30">
+                                  <h4 className="font-medium text-sm text-red-800 dark:text-red-200">
                                     {contact.name}
                                   </h4>
-                                  <p className="font-mono text-sm text-red-700">
+                                  <p className="font-mono text-sm text-red-700 dark:text-red-300">
                                     {contact.number}
                                   </p>
-                                  <p className="text-xs text-red-600">
+                                  <p className="text-xs text-red-600 dark:text-red-400">
                                     {contact.description}
                                   </p>
                                 </div>
@@ -469,8 +472,9 @@ export default function ChatPage() {
                             </CardContent>
                           </Card>
 
-                          <Card>
-                            <CardHeader className="pb-3">
+                          <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 shadow-lg overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500 to-emerald-500"></div>
+                            <CardHeader className="pb-3 pt-5">
                               <CardTitle className="flex items-center text-green-600">
                                 <Lightbulb className="h-4 w-4 mr-2" />
                                 Quick Tips
@@ -478,29 +482,29 @@ export default function ChatPage() {
                             </CardHeader>
                             <CardContent>
                               <div className="space-y-3">
-                                <div className="p-3 bg-green-50 rounded-lg">
-                                  <h4 className="font-medium text-sm text-green-800 mb-1">
+                                <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800/30">
+                                  <h4 className="font-medium text-sm text-green-800 dark:text-green-200 mb-1">
                                     Breathing Exercise
                                   </h4>
-                                  <p className="text-xs text-green-700">
+                                  <p className="text-xs text-green-700 dark:text-green-300">
                                     4-7-8 technique: Inhale 4, hold 7, exhale 8
                                   </p>
                                 </div>
                                 
-                                <div className="p-3 bg-blue-50 rounded-lg">
-                                  <h4 className="font-medium text-sm text-blue-800 mb-1">
+                                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800/30">
+                                  <h4 className="font-medium text-sm text-blue-800 dark:text-blue-200 mb-1">
                                     Grounding
                                   </h4>
-                                  <p className="text-xs text-blue-700">
+                                  <p className="text-xs text-blue-700 dark:text-blue-300">
                                     Name 5 things you can see, 4 you can hear, 3 you can touch
                                   </p>
                                 </div>
                                 
-                                <div className="p-3 bg-purple-50 rounded-lg">
-                                  <h4 className="font-medium text-sm text-purple-800 mb-1">
+                                <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-100 dark:border-purple-800/30">
+                                  <h4 className="font-medium text-sm text-purple-800 dark:text-purple-200 mb-1">
                                     Affirmation
                                   </h4>
-                                  <p className="text-xs text-purple-700">
+                                  <p className="text-xs text-purple-700 dark:text-purple-300">
                                     &quot;This feeling is temporary. I am stronger than I know.&quot;
                                   </p>
                                 </div>
@@ -508,18 +512,19 @@ export default function ChatPage() {
                             </CardContent>
                           </Card>
 
-                          <Card>
-                            <CardHeader className="pb-3">
+                          <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 shadow-lg overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
+                            <CardHeader className="pb-3 pt-5">
                               <CardTitle className="flex items-center text-blue-600">
                                 <Heart className="h-4 w-4 mr-2" />
                                 Need More Support?
                               </CardTitle>
                             </CardHeader>
                             <CardContent>
-                              <p className="text-sm text-gray-600 mb-3">
+                              <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
                                 Consider booking a session with our professional counselors.
                               </p>
-                              <Button className="w-full" size="sm">
+                              <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700" size="sm">
                                 <Phone className="h-4 w-4 mr-2" />
                                 Book Counselor
                               </Button>
@@ -532,21 +537,21 @@ export default function ChatPage() {
 
                   <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button variant="outline" size="sm" disabled={!currentSessionId} className="hidden sm:flex">
+                      <Button variant="outline" size="sm" disabled={!currentSessionId} className="hidden sm:flex bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
                         <Save className="h-4 w-4 mr-1" />
                         <span className="hidden md:inline">Save</span>
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-md mx-4">
+                    <DialogContent className="sm:max-w-md mx-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 shadow-xl">
                       <DialogHeader>
-                        <DialogTitle>Save Conversation</DialogTitle>
-                        <DialogDescription>
+                        <DialogTitle className="text-gray-900 dark:text-white">Save Conversation</DialogTitle>
+                        <DialogDescription className="text-gray-600 dark:text-gray-300">
                           Give your conversation a name to save it for later.
                         </DialogDescription>
                       </DialogHeader>
                       <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="title" className="text-right">
+                          <Label htmlFor="title" className="text-right text-gray-700 dark:text-gray-300">
                             Title
                           </Label>
                           <Input
@@ -554,27 +559,28 @@ export default function ChatPage() {
                             value={saveTitle}
                             onChange={(e) => setSaveTitle(e.target.value)}
                             placeholder="Enter conversation title"
-                            className="col-span-3"
+                            className="col-span-3 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
                           />
                         </div>
                       </div>
                       <DialogFooter>
-                        <Button variant="outline" onClick={() => setSaveDialogOpen(false)}>
+                        <Button variant="outline" onClick={() => setSaveDialogOpen(false)} className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600">
                           Cancel
                         </Button>
-                        <Button onClick={handleSaveSession} disabled={isSaving || !saveTitle.trim()}>
+                        <Button onClick={handleSaveSession} disabled={isSaving || !saveTitle.trim()} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
                           {isSaving ? 'Saving...' : 'Save'}
                         </Button>
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
 
-                  <div className="flex items-center space-x-1">
-                    <span className="text-xs text-gray-500 hidden sm:inline">Language:</span>
+                  <div className="flex items-center space-x-1 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg p-1">
+                    <span className="text-xs text-gray-500 dark:text-gray-400 hidden sm:inline">Language:</span>
                     <Button
                       variant={language === 'en' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setLanguage('en')}
+                      className="h-7 px-2 text-xs"
                     >
                       En
                     </Button>
@@ -582,6 +588,7 @@ export default function ChatPage() {
                       variant={language === 'hi' ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => setLanguage('hi')}
+                      className="h-7 px-2 text-xs"
                     >
                       हि
                     </Button>
@@ -594,7 +601,7 @@ export default function ChatPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleUnarchiveSession(currentSession.id)}
-                        className="hidden sm:flex"
+                        className="hidden sm:flex bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm"
                       >
                         <ArchiveRestore className="h-4 w-4 mr-1" />
                         <span className="hidden md:inline">Unarchive</span>
@@ -606,22 +613,22 @@ export default function ChatPage() {
                             variant="outline" 
                             size="sm" 
                             disabled={!currentSessionId}
-                            className="hidden sm:flex"
+                            className="hidden sm:flex bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm"
                           >
                             <Archive className="h-4 w-4 mr-1" />
                             <span className="hidden md:inline">Archive</span>
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-md mx-4">
+                        <DialogContent className="sm:max-w-md mx-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 shadow-xl">
                           <DialogHeader>
-                            <DialogTitle>Archive Conversation</DialogTitle>
-                            <DialogDescription>
+                            <DialogTitle className="text-gray-900 dark:text-white">Archive Conversation</DialogTitle>
+                            <DialogDescription className="text-gray-600 dark:text-gray-300">
                               This conversation will be moved to your archive and won&apos;t appear in the main list.
                             </DialogDescription>
                           </DialogHeader>
                           <div className="grid gap-4 py-4">
                             <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="archive-title" className="text-right">
+                              <Label htmlFor="archive-title" className="text-right text-gray-700 dark:text-gray-300">
                                 Title
                               </Label>
                               <Input
@@ -629,18 +636,19 @@ export default function ChatPage() {
                                 value={archiveTitle}
                                 onChange={(e) => setArchiveTitle(e.target.value)}
                                 placeholder="Conversation title"
-                                className="col-span-3"
+                                className="col-span-3 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
                               />
                             </div>
                           </div>
                           <DialogFooter>
-                            <Button variant="outline" onClick={() => setArchiveDialogOpen(false)}>
+                            <Button variant="outline" onClick={() => setArchiveDialogOpen(false)} className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600">
                               Cancel
                             </Button>
                             <Button 
                               onClick={handleArchiveSession} 
                               disabled={isArchiving || !archiveTitle.trim()}
                               variant="outline"
+                              className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
                             >
                               {isArchiving ? 'Archiving...' : 'Archive'}
                             </Button>
@@ -654,6 +662,7 @@ export default function ChatPage() {
                     variant="outline"
                     size="sm"
                     onClick={handleNewSession}
+                    className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm"
                   >
                     <Plus className="h-4 w-4 sm:mr-1" />
                     <span className="hidden sm:inline">New</span>
@@ -666,23 +675,25 @@ export default function ChatPage() {
               <ScrollArea className="flex-1 px-4 sm:px-6 py-4" style={{ maxHeight: 'calc(100vh - 200px)' }}>
                 <div className="space-y-4">
                   {messages.length === 0 && (
-                    <div className="text-center py-8">
-                      <Bot className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    <div className="text-center py-8 sm:py-12">
+                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 shadow-lg mb-4">
+                        <Bot className="h-8 w-8 text-white" />
+                      </div>
+                      <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
                         Welcome to MannSahay Chat! 🌟
                       </h3>
-                      <p className="text-gray-500 mb-4">
+                      <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-md mx-auto">
                         I&apos;m here to listen and support you. How are you feeling today?
                       </p>
                       
-                      <div className="flex flex-wrap justify-center gap-2">
+                      <div className="flex flex-wrap justify-center gap-2 max-w-2xl mx-auto">
                         {suggestedMessages.slice(0, isClient ? (window.innerWidth < 640 ? 4 : suggestedMessages.length) : 4).map((msg, index) => (
                           <Button
                             key={index}
                             variant="outline"
                             size="sm"
                             onClick={() => handleSuggestedMessage(msg)}
-                            className="text-xs max-w-xs truncate"
+                            className="text-xs max-w-xs truncate bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
                           >
                             {msg}
                           </Button>
@@ -702,13 +713,13 @@ export default function ChatPage() {
                         {message.role === 'user' ? (
                           <>
                             <AvatarImage src={session?.user?.image || ''} />
-                            <AvatarFallback>
+                            <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
                               <User className="h-4 w-4" />
                             </AvatarFallback>
                           </>
                         ) : (
-                          <AvatarFallback className="bg-blue-100">
-                            <Bot className="h-4 w-4 text-blue-600" />
+                          <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
+                            <Bot className="h-4 w-4" />
                           </AvatarFallback>
                         )}
                       </Avatar>
@@ -719,14 +730,14 @@ export default function ChatPage() {
                         }`}
                       >
                         <div
-                          className={`inline-block p-3 rounded-lg break-words ${
+                          className={`inline-block p-3 rounded-lg break-words shadow-sm ${
                             message.role === 'user'
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-gray-100 text-gray-900'
+                              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white'
+                              : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700'
                           }`}
                         >
                           {message.role === 'assistant' ? (
-                            <div className="prose prose-sm max-w-none break-words overflow-wrap-anywhere">
+                            <div className="prose prose-sm max-w-none break-words overflow-wrap-anywhere dark:prose-invert">
                               <ReactMarkdown>
                                 {message.content}
                               </ReactMarkdown>
@@ -743,7 +754,7 @@ export default function ChatPage() {
                               size="sm"
                               onClick={() => handleTextToSpeech(message.content)}
                               disabled={isGeneratingSpeech}
-                              className="text-xs"
+                              className="text-xs bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-gray-300 dark:border-gray-600"
                             >
                               <Volume2 className="h-3 w-3 mr-1" />
                               {isGeneratingSpeech ? 'Generating...' : 'Listen'}
@@ -751,7 +762,7 @@ export default function ChatPage() {
                           </div>
                         )}
                         
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                           {new Date().toLocaleTimeString()}
                         </p>
                       </div>
@@ -760,30 +771,31 @@ export default function ChatPage() {
 
                   {/* Audio Player for Generated Speech - Appears at bottom of chat */}
                   {(duration > 0) && (
-                    <div className="w-full p-4 bg-green-50 rounded-lg border border-green-200">
+                    <div className="w-full p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800/30 shadow-sm">
                       <div className="flex items-center space-x-3">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={isPlaying ? pause : play}
+                          className="bg-white dark:bg-gray-800 border-green-300 dark:border-green-700"
                         >
                           {isPlaying ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
                         </Button>
                         <div className="flex-1">
-                          <div className="text-xs text-green-800 mb-1">
+                          <div className="text-xs text-green-800 dark:text-green-200 mb-1">
                             Audio Response
                           </div>
                           <div className="flex items-center space-x-2">
-                            <span className="text-xs text-green-600">{formatTime(currentTime)}</span>
+                            <span className="text-xs text-green-600 dark:text-green-300">{formatTime(currentTime)}</span>
                             <input
                               type="range"
                               min="0"
                               max={duration}
                               value={currentTime}
                               onChange={(e) => seek(parseFloat(e.target.value))}
-                              className="flex-1 h-1 bg-green-200 rounded-lg appearance-none cursor-pointer"
+                              className="flex-1 h-1 bg-green-200 dark:bg-green-800 rounded-lg appearance-none cursor-pointer"
                             />
-                            <span className="text-xs text-green-600">{formatTime(duration)}</span>
+                            <span className="text-xs text-green-600 dark:text-green-300">{formatTime(duration)}</span>
                           </div>
                         </div>
                       </div>
@@ -793,16 +805,16 @@ export default function ChatPage() {
                   {isLoading && (
                     <div className="flex items-start space-x-3">
                       <Avatar className="h-8 w-8 flex-shrink-0">
-                        <AvatarFallback className="bg-blue-100">
-                          <Bot className="h-4 w-4 text-blue-600" />
+                        <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
+                          <Bot className="h-4 w-4" />
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                        <div className="inline-block p-3 rounded-lg bg-gray-100">
+                        <div className="inline-block p-3 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
                           <div className="flex space-x-1">
-                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                            <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"></div>
+                            <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                            <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                           </div>
                         </div>
                       </div>
@@ -812,12 +824,12 @@ export default function ChatPage() {
                 <div ref={messagesEndRef} />
               </ScrollArea>
               
-              <div className="p-4 border-t bg-white">
+              <div className="p-4 border-t border-gray-200/50 dark:border-gray-700/50 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
                 {/* Recorded Audio Section - Only for user recordings before sending */}
                 {audioBlob && (
-                  <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                  <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800/30 shadow-sm">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-blue-800">Recorded audio</span>
+                      <span className="text-sm text-blue-800 dark:text-blue-200">Recorded audio</span>
                       <audio src={audioUrl!} controls className="h-8 max-w-[200px] sm:max-w-[300px]" />
                     </div>
                     <div className="flex space-x-2">
@@ -825,6 +837,7 @@ export default function ChatPage() {
                         size="sm"
                         onClick={handleAudioSubmit}
                         disabled={isTranscribing}
+                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                       >
                         {isTranscribing ? 'Transcribing...' : 'Send Audio'}
                       </Button>
@@ -832,6 +845,7 @@ export default function ChatPage() {
                         variant="outline"
                         size="sm"
                         onClick={clearRecording}
+                        className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
                       >
                         Cancel
                       </Button>
@@ -850,7 +864,7 @@ export default function ChatPage() {
                           ? 'अपने विचार साझा करें या माइक्रोफोन बटन दबाएं...' 
                           : 'Share your thoughts or press the microphone button...'
                       }
-                      className="flex-1 min-h-[44px] max-h-32 resize-none"
+                      className="flex-1 min-h-[44px] max-h-32 resize-none bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-500"
                       disabled={isLoading || isRecording}
                     />
                     
@@ -859,7 +873,7 @@ export default function ChatPage() {
                       variant={isRecording ? "destructive" : "outline"}
                       onClick={isRecording ? stopRecording : startRecording}
                       disabled={isLoading}
-                      className="flex-shrink-0"
+                      className="flex-shrink-0 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                     >
                       {isRecording ? (
                         <Square className="h-4 w-4" />
@@ -872,7 +886,7 @@ export default function ChatPage() {
                       type="submit" 
                       disabled={!input.trim() || isLoading}
                       size="lg"
-                      className="flex-shrink-0"
+                      className="flex-shrink-0 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                     >
                       <Send className="h-4 w-4" />
                     </Button>
@@ -883,28 +897,29 @@ export default function ChatPage() {
           </Card>
         </div>
         
-        <div className="hidden lg:block w-80 bg-white border-l">
+        <div className="hidden lg:block w-80 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-l border-gray-200/50 dark:border-gray-700/50">
           <div className="h-full p-4 space-y-4 overflow-y-auto">
-            <Card>
-              <CardHeader className="pb-3">
+            <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 shadow-lg overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 to-orange-500"></div>
+              <CardHeader className="pb-3 pt-5">
                 <CardTitle className="flex items-center text-red-600">
                   <AlertTriangle className="h-4 w-4 mr-2" />
                   Crisis Support
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-300">
                   If you&apos;re in crisis, please reach out immediately:
                 </p>
                 {emergencyContacts.map((contact, index) => (
-                  <div key={index} className="p-3 bg-red-50 rounded-lg">
-                    <h4 className="font-medium text-sm text-red-800">
+                  <div key={index} className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-100 dark:border-red-800/30">
+                    <h4 className="font-medium text-sm text-red-800 dark:text-red-200">
                       {contact.name}
                     </h4>
-                    <p className="font-mono text-sm text-red-700">
+                    <p className="font-mono text-sm text-red-700 dark:text-red-300">
                       {contact.number}
                     </p>
-                    <p className="text-xs text-red-600">
+                    <p className="text-xs text-red-600 dark:text-red-400">
                       {contact.description}
                     </p>
                   </div>
@@ -912,8 +927,9 @@ export default function ChatPage() {
               </CardContent>
             </Card>
             
-            <Card>
-              <CardHeader className="pb-3">
+            <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 shadow-lg overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500 to-emerald-500"></div>
+              <CardHeader className="pb-3 pt-5">
                 <CardTitle className="flex items-center text-green-600">
                   <Lightbulb className="h-4 w-4 mr-2" />
                   Quick Tips
@@ -921,29 +937,29 @@ export default function ChatPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="p-3 bg-green-50 rounded-lg">
-                    <h4 className="font-medium text-sm text-green-800 mb-1">
+                  <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800/30">
+                    <h4 className="font-medium text-sm text-green-800 dark:text-green-200 mb-1">
                       Breathing Exercise
                     </h4>
-                    <p className="text-xs text-green-700">
+                    <p className="text-xs text-green-700 dark:text-green-300">
                       4-7-8 technique: Inhale 4, hold 7, exhale 8
                     </p>
                   </div>
                   
-                  <div className="p-3 bg-blue-50 rounded-lg">
-                    <h4 className="font-medium text-sm text-blue-800 mb-1">
+                  <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800/30">
+                    <h4 className="font-medium text-sm text-blue-800 dark:text-blue-200 mb-1">
                       Grounding
                     </h4>
-                    <p className="text-xs text-blue-700">
+                    <p className="text-xs text-blue-700 dark:text-blue-300">
                       Name 5 things you can see, 4 you can hear, 3 you can touch
                     </p>
                   </div>
                   
-                  <div className="p-3 bg-purple-50 rounded-lg">
-                    <h4 className="font-medium text-sm text-purple-800 mb-1">
+                  <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-100 dark:border-purple-800/30">
+                    <h4 className="font-medium text-sm text-purple-800 dark:text-purple-200 mb-1">
                       Affirmation
                     </h4>
-                    <p className="text-xs text-purple-700">
+                    <p className="text-xs text-purple-700 dark:text-purple-300">
                       &quot;This feeling is temporary. I am stronger than I know.&quot;
                     </p>
                   </div>
@@ -951,18 +967,19 @@ export default function ChatPage() {
               </CardContent>
             </Card>
             
-            <Card>
-              <CardHeader className="pb-3">
+            <Card className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 shadow-lg overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
+              <CardHeader className="pb-3 pt-5">
                 <CardTitle className="flex items-center text-blue-600">
                   <Heart className="h-4 w-4 mr-2" />
                   Need More Support?
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-gray-600 mb-3">
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
                   Consider booking a session with our professional counselors.
                 </p>
-                <Button className="w-full" size="sm">
+                <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700" size="sm">
                   <Phone className="h-4 w-4 mr-2" />
                   Book Counselor
                 </Button>

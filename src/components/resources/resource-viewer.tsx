@@ -1,4 +1,3 @@
-// E:\mannsahay\src\components\resources\resource-viewer.tsx
 'use client';
 
 import { useState } from 'react';
@@ -58,19 +57,21 @@ export default function ResourceViewer({ resource }: ResourceViewerProps) {
     switch (resource.type) {
       case ResourceType.PDF:
         return (
-          <div className="flex flex-col items-center justify-center h-[70vh] bg-gray-50 rounded-lg">
-            <FileText className="h-16 w-16 text-blue-600 mb-4" />
-            <p className="text-gray-600 mb-4">PDF Document</p>
+          <div className="flex flex-col items-center justify-center h-[70vh] bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg shadow-md">
+            <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mb-4">
+              <FileText className="h-8 w-8 text-red-600" />
+            </div>
+            <p className="text-gray-600 mb-4 font-medium">PDF Document</p>
             <p className="text-sm text-gray-500 mb-4">
               {resource.fileSize ? `${(resource.fileSize / 1024 / 1024).toFixed(2)} MB` : ''}
             </p>
             <div className="flex gap-2">
-              <Button onClick={handleDownload}>
+              <Button onClick={handleDownload} className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white">
                 <Download className="mr-2 h-4 w-4" />
                 Download PDF
               </Button>
               {resource.fileUrl && (
-                <Button variant="outline" asChild>
+                <Button variant="outline" className="border-red-200 text-red-700 hover:bg-red-50" asChild>
                   <a href={resource.fileUrl} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="mr-2 h-4 w-4" />
                     Open in New Tab
@@ -87,7 +88,7 @@ export default function ResourceViewer({ resource }: ResourceViewerProps) {
             <video
               src={resource.fileUrl || ''}
               controls
-              className="w-full max-h-[70vh] rounded-lg"
+              className="w-full max-h-[70vh] rounded-lg shadow-lg"
               preload="metadata"
             >
               Your browser does not support the video tag.
@@ -99,13 +100,13 @@ export default function ResourceViewer({ resource }: ResourceViewerProps) {
       case ResourceType.MUSIC:
       case ResourceType.MEDITATION:
         return (
-          <div className="bg-gray-50 rounded-lg p-8">
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-8 shadow-md">
             <div className="flex items-center justify-center mb-6">
-              <div className="w-32 h-32 bg-blue-100 rounded-full flex items-center justify-center">
+              <div className="w-32 h-32 bg-gradient-to-br from-blue-100 to-indigo-200 rounded-full flex items-center justify-center shadow-lg">
                 <Headphones className="h-16 w-16 text-blue-600" />
               </div>
             </div>
-            <h3 className="text-xl font-semibold text-center mb-4">
+            <h3 className="text-xl font-semibold text-center text-gray-900 mb-4">
               {resource.title}
             </h3>
             <p className="text-gray-600 text-center max-w-md mb-6">
@@ -115,14 +116,14 @@ export default function ResourceViewer({ resource }: ResourceViewerProps) {
               <audio
                 src={resource.fileUrl || ''}
                 controls
-                className="w-full max-w-md"
+                className="w-full max-w-md bg-white rounded-lg shadow-sm"
                 preload="metadata"
               >
                 Your browser does not support the audio element.
               </audio>
             </div>
             <div className="flex justify-center mt-6">
-              <Button onClick={handleDownload}>
+              <Button onClick={handleDownload} className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white">
                 <Download className="mr-2 h-4 w-4" />
                 Download Audio
               </Button>
@@ -132,9 +133,11 @@ export default function ResourceViewer({ resource }: ResourceViewerProps) {
 
       case ResourceType.INFOGRAPHIC:
         return (
-          <div className="flex flex-col items-center justify-center h-[70vh] bg-gray-50 rounded-lg">
-            <File className="h-16 w-16 text-blue-600 mb-4" />
-            <p className="text-gray-600 mb-4">Infographic Image</p>
+          <div className="flex flex-col items-center justify-center h-[70vh] bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg shadow-md">
+            <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mb-4">
+              <File className="h-8 w-8 text-purple-600" />
+            </div>
+            <p className="text-gray-600 mb-4 font-medium">Infographic Image</p>
             <p className="text-sm text-gray-500 mb-4">
               {resource.fileSize ? `${(resource.fileSize / 1024 / 1024).toFixed(2)} MB` : ''}
             </p>
@@ -143,14 +146,14 @@ export default function ResourceViewer({ resource }: ResourceViewerProps) {
                 <img
                   src={resource.fileUrl}
                   alt={resource.title}
-                  className="max-w-full max-h-[50vh] object-contain rounded-lg mb-4"
+                  className="max-w-full max-h-[50vh] object-contain rounded-lg shadow-sm mb-4"
                 />
                 <div className="flex gap-2">
-                  <Button onClick={handleDownload}>
+                  <Button onClick={handleDownload} className="bg-gradient-to-r from-purple-600 to-indigo-700 hover:from-purple-700 hover:to-indigo-800 text-white">
                     <Download className="mr-2 h-4 w-4" />
                     Download Image
                   </Button>
-                  <Button variant="outline" asChild>
+                  <Button variant="outline" className="border-purple-200 text-purple-700 hover:bg-purple-50" asChild>
                     <a href={resource.fileUrl} target="_blank" rel="noopener noreferrer">
                       <ExternalLink className="mr-2 h-4 w-4" />
                       View Full Size
@@ -165,21 +168,23 @@ export default function ResourceViewer({ resource }: ResourceViewerProps) {
       case ResourceType.WORKSHEET:
       case ResourceType.GUIDE:
         return (
-          <div className="flex flex-col items-center justify-center h-[70vh] bg-gray-50 rounded-lg">
-            <FileText className="h-16 w-16 text-blue-600 mb-4" />
-            <p className="text-gray-600 mb-4">
+          <div className="flex flex-col items-center justify-center h-[70vh] bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg shadow-md">
+            <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mb-4">
+              <FileText className="h-8 w-8 text-green-600" />
+            </div>
+            <p className="text-gray-600 mb-4 font-medium">
               {resource.type === ResourceType.WORKSHEET ? 'Worksheet' : 'Guide'} Document
             </p>
             <p className="text-sm text-gray-500 mb-4">
               {resource.fileSize ? `${(resource.fileSize / 1024 / 1024).toFixed(2)} MB` : ''}
             </p>
             <div className="flex gap-2">
-              <Button onClick={handleDownload}>
+              <Button onClick={handleDownload} className="bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white">
                 <Download className="mr-2 h-4 w-4" />
                 Download {resource.type === ResourceType.WORKSHEET ? 'Worksheet' : 'Guide'}
               </Button>
               {resource.fileUrl && (
-                <Button variant="outline" asChild>
+                <Button variant="outline" className="border-green-200 text-green-700 hover:bg-green-50" asChild>
                   <a href={resource.fileUrl} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="mr-2 h-4 w-4" />
                     Open in New Tab
@@ -195,24 +200,26 @@ export default function ResourceViewer({ resource }: ResourceViewerProps) {
       default:
         if (resource.content) {
           return (
-            <div className="prose max-w-none">
+            <div className="prose max-w-none bg-white p-6 rounded-lg shadow-sm">
               <ReactMarkdown>{resource.content}</ReactMarkdown>
             </div>
           );
         } else if (resource.fileUrl) {
           return (
-            <div className="flex flex-col items-center justify-center h-[70vh] bg-gray-50 rounded-lg">
-              <FileText className="h-16 w-16 text-blue-600 mb-4" />
-              <p className="text-gray-600 mb-4">Document File</p>
+            <div className="flex flex-col items-center justify-center h-[70vh] bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg shadow-md">
+              <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mb-4">
+                <FileText className="h-8 w-8 text-blue-600" />
+              </div>
+              <p className="text-gray-600 mb-4 font-medium">Document File</p>
               <p className="text-sm text-gray-500 mb-4">
                 {resource.fileSize ? `${(resource.fileSize / 1024 / 1024).toFixed(2)} MB` : ''}
               </p>
               <div className="flex gap-2">
-                <Button onClick={handleDownload}>
+                <Button onClick={handleDownload} className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white">
                   <Download className="mr-2 h-4 w-4" />
                   Download File
                 </Button>
-                <Button variant="outline" asChild>
+                <Button variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50" asChild>
                   <a href={resource.fileUrl} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="mr-2 h-4 w-4" />
                     Open in New Tab
@@ -223,7 +230,7 @@ export default function ResourceViewer({ resource }: ResourceViewerProps) {
           );
         } else {
           return (
-            <div className="text-center py-12">
+            <div className="text-center py-12 bg-white rounded-lg shadow-sm">
               <p className="text-gray-500">No content available for viewing</p>
             </div>
           );
@@ -233,26 +240,28 @@ export default function ResourceViewer({ resource }: ResourceViewerProps) {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
+      <Card className="bg-white shadow-md hover:shadow-lg transition-all duration-300 border-0 overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100 pb-4">
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="text-2xl">{resource.title}</CardTitle>
+              <CardTitle className="text-2xl text-gray-900">{resource.title}</CardTitle>
               <div className="flex flex-wrap gap-2 mt-2">
-                <Badge variant="secondary">
+                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                   {resource.type.replace('_', ' ')}
                 </Badge>
-                <Badge variant="outline">
+                <Badge variant="outline" className="border-blue-200 text-blue-700">
                   {getLanguageName(resource.language)}
                 </Badge>
                 {resource.author && (
-                  <Badge variant="outline">By {resource.author}</Badge>
+                  <Badge variant="outline" className="border-blue-200 text-blue-700">
+                    By {resource.author}
+                  </Badge>
                 )}
               </div>
             </div>
             
             {resource.fileUrl && (
-              <Button onClick={handleDownload}>
+              <Button onClick={handleDownload} className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white">
                 <Download className="mr-2 h-4 w-4" />
                 Download
               </Button>
@@ -266,10 +275,16 @@ export default function ResourceViewer({ resource }: ResourceViewerProps) {
         
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="content">Content</TabsTrigger>
-              <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="summary">Summary</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 bg-gray-100 p-1 rounded-lg">
+              <TabsTrigger value="content" className="data-[state=active]:bg-white data-[state=active]:shadow rounded-md transition-all">
+                Content
+              </TabsTrigger>
+              <TabsTrigger value="details" className="data-[state=active]:bg-white data-[state=active]:shadow rounded-md transition-all">
+                Details
+              </TabsTrigger>
+              <TabsTrigger value="summary" className="data-[state=active]:bg-white data-[state=active]:shadow rounded-md transition-all">
+                Summary
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="content" className="mt-4">
@@ -281,7 +296,7 @@ export default function ResourceViewer({ resource }: ResourceViewerProps) {
                 <h3 className="font-medium mb-2">Categories</h3>
                 <div className="flex flex-wrap gap-2">
                   {resource.categories.map((category) => (
-                    <Badge key={category} variant="outline">
+                    <Badge key={category} variant="outline" className="border-blue-200 text-blue-700">
                       {category}
                     </Badge>
                   ))}
@@ -294,7 +309,7 @@ export default function ResourceViewer({ resource }: ResourceViewerProps) {
                 <h3 className="font-medium mb-2">Tags</h3>
                 <div className="flex flex-wrap gap-2">
                   {resource.tags.map((tag) => (
-                    <Badge key={tag} variant="outline">
+                    <Badge key={tag} variant="outline" className="border-blue-200 text-blue-700">
                       {tag}
                     </Badge>
                   ))}
@@ -331,11 +346,11 @@ export default function ResourceViewer({ resource }: ResourceViewerProps) {
             
             <TabsContent value="summary" className="mt-4">
               {resource.summary ? (
-                <div className="prose max-w-none">
+                <div className="prose max-w-none bg-blue-50 p-4 rounded-lg border border-blue-100">
                   <ReactMarkdown>{resource.summary}</ReactMarkdown>
                 </div>
               ) : (
-                <div className="text-center py-12">
+                <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
                   <p className="text-gray-500">No summary available</p>
                 </div>
               )}

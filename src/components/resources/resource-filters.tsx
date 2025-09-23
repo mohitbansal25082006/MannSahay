@@ -1,4 +1,3 @@
-// E:\mannsahay\src\components\resources\resource-filters.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -123,13 +122,13 @@ export default function ResourceFilters({
             placeholder="Search resources..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
           />
         </div>
         
         <div className="flex gap-2">
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px] border-gray-300 focus:border-blue-500 focus:ring-blue-500">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>
@@ -142,7 +141,7 @@ export default function ResourceFilters({
           </Select>
           
           <Select value={sortOrder} onValueChange={setSortOrder}>
-            <SelectTrigger className="w-full sm:w-[120px]">
+            <SelectTrigger className="w-full sm:w-[120px] border-gray-300 focus:border-blue-500 focus:ring-blue-500">
               <SelectValue placeholder="Order" />
             </SelectTrigger>
             <SelectContent>
@@ -155,7 +154,7 @@ export default function ResourceFilters({
       
       <div className="flex flex-wrap gap-4">
         <Select value={selectedType} onValueChange={setSelectedType}>
-          <SelectTrigger className="w-full sm:w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px] border-gray-300 focus:border-blue-500 focus:ring-blue-500">
             <SelectValue placeholder="Resource Type" />
           </SelectTrigger>
           <SelectContent>
@@ -168,7 +167,7 @@ export default function ResourceFilters({
         </Select>
         
         <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-          <SelectTrigger className="w-full sm:w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px] border-gray-300 focus:border-blue-500 focus:ring-blue-500">
             <SelectValue placeholder="Language" />
           </SelectTrigger>
           <SelectContent>
@@ -181,30 +180,30 @@ export default function ResourceFilters({
         </Select>
         
         {hasActiveFilters && (
-          <Button variant="outline" onClick={clearFilters}>
+          <Button variant="outline" onClick={clearFilters} className="border-red-200 text-red-700 hover:bg-red-50">
             <X className="h-4 w-4 mr-2" />
             Clear Filters
           </Button>
         )}
       </div>
       
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 items-center">
         <span className="text-sm font-medium text-gray-700">Categories:</span>
         <Badge
           variant={selectedCategory === 'all' ? 'default' : 'outline'}
-          className="cursor-pointer"
+          className="cursor-pointer transition-colors"
           onClick={() => setSelectedCategory('all')}
         >
           All ({categories.reduce((sum, cat) => sum + cat.count, 0)})
         </Badge>
         {loading ? (
-          <Badge variant="outline">Loading...</Badge>
+          <Badge variant="outline" className="bg-gray-100">Loading...</Badge>
         ) : (
           categories.map((category) => (
             <Badge
               key={category.name}
               variant={selectedCategory === category.name ? 'default' : 'outline'}
-              className="cursor-pointer"
+              className="cursor-pointer transition-colors hover:bg-blue-100"
               onClick={() => setSelectedCategory(category.name)}
             >
               {category.name} ({category.count})

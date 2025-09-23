@@ -335,7 +335,7 @@ export default function ResourceDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-8">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-center items-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
@@ -347,15 +347,20 @@ export default function ResourceDetailPage() {
 
   if (!resource) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 py-8">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center py-12">
+            <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="h-8 w-8 text-red-500" />
+            </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Resource Not Found</h1>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 mb-6 max-w-md mx-auto">
               The resource you&apos;re looking for doesn&apos;t exist or has been removed.
             </p>
             <Link href="/dashboard/resources">
-              <Button>Back to Resources</Button>
+              <Button className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white">
+                Back to Resources
+              </Button>
             </Link>
           </div>
         </div>
@@ -364,11 +369,11 @@ export default function ResourceDetailPage() {
   }
 
   return (
-    <div className={`min-h-screen py-8 ${highContrastMode ? 'bg-black text-white' : 'bg-gradient-to-br from-blue-50 to-indigo-50'}`}>
+    <div className={`min-h-screen py-8 ${highContrastMode ? 'bg-black text-white' : 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-6">
           <Link href="/dashboard/resources">
-            <Button variant="ghost" className="mb-4">
+            <Button variant="ghost" className="mb-4 text-blue-600 hover:text-blue-800">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Resources
             </Button>
@@ -377,25 +382,27 @@ export default function ResourceDetailPage() {
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
-            <Card className={highContrastMode ? 'bg-gray-900 border-gray-700' : ''}>
-              <CardHeader>
+            <Card className={`${highContrastMode ? 'bg-gray-900 border-gray-700' : 'bg-white shadow-md hover:shadow-lg transition-all duration-300'}`}>
+              <CardHeader className="pb-4">
                 <div className="flex flex-wrap justify-between items-start gap-4">
                   <div className="space-y-2">
                     <div className="flex flex-wrap gap-2">
-                      <Badge variant="secondary">
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                         {resource.type.replace('_', ' ')}
                       </Badge>
-                      <Badge variant="outline">
+                      <Badge variant="outline" className="border-blue-200 text-blue-700">
                         {getLanguageName(resource.language)}
                       </Badge>
                       {resource.isFeatured && (
-                        <Badge variant="default">Featured</Badge>
+                        <Badge variant="default" className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white">
+                          Featured
+                        </Badge>
                       )}
                     </div>
-                    <CardTitle className={`text-2xl ${highContrastMode ? 'text-white' : ''}`}>
+                    <CardTitle className={`text-2xl ${highContrastMode ? 'text-white' : 'text-gray-900'}`}>
                       {resource.title}
                     </CardTitle>
-                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                       {resource.author && (
                         <div className="flex items-center gap-1">
                           <User className="h-4 w-4" />
@@ -423,14 +430,14 @@ export default function ResourceDetailPage() {
                 </div>
                 
                 {resource.description && (
-                  <p className={highContrastMode ? 'text-gray-300' : 'text-gray-600'}>
+                  <p className={`${highContrastMode ? 'text-gray-300' : 'text-gray-600'}`}>
                     {resource.description}
                   </p>
                 )}
                 
                 <div className="flex flex-wrap gap-2">
                   {resource.categories.map((category) => (
-                    <Badge key={category} variant="outline">
+                    <Badge key={category} variant="outline" className="border-blue-200 text-blue-700">
                       {category}
                     </Badge>
                   ))}
@@ -439,19 +446,29 @@ export default function ResourceDetailPage() {
               
               <CardContent>
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-4">
-                  <TabsList className="grid w-full grid-cols-5">
-                    <TabsTrigger value="content">Content</TabsTrigger>
-                    <TabsTrigger value="details">Details</TabsTrigger>
-                    <TabsTrigger value="summary">AI Summary</TabsTrigger>
-                    <TabsTrigger value="analytics">Analytics</TabsTrigger>
-                    <TabsTrigger value="comments">Comments</TabsTrigger>
+                  <TabsList className="grid w-full grid-cols-5 bg-gray-100 p-1 rounded-lg">
+                    <TabsTrigger value="content" className="data-[state=active]:bg-white data-[state=active]:shadow rounded-md transition-all">
+                      Content
+                    </TabsTrigger>
+                    <TabsTrigger value="details" className="data-[state=active]:bg-white data-[state=active]:shadow rounded-md transition-all">
+                      Details
+                    </TabsTrigger>
+                    <TabsTrigger value="summary" className="data-[state=active]:bg-white data-[state=active]:shadow rounded-md transition-all">
+                      AI Summary
+                    </TabsTrigger>
+                    <TabsTrigger value="analytics" className="data-[state=active]:bg-white data-[state=active]:shadow rounded-md transition-all">
+                      Analytics
+                    </TabsTrigger>
+                    <TabsTrigger value="comments" className="data-[state=active]:bg-white data-[state=active]:shadow rounded-md transition-all">
+                      Comments
+                    </TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="content" className="mt-4">
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs bg-blue-100 text-blue-800 border-blue-200">
                             {getLanguageName(resource.language)}
                           </Badge>
                         </div>
@@ -462,13 +479,13 @@ export default function ResourceDetailPage() {
                             size="sm"
                             onClick={handleTextToSpeech}
                             disabled={!resource.content}
-                            className="p-2 h-8 w-8"
+                            className="p-2 h-8 w-8 rounded-full hover:bg-blue-100"
                             title="Read Aloud"
                           >
                             {isPlaying ? (
-                              <VolumeX className="h-4 w-4" />
+                              <VolumeX className="h-4 w-4 text-blue-600" />
                             ) : (
-                              <Volume2 className="h-4 w-4" />
+                              <Volume2 className="h-4 w-4 text-blue-600" />
                             )}
                           </Button>
                           
@@ -476,8 +493,8 @@ export default function ResourceDetailPage() {
                             variant="ghost"
                             size="sm"
                             onClick={handleBookmark}
-                            className={`p-2 h-8 w-8 ${
-                              isBookmarked ? 'text-blue-600' : 'text-gray-500'
+                            className={`p-2 h-8 w-8 rounded-full ${
+                              isBookmarked ? 'text-blue-600' : 'text-gray-500 hover:text-blue-600'
                             }`}
                             title={isBookmarked ? 'Remove Bookmark' : 'Bookmark'}
                           >
@@ -492,7 +509,7 @@ export default function ResourceDetailPage() {
                             variant="ghost"
                             size="sm"
                             onClick={handleDownload}
-                            className="p-2 h-8 w-8 text-gray-500"
+                            className="p-2 h-8 w-8 rounded-full text-gray-500 hover:text-blue-600"
                             title="Download"
                           >
                             <Download className="h-4 w-4" />
@@ -502,7 +519,7 @@ export default function ResourceDetailPage() {
                             variant="ghost"
                             size="sm"
                             onClick={handleShare}
-                            className="p-2 h-8 w-8 text-gray-500"
+                            className="p-2 h-8 w-8 rounded-full text-gray-500 hover:text-blue-600"
                             title="Share"
                           >
                             <Share2 className="h-4 w-4" />
@@ -512,7 +529,7 @@ export default function ResourceDetailPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => setHighContrastMode(!highContrastMode)}
-                            className="p-2 h-8 w-8 text-gray-500"
+                            className="p-2 h-8 w-8 rounded-full text-gray-500 hover:text-blue-600"
                             title={highContrastMode ? 'Normal Mode' : 'High Contrast'}
                           >
                             <Accessibility className="h-4 w-4" />
@@ -520,7 +537,7 @@ export default function ResourceDetailPage() {
                         </div>
                       </div>
                       
-                      <div className="border rounded-lg overflow-hidden">
+                      <div className="border rounded-lg overflow-hidden shadow-sm">
                         {resource.fileUrl ? (
                           resource.type === ResourceType.VIDEO ||
                           resource.type === ResourceType.AUDIO ||
@@ -595,7 +612,7 @@ export default function ResourceDetailPage() {
                       <h3 className="font-medium mb-2">Categories</h3>
                       <div className="flex flex-wrap gap-2">
                         {resource.categories.map((category) => (
-                          <Badge key={category} variant="outline">
+                          <Badge key={category} variant="outline" className="border-blue-200 text-blue-700">
                             {category}
                           </Badge>
                         ))}
@@ -608,7 +625,7 @@ export default function ResourceDetailPage() {
                       <h3 className="font-medium mb-2">Tags</h3>
                       <div className="flex flex-wrap gap-2">
                         {resource.tags.map((tag) => (
-                          <Badge key={tag} variant="outline">
+                          <Badge key={tag} variant="outline" className="border-blue-200 text-blue-700">
                             {tag}
                           </Badge>
                         ))}
@@ -620,7 +637,9 @@ export default function ResourceDetailPage() {
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
                         <h3 className="text-lg font-semibold flex items-center gap-2">
-                          <Sparkles className="h-5 w-5 text-yellow-500" />
+                          <div className="bg-yellow-100 p-2 rounded-lg">
+                            <Sparkles className="h-5 w-5 text-yellow-600" />
+                          </div>
                           AI-Generated Summary
                         </h3>
                         <Button
@@ -628,7 +647,7 @@ export default function ResourceDetailPage() {
                           size="sm"
                           onClick={generateSummary}
                           disabled={summaryLoading}
-                          className="flex items-center gap-2"
+                          className="flex items-center gap-2 border-yellow-300 text-yellow-700 hover:bg-yellow-100"
                         >
                           {summaryLoading ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -644,7 +663,7 @@ export default function ResourceDetailPage() {
                           <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
                         </div>
                       ) : summary ? (
-                        <div className={`p-6 rounded-lg border ${highContrastMode ? 'bg-gray-800 border-gray-700' : 'bg-blue-50 border-blue-100'}`}>
+                        <div className={`p-6 rounded-lg border ${highContrastMode ? 'bg-gray-800 border-gray-700' : 'bg-blue-50 border-blue-100 shadow-sm'}`}>
                           <div className="prose max-w-none">
                             <p className={highContrastMode ? 'text-gray-300' : 'text-gray-700'}>
                               {summary}
@@ -659,14 +678,16 @@ export default function ResourceDetailPage() {
                         </div>
                       ) : (
                         <div className={`text-center py-12 rounded-lg border ${highContrastMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
-                          <Sparkles className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Sparkles className="h-8 w-8 text-gray-400" />
+                          </div>
                           <h3 className="text-lg font-medium text-gray-900 mb-2">
                             No Summary Available
                           </h3>
                           <p className="text-gray-500 mb-6 max-w-md mx-auto">
                             Generate an AI-powered summary of this resource to get key insights and takeaways at a glance.
                           </p>
-                          <Button onClick={generateSummary}>
+                          <Button onClick={generateSummary} className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white">
                             Generate Summary
                           </Button>
                         </div>
@@ -690,14 +711,14 @@ export default function ResourceDetailPage() {
           </div>
           
           <div className="lg:col-span-1 space-y-6">
-            <Card className={highContrastMode ? 'bg-gray-900 border-gray-700' : ''}>
+            <Card className={`${highContrastMode ? 'bg-gray-900 border-gray-700' : 'bg-white shadow-md hover:shadow-lg transition-all duration-300'}`}>
               <CardHeader>
                 <CardTitle className="text-lg">Resource Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <Button
                   variant="outline"
-                  className="w-full justify-start"
+                  className="w-full justify-start border-blue-200 text-blue-700 hover:bg-blue-50"
                   onClick={handleBookmark}
                 >
                   <Bookmark className={`mr-2 h-4 w-4 ${isBookmarked ? 'fill-current' : ''}`} />
@@ -706,7 +727,7 @@ export default function ResourceDetailPage() {
                 
                 <Button
                   variant="outline"
-                  className="w-full justify-start"
+                  className="w-full justify-start border-blue-200 text-blue-700 hover:bg-blue-50"
                   onClick={handleDownload}
                 >
                   <Download className="mr-2 h-4 w-4" />
@@ -715,7 +736,7 @@ export default function ResourceDetailPage() {
                 
                 <Button
                   variant="outline"
-                  className="w-full justify-start"
+                  className="w-full justify-start border-blue-200 text-blue-700 hover:bg-blue-50"
                   onClick={handleShare}
                 >
                   <Share2 className="mr-2 h-4 w-4" />
@@ -724,7 +745,7 @@ export default function ResourceDetailPage() {
                 
                 <Button
                   variant="outline"
-                  className="w-full justify-start"
+                  className="w-full justify-start border-blue-200 text-blue-700 hover:bg-blue-50"
                   onClick={handleTextToSpeech}
                   disabled={!resource.content}
                 >
@@ -743,7 +764,7 @@ export default function ResourceDetailPage() {
                 
                 <Button
                   variant="outline"
-                  className="w-full justify-start"
+                  className="w-full justify-start border-blue-200 text-blue-700 hover:bg-blue-50"
                   onClick={() => setHighContrastMode(!highContrastMode)}
                 >
                   <Accessibility className="mr-2 h-4 w-4" />
@@ -752,7 +773,7 @@ export default function ResourceDetailPage() {
                 
                 <Button
                   variant="outline"
-                  className="w-full justify-start"
+                  className="w-full justify-start border-blue-200 text-blue-700 hover:bg-blue-50"
                   onClick={() => setAiAssistantOpen(true)}
                 >
                   <Brain className="mr-2 h-4 w-4" />
@@ -761,23 +782,23 @@ export default function ResourceDetailPage() {
               </CardContent>
             </Card>
             
-            <Card className={highContrastMode ? 'bg-gray-900 border-gray-700' : ''}>
+            <Card className={`${highContrastMode ? 'bg-gray-900 border-gray-700' : 'bg-white shadow-md hover:shadow-lg transition-all duration-300'}`}>
               <CardHeader>
                 <CardTitle className="text-lg">Statistics</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
                   <span className="text-gray-600">Views</span>
                   <span className="font-medium">{resource.viewCount}</span>
                 </div>
                 
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
                   <span className="text-gray-600">Downloads</span>
                   <span className="font-medium">{resource.downloadCount}</span>
                 </div>
                 
                 {resource.averageRating && (
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
                     <span className="text-gray-600">Rating</span>
                     <div className="flex items-center gap-1">
                       <Star className="h-4 w-4 text-yellow-400 fill-current" />
@@ -787,7 +808,7 @@ export default function ResourceDetailPage() {
                   </div>
                 )}
                 
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
                   <span className="text-gray-600">Reading Time</span>
                   <span className="font-medium">{readingTime} min</span>
                 </div>
@@ -795,10 +816,12 @@ export default function ResourceDetailPage() {
             </Card>
             
             {summary && (
-              <Card className={highContrastMode ? 'bg-gray-900 border-gray-700' : ''}>
+              <Card className={`${highContrastMode ? 'bg-gray-900 border-gray-700' : 'bg-white shadow-md hover:shadow-lg transition-all duration-300'}`}>
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-yellow-500" />
+                    <div className="bg-yellow-100 p-2 rounded-lg">
+                      <Sparkles className="h-5 w-5 text-yellow-600" />
+                    </div>
                     Summary Preview
                   </CardTitle>
                 </CardHeader>
@@ -809,7 +832,7 @@ export default function ResourceDetailPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="mt-2 w-full"
+                    className="mt-2 w-full border-blue-200 text-blue-700 hover:bg-blue-50"
                     onClick={() => setActiveTab('summary')}
                   >
                     View Full Summary
@@ -818,10 +841,12 @@ export default function ResourceDetailPage() {
               </Card>
             )}
             
-            <Card className={highContrastMode ? 'bg-gray-900 border-gray-700' : ''}>
+            <Card className={`${highContrastMode ? 'bg-gray-900 border-gray-700' : 'bg-white shadow-md hover:shadow-lg transition-all duration-300'}`}>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <Target className="h-5 w-5 text-purple-600" />
+                  <div className="bg-purple-100 p-2 rounded-lg">
+                    <Target className="h-5 w-5 text-purple-600" />
+                  </div>
                   Mood-Based Recommendations
                 </CardTitle>
               </CardHeader>
@@ -832,26 +857,28 @@ export default function ResourceDetailPage() {
                   </div>
                 ) : recommendationsError ? (
                   <div className="text-center py-4">
-                    <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
+                    <div className="bg-red-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2">
+                      <AlertCircle className="h-6 w-6 text-red-500" />
+                    </div>
                     <p className="text-sm text-gray-600 mb-2">{recommendationsError}</p>
-                    <Button variant="outline" size="sm" onClick={getMoodBasedRecommendations}>
+                    <Button variant="outline" size="sm" onClick={getMoodBasedRecommendations} className="border-blue-200 text-blue-700 hover:bg-blue-50">
                       Try Again
                     </Button>
                   </div>
                 ) : moodBasedRecommendations.length > 0 ? (
                   <div className="space-y-3">
                     {moodBasedRecommendations.map((rec, index) => (
-                      <div key={index} className="p-2 border rounded-lg">
+                      <div key={index} className="p-3 border rounded-lg bg-white shadow-sm">
                         <h4 className="font-medium text-sm">{rec.title}</h4>
                         <p className="text-xs text-gray-600">{rec.reason}</p>
                         <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs bg-purple-100 text-purple-800 border-purple-200">
                             {rec.mood}
                           </Badge>
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            className="text-xs h-5 px-1"
+                            className="text-xs h-5 px-1 text-purple-700 hover:bg-purple-100"
                             onClick={() => {
                               if (rec.resourceId) {
                                 window.location.href = `/dashboard/resources/${rec.resourceId}`;
@@ -871,7 +898,7 @@ export default function ResourceDetailPage() {
                     </p>
                     <Button 
                       variant="outline" 
-                      className="w-full"
+                      className="w-full border-blue-200 text-blue-700 hover:bg-blue-50"
                       onClick={getMoodBasedRecommendations}
                     >
                       Get Recommendations
@@ -881,10 +908,12 @@ export default function ResourceDetailPage() {
               </CardContent>
             </Card>
             
-            <Card className={highContrastMode ? 'bg-gray-900 border-gray-700' : ''}>
+            <Card className={`${highContrastMode ? 'bg-gray-900 border-gray-700' : 'bg-white shadow-md hover:shadow-lg transition-all duration-300'}`}>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <Award className="h-5 w-5 text-yellow-600" />
+                  <div className="bg-yellow-100 p-2 rounded-lg">
+                    <Award className="h-5 w-5 text-yellow-600" />
+                  </div>
                   Content Quality
                 </CardTitle>
               </CardHeader>
@@ -894,7 +923,7 @@ export default function ResourceDetailPage() {
                 </p>
                 <Button 
                   variant="outline" 
-                  className="w-full"
+                  className="w-full border-blue-200 text-blue-700 hover:bg-blue-50"
                   onClick={analyzeContentQuality}
                 >
                   Analyze Quality

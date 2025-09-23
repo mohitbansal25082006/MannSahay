@@ -187,9 +187,9 @@ export default function ResourceAnalytics({
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      <Card className="bg-white shadow-md hover:shadow-lg transition-all duration-300 border-0 overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100 pb-4">
+          <CardTitle className="flex items-center gap-2 text-lg md:text-xl font-bold text-gray-900">
             <BarChart3 className="h-5 w-5 text-blue-600" />
             Resource Analytics
           </CardTitle>
@@ -210,20 +210,22 @@ export default function ResourceAnalytics({
 
   if (!analytics) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      <Card className="bg-white shadow-md hover:shadow-lg transition-all duration-300 border-0 overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100 pb-4">
+          <CardTitle className="flex items-center gap-2 text-lg md:text-xl font-bold text-gray-900">
             <BarChart3 className="h-5 w-5 text-blue-600" />
             Resource Analytics
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
-            <Info className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Info className="h-8 w-8 text-gray-400" />
+            </div>
+            <h3 className="text-lg md:text-xl font-medium text-gray-900 mb-2">
               Analytics Unavailable
             </h3>
-            <p className="text-gray-500">
+            <p className="text-gray-500 max-w-md mx-auto">
               Unable to load analytics data at this time.
             </p>
           </div>
@@ -234,47 +236,55 @@ export default function ResourceAnalytics({
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      <Card className="bg-white shadow-md hover:shadow-lg transition-all duration-300 border-0 overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100 pb-4">
+          <CardTitle className="flex items-center gap-2 text-lg md:text-xl font-bold text-gray-900">
             <BarChart3 className="h-5 w-5 text-blue-600" />
             Engagement Metrics
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="flex flex-col items-center p-4 bg-blue-50 rounded-lg">
-              <Eye className="h-8 w-8 text-blue-600 mb-2" />
-              <span className="text-2xl font-bold">{analytics.viewCount}</span>
+            <div className="flex flex-col items-center p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-100 shadow-sm">
+              <div className="bg-blue-100 p-2 rounded-full mb-2">
+                <Eye className="h-6 w-6 text-blue-600" />
+              </div>
+              <span className="text-2xl md:text-3xl font-bold text-blue-700">{analytics.viewCount}</span>
               <span className="text-sm text-gray-600">Views</span>
             </div>
             
-            <div className="flex flex-col items-center p-4 bg-green-50 rounded-lg">
-              <Download className="h-8 w-8 text-green-600 mb-2" />
-              <span className="text-2xl font-bold">{analytics.downloadCount}</span>
+            <div className="flex flex-col items-center p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-100 shadow-sm">
+              <div className="bg-green-100 p-2 rounded-full mb-2">
+                <Download className="h-6 w-6 text-green-600" />
+              </div>
+              <span className="text-2xl md:text-3xl font-bold text-green-700">{analytics.downloadCount}</span>
               <span className="text-sm text-gray-600">Downloads</span>
             </div>
             
             {analytics.averageRating && (
-              <div className="flex flex-col items-center p-4 bg-yellow-50 rounded-lg">
-                <Star className="h-8 w-8 text-yellow-600 mb-2" />
-                <span className="text-2xl font-bold">{analytics.averageRating}</span>
+              <div className="flex flex-col items-center p-4 bg-gradient-to-br from-yellow-50 to-amber-50 rounded-lg border border-yellow-100 shadow-sm">
+                <div className="bg-yellow-100 p-2 rounded-full mb-2">
+                  <Star className="h-6 w-6 text-yellow-600" />
+                </div>
+                <span className="text-2xl md:text-3xl font-bold text-yellow-700">{analytics.averageRating}</span>
                 <span className="text-sm text-gray-600">Rating</span>
               </div>
             )}
             
-            <div className="flex flex-col items-center p-4 bg-purple-50 rounded-lg">
-              <Users className="h-8 w-8 text-purple-600 mb-2" />
-              <span className="text-2xl font-bold">{analytics.userEngagement.uniqueUsers}</span>
+            <div className="flex flex-col items-center p-4 bg-gradient-to-br from-purple-50 to-violet-50 rounded-lg border border-purple-100 shadow-sm">
+              <div className="bg-purple-100 p-2 rounded-full mb-2">
+                <Users className="h-6 w-6 text-purple-600" />
+              </div>
+              <span className="text-2xl md:text-3xl font-bold text-purple-700">{analytics.userEngagement.uniqueUsers}</span>
               <span className="text-sm text-gray-600">Unique Users</span>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      <Card className="bg-white shadow-md hover:shadow-lg transition-all duration-300 border-0 overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-yellow-50 to-amber-50 border-b border-gray-100 pb-4">
+          <CardTitle className="flex items-center gap-2 text-lg md:text-xl font-bold text-gray-900">
             <Award className="h-5 w-5 text-yellow-600" />
             Content Quality Analysis
           </CardTitle>
@@ -282,13 +292,13 @@ export default function ResourceAnalytics({
         <CardContent>
           {contentQuality ? (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center gap-2">
                   {getQualityIcon(contentQuality.score)}
                   <span className="font-medium">Quality Score</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <span className={`text-2xl font-bold ${getQualityColor(contentQuality.score)}`}>
+                  <span className={`text-2xl md:text-3xl font-bold ${getQualityColor(contentQuality.score)}`}>
                     {contentQuality.score}/10
                   </span>
                   <Badge variant={getQualityBadgeVariant(contentQuality.score)}>
@@ -297,7 +307,7 @@ export default function ResourceAnalytics({
                 </div>
               </div>
               
-              <div className="p-4 bg-gray-50 rounded-lg">
+              <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <p className="text-gray-700">{contentQuality.assessment}</p>
               </div>
               
@@ -306,8 +316,10 @@ export default function ResourceAnalytics({
                 <ul className="space-y-1">
                   {contentQuality.suggestions.map((suggestion, index) => (
                     <li key={index} className="flex items-start gap-2 text-sm">
-                      <Lightbulb className="h-4 w-4 text-yellow-500 mt-0.5 flex-shrink-0" />
-                      <span>{suggestion}</span>
+                      <div className="bg-yellow-100 p-1 rounded-full mt-0.5 flex-shrink-0">
+                        <Lightbulb className="h-3 w-3 text-yellow-600" />
+                      </div>
+                      <span className="text-gray-700">{suggestion}</span>
                     </li>
                   ))}
                 </ul>
@@ -315,7 +327,12 @@ export default function ResourceAnalytics({
             </div>
           ) : (
             <div className="text-center py-4">
-              <Button variant="outline" onClick={analyzeContentQuality} disabled={qualityLoading}>
+              <Button 
+                variant="outline" 
+                onClick={analyzeContentQuality} 
+                disabled={qualityLoading}
+                className="border-yellow-200 text-yellow-700 hover:bg-yellow-50"
+              >
                 {qualityLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -333,9 +350,9 @@ export default function ResourceAnalytics({
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      <Card className="bg-white shadow-md hover:shadow-lg transition-all duration-300 border-0 overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-purple-50 to-violet-50 border-b border-gray-100 pb-4">
+          <CardTitle className="flex items-center gap-2 text-lg md:text-xl font-bold text-gray-900">
             <Target className="h-5 w-5 text-purple-600" />
             Mood-Based Recommendations
           </CardTitle>
@@ -343,36 +360,44 @@ export default function ResourceAnalytics({
         <CardContent>
           {moodRecommendationsLoading ? (
             <div className="flex justify-center items-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+              <Loader2 className="h-6 w-6 animate-spin text-purple-600" />
             </div>
           ) : moodError ? (
             <div className="text-center py-4">
-              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="h-8 w-8 text-red-500" />
+              </div>
+              <h3 className="text-lg md:text-xl font-medium text-gray-900 mb-2">
                 Error Loading Recommendations
               </h3>
-              <p className="text-gray-500 mb-4">{moodError}</p>
-              <Button variant="outline" onClick={getMoodBasedRecommendations}>
+              <p className="text-gray-500 mb-4 max-w-md mx-auto">{moodError}</p>
+              <Button 
+                variant="outline" 
+                onClick={getMoodBasedRecommendations}
+                className="border-purple-200 text-purple-700 hover:bg-purple-50"
+              >
                 Try Again
               </Button>
             </div>
           ) : moodRecommendations.length > 0 ? (
             <div className="space-y-3">
               {moodRecommendations.map((rec, index) => (
-                <div key={index} className="p-3 border rounded-lg">
+                <div key={index} className="p-3 border border-purple-100 rounded-lg bg-white hover:bg-purple-50 transition-colors shadow-sm">
                   <div className="flex items-start gap-3">
-                    <Brain className="h-5 w-5 text-purple-600 mt-0.5" />
+                    <div className="bg-purple-100 p-2 rounded-full">
+                      <Brain className="h-5 w-5 text-purple-600" />
+                    </div>
                     <div className="flex-1">
-                      <h4 className="font-medium">{rec.title}</h4>
-                      <p className="text-sm text-gray-600">{rec.reason}</p>
+                      <h4 className="font-medium text-gray-900">{rec.title}</h4>
+                      <p className="text-sm text-gray-600 mt-1">{rec.reason}</p>
                       <div className="flex items-center gap-2 mt-2">
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs border-purple-200 text-purple-700">
                           {rec.mood}
                         </Badge>
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          className="text-xs h-6 px-2"
+                          className="text-xs h-6 px-2 text-purple-700 hover:bg-purple-100"
                           onClick={() => {
                             if (rec.resourceId) {
                               window.location.href = `/dashboard/resources/${rec.resourceId}`;
@@ -390,10 +415,17 @@ export default function ResourceAnalytics({
             </div>
           ) : (
             <div className="text-center py-4">
-              <p className="text-gray-500 mb-3">
+              <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Brain className="h-8 w-8 text-purple-600" />
+              </div>
+              <p className="text-gray-500 mb-3 max-w-md mx-auto">
                 Get personalized recommendations based on your current mood
               </p>
-              <Button variant="outline" onClick={getMoodBasedRecommendations}>
+              <Button 
+                variant="outline" 
+                onClick={getMoodBasedRecommendations}
+                className="border-purple-200 text-purple-700 hover:bg-purple-50"
+              >
                 Get Recommendations
               </Button>
             </div>
@@ -402,15 +434,15 @@ export default function ResourceAnalytics({
       </Card>
 
       {analytics.trending && (
-        <Card className="border-green-200 bg-green-50">
-          <CardHeader>
+        <Card className="border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden">
+          <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 text-green-800">
               <TrendingUp className="h-5 w-5" />
               Trending Resource
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-green-700">
+            <p className="text-green-700 bg-green-100 p-3 rounded-lg">
               This resource is trending in the {categories[0] || 'general'} category this week!
             </p>
           </CardContent>

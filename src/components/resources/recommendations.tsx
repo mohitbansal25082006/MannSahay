@@ -48,11 +48,11 @@ export default function Recommendations() {
   }, []);
 
   return (
-    <Card className="sticky top-24">
-      <CardHeader className="pb-3">
+    <Card className="sticky top-24 bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-100 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden">
+      <CardHeader className="bg-gradient-to-r from-purple-600 to-indigo-700 text-white pb-4">
         <div className="flex justify-between items-center">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Brain className="h-5 w-5 text-purple-600" />
+          <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+            <Brain className="h-5 w-5" />
             AI-Powered Recommendations
           </CardTitle>
           <Button
@@ -60,7 +60,7 @@ export default function Recommendations() {
             size="sm"
             onClick={fetchRecommendations}
             disabled={loading}
-            className="p-1 h-8 w-8"
+            className="p-1 h-8 w-8 text-white hover:bg-purple-700"
           >
             <RefreshCw
               className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`}
@@ -68,7 +68,7 @@ export default function Recommendations() {
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 p-4">
         {loading ? (
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => (
@@ -81,7 +81,7 @@ export default function Recommendations() {
           </div>
         ) : recommendations.length === 0 ? (
           <div className="text-center py-8">
-            <div className="text-gray-400 mb-4">
+            <div className="text-purple-200 mb-4">
               <Brain className="h-12 w-12 mx-auto" />
             </div>
             <p className="text-gray-500 text-sm">
@@ -91,12 +91,12 @@ export default function Recommendations() {
         ) : (
           <div className="space-y-4">
             {recommendations.slice(0, 3).map((resource) => (
-              <div key={resource.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+              <div key={resource.id} className="border border-purple-100 rounded-lg p-4 bg-white hover:bg-purple-50 transition-colors shadow-sm">
                 <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-medium text-sm line-clamp-2 flex-1">
+                  <h4 className="font-medium text-sm line-clamp-2 flex-1 text-gray-900">
                     {resource.title}
                   </h4>
-                  <Badge variant="outline" className="text-xs ml-2">
+                  <Badge variant="outline" className="text-xs ml-2 border-purple-200 text-purple-700">
                     {resource.type.replace('_', ' ')}
                   </Badge>
                 </div>
@@ -106,7 +106,7 @@ export default function Recommendations() {
                 </p>
                 
                 {aiReasons[resource.id] && (
-                  <div className="flex items-start gap-1 mb-3">
+                  <div className="flex items-start gap-1 mb-3 bg-purple-50 p-2 rounded-lg">
                     <Sparkles className="h-3 w-3 text-purple-500 mt-0.5 flex-shrink-0" />
                     <p className="text-xs text-purple-600">
                       {aiReasons[resource.id]}
@@ -118,7 +118,7 @@ export default function Recommendations() {
                   <div className="flex items-center gap-1">
                     {resource.averageRating && (
                       <>
-                        <span className="text-xs font-medium">
+                        <span className="text-xs font-medium text-gray-900">
                           {resource.averageRating}
                         </span>
                         <span className="text-xs text-gray-500">/5</span>
@@ -129,7 +129,7 @@ export default function Recommendations() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-xs h-7 px-2"
+                    className="text-xs h-7 px-2 text-purple-700 hover:bg-purple-50"
                     onClick={() => {
                       window.location.href = `/dashboard/resources/${resource.id}`;
                     }}

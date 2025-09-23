@@ -554,20 +554,20 @@ export default function PostPage() {
 
   const getRiskColor = (riskLevel: string) => {
     switch (riskLevel) {
-      case 'HIGH': return 'bg-red-100 text-red-800';
-      case 'MEDIUM': return 'bg-yellow-100 text-yellow-800';
-      case 'LOW': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'HIGH': return 'bg-red-100 text-red-800 border-red-200';
+      case 'MEDIUM': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'LOW': return 'bg-blue-100 text-blue-800 border-blue-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case 'academic': return 'bg-purple-100 text-purple-800';
-      case 'relationships': return 'bg-pink-100 text-pink-800';
-      case 'mental-health': return 'bg-green-100 text-green-800';
-      case 'lifestyle': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'academic': return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'relationships': return 'bg-pink-100 text-pink-800 border-pink-200';
+      case 'mental-health': return 'bg-green-100 text-green-800 border-green-200';
+      case 'lifestyle': return 'bg-blue-100 text-blue-800 border-blue-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
@@ -646,20 +646,18 @@ export default function PostPage() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 forum-gradient min-h-screen">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
-          <div className="forum-card card-hover mb-8 fade-in">
-            <CardHeader>
-              <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-            </CardHeader>
-            <CardContent>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/3 mb-6"></div>
+            <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+              <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
               <div className="space-y-2">
                 <div className="h-4 bg-gray-200 rounded"></div>
                 <div className="h-4 bg-gray-200 rounded w-5/6"></div>
                 <div className="h-4 bg-gray-200 rounded w-4/6"></div>
               </div>
-            </CardContent>
+            </div>
           </div>
         </div>
       </div>
@@ -668,11 +666,16 @@ export default function PostPage() {
 
   if (!post) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 forum-gradient min-h-screen text-center">
-        <h2 className="text-2xl font-semibold mb-4">Post not found</h2>
-        <Button onClick={() => router.push('/dashboard/forum')}>
-          Back to Forum
-        </Button>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-md p-8 text-center">
+          <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="h-8 w-8 text-red-500" />
+          </div>
+          <h2 className="text-2xl font-semibold mb-4">Post not found</h2>
+          <Button onClick={() => router.push('/dashboard/forum')} className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white">
+            Back to Forum
+          </Button>
+        </div>
       </div>
     );
   }
@@ -680,436 +683,445 @@ export default function PostPage() {
   const isAuthor = session?.user?.id === post.author.id;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 forum-gradient min-h-screen">
-      <Button 
-        variant="ghost" 
-        onClick={() => router.back()}
-        className="mb-6"
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Back
-      </Button>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+        <Button 
+          variant="ghost" 
+          onClick={() => router.back()}
+          className="mb-6 flex items-center text-gray-600 hover:text-gray-900"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
 
-      {/* Post */}
-      <div className="forum-card card-hover mb-8 fade-in">
-        <CardHeader>
-          <div className="flex items-start justify-between">
-            <div className="flex items-center space-x-3">
-              <Avatar className="h-12 w-12">
-                {post.isAnonymous ? (
-                  <AvatarFallback className="bg-gray-200">
-                    A
-                  </AvatarFallback>
-                ) : (
-                  <>
-                    <AvatarImage src={post.author.image || ''} alt={post.author.name || ''} />
-                    <AvatarFallback>
-                      {post.author.name?.charAt(0).toUpperCase() || 'U'}
+        {/* Post */}
+        <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 mb-8 overflow-hidden">
+          <CardHeader className="pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              <div className="flex items-center space-x-3">
+                <Avatar className="h-12 w-12">
+                  {post.isAnonymous ? (
+                    <AvatarFallback className="bg-gradient-to-r from-gray-300 to-gray-400 text-gray-700">
+                      A
                     </AvatarFallback>
-                  </>
-                )}
-              </Avatar>
-              <div>
-                <div className="flex items-center space-x-2">
-                  <span className="font-medium">
-                    {post.isAnonymous ? 'Anonymous' : post.author.name || 'User'}
-                  </span>
-                  {post.flagged && (
-                    <Badge variant="destructive" className="text-xs">
-                      Flagged
-                    </Badge>
-                  )}
-                  <Badge className={`text-xs ${getRiskColor(post.riskLevel)}`}>
-                    {post.riskLevel}
-                  </Badge>
-                  <Badge variant="outline" className="text-xs">
-                    {getLanguageName(post.language)}
-                  </Badge>
-                </div>
-                <div className="flex items-center space-x-2 text-sm text-gray-500">
-                  <span>
-                    {post.createdAt 
-                      ? formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })
-                      : 'Unknown date'}
-                  </span>
-                  <span>•</span>
-                  <span className="flex items-center">
-                    <Eye className="h-3 w-3 mr-1" />
-                    {post.views}
-                  </span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="relative">
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => setShowActions(!showActions)}
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-              
-              {showActions && (
-                <div className="absolute right-0 z-10 mt-1 w-48 bg-white rounded-md shadow-lg py-1 border border-gray-200">
-                  {(isAuthor || isAdmin) && (
+                  ) : (
                     <>
-                      <button
-                        onClick={() => router.push(`/dashboard/forum/post/${id}/edit`)}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        <Edit className="h-4 w-4 inline mr-2" />
-                        Edit
-                      </button>
-                      <button
-                        onClick={handleDelete}
-                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                      >
-                        <Trash2 className="h-4 w-4 inline mr-2" />
-                        Delete
-                      </button>
+                      <AvatarImage src={post.author.image || ''} alt={post.author.name || ''} />
+                      <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
+                        {post.author.name?.charAt(0).toUpperCase() || 'U'}
+                      </AvatarFallback>
                     </>
                   )}
-                  <button
-                    onClick={handleFlag}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    <Flag className="h-4 w-4 inline mr-2" />
-                    Report
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-2 mt-2">
-            <Badge className={`text-xs ${getCategoryColor(post.category)}`}>
-              {post.category}
-            </Badge>
-            
-            <div className="flex space-x-2 ml-auto">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={fetchSuggestions}
-                disabled={isLoadingSuggestions || !post.content}
-                className="text-xs h-7 px-2"
-              >
-                <SpellCheck className="h-3 w-3 mr-1" />
-                {isLoadingSuggestions ? 'Checking...' : 'Check Writing'}
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={fetchToneAnalysis}
-                disabled={isLoadingToneAnalysis || !post.content}
-                className="text-xs h-7 px-2"
-              >
-                <AlertTriangle className="h-3 w-3 mr-1" />
-                {isLoadingToneAnalysis ? 'Analyzing...' : 'Analyze Tone'}
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        
-        <CardContent>
-          {/* Writing Suggestions */}
-          {showSuggestions && suggestions && (
-            <div className="mb-4 p-3 bg-blue-50 rounded-md border border-blue-200">
-              <div className="flex justify-between items-start mb-2">
-                <h4 className="font-medium text-blue-800 flex items-center">
-                  <SpellCheck className="h-4 w-4 mr-1" />
-                  Writing Suggestions
-                </h4>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setShowSuggestions(false)}
-                  className="h-6 w-6 p-0"
-                >
-                  ×
-                </Button>
-              </div>
-              
-              {suggestions.grammar && suggestions.grammar.length > 0 && (
-                <div className="mb-2">
-                  <p className="text-sm font-medium text-blue-700">Grammar:</p>
-                  <ul className="text-xs text-blue-600 list-disc pl-5">
-                    {suggestions.grammar.map((item: string, index: number) => (
-                      <li key={index}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              
-              {suggestions.clarity && suggestions.clarity.length > 0 && (
-                <div className="mb-2">
-                  <p className="text-sm font-medium text-blue-700">Clarity:</p>
-                  <ul className="text-xs text-blue-600 list-disc pl-5">
-                    {suggestions.clarity.map((item: string, index: number) => (
-                      <li key={index}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              
-              {suggestions.tone && suggestions.tone.length > 0 && (
-                <div className="mb-2">
-                  <p className="text-sm font-medium text-blue-700">Tone:</p>
-                  <ul className="text-xs text-blue-600 list-disc pl-5">
-                    {suggestions.tone.map((item: string, index: number) => (
-                      <li key={index}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              
-              {suggestions.suggestedText && (
-                <div className="mt-2 p-2 bg-white rounded border border-blue-200">
-                  <p className="text-xs font-medium text-blue-700 mb-1">Suggested Text:</p>
-                  <p className="text-xs text-blue-800">{suggestions.suggestedText}</p>
-                </div>
-              )}
-            </div>
-          )}
-          
-          {/* Tone Analysis */}
-          {showToneAnalysis && toneAnalysis && (
-            <div className="mb-4 p-3 bg-purple-50 rounded-md border border-purple-200">
-              <div className="flex justify-between items-start mb-2">
-                <h4 className="font-medium text-purple-800 flex items-center">
-                  <AlertTriangle className="h-4 w-4 mr-1" />
-                  Tone Analysis
-                </h4>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setShowToneAnalysis(false)}
-                  className="h-6 w-6 p-0"
-                >
-                  ×
-                </Button>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                </Avatar>
                 <div>
-                  <p className="text-sm font-medium text-purple-700">Overall Tone:</p>
-                  <p className="text-xs text-purple-800">{toneAnalysis.overallTone}</p>
-                </div>
-                
-                <div>
-                  <p className="text-sm font-medium text-purple-700">Respectfulness:</p>
-                  <p className="text-xs text-purple-800">{toneAnalysis.respectfulness}</p>
-                </div>
-              </div>
-              
-              {toneAnalysis.emotions && toneAnalysis.emotions.length > 0 && (
-                <div className="mt-2">
-                  <p className="text-sm font-medium text-purple-700">Detected Emotions:</p>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {toneAnalysis.emotions.map((emotion: string, index: number) => (
-                      <Badge key={index} variant="outline" className="text-xs border-purple-300 text-purple-700">
-                        {emotion}
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <span className="font-medium text-gray-900">
+                      {post.isAnonymous ? 'Anonymous' : post.author.name || 'User'}
+                    </span>
+                    {post.flagged && (
+                      <Badge variant="destructive" className="text-xs">
+                        Flagged
                       </Badge>
-                    ))}
+                    )}
+                    <Badge className={`text-xs ${getRiskColor(post.riskLevel)}`}>
+                      {post.riskLevel}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs flex items-center">
+                      <Languages className="h-3 w-3 mr-1" />
+                      {getLanguageName(post.language)}
+                    </Badge>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
+                    <span>
+                      {post.createdAt 
+                        ? formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })
+                        : 'Unknown date'}
+                    </span>
+                    <span className="hidden sm:inline">•</span>
+                    <span className="flex items-center">
+                      <Eye className="h-3 w-3 mr-1" />
+                      {post.views}
+                    </span>
                   </div>
                 </div>
-              )}
-              
-              {toneAnalysis.suggestions && toneAnalysis.suggestions.length > 0 && (
-                <div className="mt-2">
-                  <p className="text-sm font-medium text-purple-700">Suggestions:</p>
-                  <ul className="text-xs text-purple-600 list-disc pl-5">
-                    {toneAnalysis.suggestions.map((item: string, index: number) => (
-                      <li key={index}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
-          
-          {post.title && (
-            <h1 className="text-2xl font-bold mb-4">
-              {isTranslated && translatedTitle ? translatedTitle : post.title}
-            </h1>
-          )}
-          <div className="prose max-w-none mb-6">
-            <p className="text-gray-700 whitespace-pre-line">
-              {isTranslated && translatedContent ? translatedContent : post.content}
-            </p>
-          </div>
-          
-          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLike}
-                className={`flex items-center space-x-1 ${isLiked ? 'text-red-500' : 'text-gray-500'}`}
-              >
-                <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
-                <span>{post._count.likes}</span>
-              </Button>
-              
-              <Button variant="ghost" size="sm" className="flex items-center space-x-1 text-gray-500">
-                <MessageCircle className="h-4 w-4" />
-                <span>{post._count.replies}</span>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleBookmark}
-                className={`flex items-center space-x-1 ${isBookmarked ? 'text-blue-500' : 'text-gray-500'}`}
-              >
-                <Bookmark className={`h-4 w-4 ${isBookmarked ? 'fill-current' : ''}`} />
-                <span>{post._count.bookmarks}</span>
-              </Button>
-              
-              <TranslationToggle
-                onTranslate={handleTranslate}
-                isTranslated={isTranslated}
-                isLoading={isTranslating}
-              />
-            </div>
-            
-            <Button variant="ghost" size="sm" onClick={handleShare} className="text-gray-500">
-              <Share2 className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardContent>
-      </div>
-
-      {/* AI Summary Section */}
-      <div className="summary-card card-hover mb-6 fade-in">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center text-blue-800">
-            <Bot className="h-5 w-5 mr-2" />
-            AI Thread Summary
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={fetchSummary}
-              disabled={loadingSummary}
-              className="ml-auto text-blue-600 hover:text-blue-800 hover:bg-blue-100"
-            >
-              <RefreshCw className={`h-4 w-4 ${loadingSummary ? 'animate-spin' : ''}`} />
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loadingSummary ? (
-            <div className="flex items-center justify-center py-4">
-              <RefreshCw className="h-6 w-6 animate-spin text-blue-500 mr-2" />
-              <span className="text-blue-700">Generating summary...</span>
-            </div>
-          ) : summary ? (
-            <div className="space-y-3">
-              <div className="p-3 bg-white rounded-md border border-blue-200">
-                <p className="text-blue-800">{summary.summary}</p>
               </div>
               
-              {summary.keyPoints && summary.keyPoints.length > 0 && (
-                <div>
-                  <h4 className="font-medium text-blue-800 mb-2 flex items-center">
-                    <Lightbulb className="h-4 w-4 mr-2" />
-                    Key Points
-                  </h4>
-                  <ul className="space-y-1">
-                    {summary.keyPoints.map((point: string, index: number) => (
-                      <li key={index} className="text-blue-700 text-sm flex items-start">
-                        <span className="text-blue-500 mr-2">•</span>
-                        {point}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              <div className="relative">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => setShowActions(!showActions)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+                
+                {showActions && (
+                  <div className="absolute right-0 z-10 mt-1 w-48 bg-white rounded-md shadow-lg py-1 border border-gray-200">
+                    {(isAuthor || isAdmin) && (
+                      <>
+                        <button
+                          onClick={() => router.push(`/dashboard/forum/post/${id}/edit`)}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          <Edit className="h-4 w-4 inline mr-2" />
+                          Edit
+                        </button>
+                        <button
+                          onClick={handleDelete}
+                          className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                        >
+                          <Trash2 className="h-4 w-4 inline mr-2" />
+                          Delete
+                        </button>
+                      </>
+                    )}
+                    <button
+                      onClick={handleFlag}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      <Flag className="h-4 w-4 inline mr-2" />
+                      Report
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              <Badge className={`text-xs ${getCategoryColor(post.category)}`}>
+                {post.category}
+              </Badge>
               
-              <div className="flex items-center space-x-4 pt-2">
-                {summary.sentiment && (
-                  <div className="flex items-center">
-                    <TrendingUp className="h-4 w-4 text-blue-600 mr-1" />
-                    <span className="text-sm text-blue-700">
-                      Sentiment: <Badge variant="outline" className="ml-1 text-blue-700 border-blue-300">
-                        {summary.sentiment}
-                      </Badge>
-                    </span>
+              <div className="flex flex-wrap gap-2 ml-auto">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={fetchSuggestions}
+                  disabled={isLoadingSuggestions || !post.content}
+                  className="text-xs h-7 px-2 border border-gray-200 text-gray-700 hover:bg-gray-100"
+                >
+                  <SpellCheck className="h-3 w-3 mr-1" />
+                  {isLoadingSuggestions ? 'Checking...' : 'Check Writing'}
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={fetchToneAnalysis}
+                  disabled={isLoadingToneAnalysis || !post.content}
+                  className="text-xs h-7 px-2 border border-gray-200 text-gray-700 hover:bg-gray-100"
+                >
+                  <AlertTriangle className="h-3 w-3 mr-1" />
+                  {isLoadingToneAnalysis ? 'Analyzing...' : 'Analyze Tone'}
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          
+          <CardContent className="pt-0">
+            {/* Writing Suggestions */}
+            {showSuggestions && suggestions && (
+              <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex justify-between items-start mb-3">
+                  <h4 className="font-medium text-blue-800 flex items-center">
+                    <SpellCheck className="h-4 w-4 mr-2" />
+                    Writing Suggestions
+                  </h4>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setShowSuggestions(false)}
+                    className="h-6 w-6 p-0 text-blue-500 hover:text-blue-700"
+                  >
+                    ×
+                  </Button>
+                </div>
+                
+                {suggestions.grammar && suggestions.grammar.length > 0 && (
+                  <div className="mb-3">
+                    <p className="text-sm font-medium text-blue-700 mb-1">Grammar:</p>
+                    <ul className="text-xs text-blue-600 list-disc pl-5 space-y-1">
+                      {suggestions.grammar.map((item: string, index: number) => (
+                        <li key={index}>{item}</li>
+                      ))}
+                    </ul>
                   </div>
                 )}
                 
-                {summary.topics && summary.topics.length > 0 && (
-                  <div className="flex items-center">
-                    <MessageSquare className="h-4 w-4 text-blue-600 mr-1" />
-                    <span className="text-sm text-blue-700">
-                      Topics: {summary.topics.slice(0, 3).map((topic: string) => (
-                        <Badge key={topic} variant="outline" className="ml-1 text-blue-700 border-blue-300">
-                          {topic}
+                {suggestions.clarity && suggestions.clarity.length > 0 && (
+                  <div className="mb-3">
+                    <p className="text-sm font-medium text-blue-700 mb-1">Clarity:</p>
+                    <ul className="text-xs text-blue-600 list-disc pl-5 space-y-1">
+                      {suggestions.clarity.map((item: string, index: number) => (
+                        <li key={index}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
+                {suggestions.tone && suggestions.tone.length > 0 && (
+                  <div className="mb-3">
+                    <p className="text-sm font-medium text-blue-700 mb-1">Tone:</p>
+                    <ul className="text-xs text-blue-600 list-disc pl-5 space-y-1">
+                      {suggestions.tone.map((item: string, index: number) => (
+                        <li key={index}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
+                {suggestions.suggestedText && (
+                  <div className="mt-3 p-3 bg-white rounded border border-blue-200">
+                    <p className="text-xs font-medium text-blue-700 mb-1">Suggested Text:</p>
+                    <p className="text-xs text-blue-800">{suggestions.suggestedText}</p>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Tone Analysis */}
+            {showToneAnalysis && toneAnalysis && (
+              <div className="mb-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                <div className="flex justify-between items-start mb-3">
+                  <h4 className="font-medium text-purple-800 flex items-center">
+                    <AlertTriangle className="h-4 w-4 mr-2" />
+                    Tone Analysis
+                  </h4>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setShowToneAnalysis(false)}
+                    className="h-6 w-6 p-0 text-purple-500 hover:text-purple-700"
+                  >
+                    ×
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                  <div className="bg-white p-3 rounded border border-purple-200">
+                    <p className="text-sm font-medium text-purple-700 mb-1">Overall Tone:</p>
+                    <p className="text-xs text-purple-800">{toneAnalysis.overallTone}</p>
+                  </div>
+                  
+                  <div className="bg-white p-3 rounded border border-purple-200">
+                    <p className="text-sm font-medium text-purple-700 mb-1">Respectfulness:</p>
+                    <p className="text-xs text-purple-800">{toneAnalysis.respectfulness}</p>
+                  </div>
+                </div>
+                
+                {toneAnalysis.emotions && toneAnalysis.emotions.length > 0 && (
+                  <div className="mb-3">
+                    <p className="text-sm font-medium text-purple-700 mb-2">Detected Emotions:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {toneAnalysis.emotions.map((emotion: string, index: number) => (
+                        <Badge key={index} variant="outline" className="text-xs border-purple-300 text-purple-700">
+                          {emotion}
                         </Badge>
                       ))}
-                    </span>
+                    </div>
                   </div>
                 )}
                 
-                {summary.isCached && summary.generatedAt && (
-                  <div className="text-xs text-blue-500 italic">
-                    Cached from {new Date(summary.generatedAt).toLocaleString()}
+                {toneAnalysis.suggestions && toneAnalysis.suggestions.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-sm font-medium text-purple-700 mb-2">Suggestions:</p>
+                    <ul className="text-xs text-purple-600 list-disc pl-5 space-y-1">
+                      {toneAnalysis.suggestions.map((item: string, index: number) => (
+                        <li key={index}>{item}</li>
+                      ))}
+                    </ul>
                   </div>
                 )}
               </div>
+            )}
+            
+            {post.title && (
+              <h1 className="text-2xl md:text-3xl font-bold mb-4 text-gray-900">
+                {isTranslated && translatedTitle ? translatedTitle : post.title}
+              </h1>
+            )}
+            <div className="prose max-w-none mb-6">
+              <p className="text-gray-700 whitespace-pre-line text-base">
+                {isTranslated && translatedContent ? translatedContent : post.content}
+              </p>
             </div>
-          ) : (
-            <div className="text-center py-4">
-              <FileText className="h-8 w-8 text-blue-400 mx-auto mb-2" />
-              <p className="text-blue-700 mb-3">No summary available for this thread</p>
-              <Button 
-                onClick={fetchSummary} 
-                variant="outline" 
-                className="text-blue-700 border-blue-300 hover:bg-blue-100"
-              >
-                Generate AI Summary
+            
+            <div className="flex flex-wrap items-center justify-between pt-4 border-t border-gray-100">
+              <div className="flex flex-wrap items-center gap-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLike}
+                  className={`flex items-center space-x-1 ${isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
+                >
+                  <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
+                  <span>{post._count.likes}</span>
+                </Button>
+                
+                <Button variant="ghost" size="sm" className="flex items-center space-x-1 text-gray-500 hover:text-blue-500">
+                  <MessageCircle className="h-4 w-4" />
+                  <span>{post._count.replies}</span>
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleBookmark}
+                  className={`flex items-center space-x-1 ${isBookmarked ? 'text-blue-500' : 'text-gray-500 hover:text-blue-500'}`}
+                >
+                  <Bookmark className={`h-4 w-4 ${isBookmarked ? 'fill-current' : ''}`} />
+                  <span>{post._count.bookmarks}</span>
+                </Button>
+                
+                <TranslationToggle
+                  onTranslate={handleTranslate}
+                  isTranslated={isTranslated}
+                  isLoading={isTranslating}
+                />
+              </div>
+              
+              <Button variant="ghost" size="sm" onClick={handleShare} className="text-gray-500 hover:text-green-500">
+                <Share2 className="h-4 w-4" />
               </Button>
             </div>
-          )}
-        </CardContent>
-      </div>
+          </CardContent>
+        </div>
 
-      {/* Reply Form */}
-      <div className="forum-card card-hover mb-6 fade-in">
-        <CreateReplyForm 
-          postId={id || ''} 
-          onReplyCreated={fetchReplies}
-          placeholder="Share your thoughts on this post..."
-        />
-      </div>
-
-      {/* Replies Section */}
-      <div className="mt-8 fade-in">
-        <h2 className="text-xl font-semibold mb-4">
-          Replies ({replies.length})
-        </h2>
-        
-        {replies.length > 0 ? (
-          <div className="space-y-4">
-            {renderReplies(replies)}
-          </div>
-        ) : (
-          <div className="forum-card card-hover">
-            <CardContent className="pt-6 text-center">
-              <div className="py-8">
-                <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No replies yet
-                </h3>
-                <p className="text-gray-500 mb-4">
-                  Be the first to share your thoughts
-                </p>
+        {/* AI Summary Section */}
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 mb-6 overflow-hidden border border-blue-100">
+          <CardHeader className="pb-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
+            <CardTitle className="flex items-center">
+              <Bot className="h-5 w-5 mr-2" />
+              AI Thread Summary
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={fetchSummary}
+                disabled={loadingSummary}
+                className="ml-auto text-white hover:bg-blue-700"
+              >
+                <RefreshCw className={`h-4 w-4 ${loadingSummary ? 'animate-spin' : ''}`} />
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 md:p-6">
+            {loadingSummary ? (
+              <div className="flex items-center justify-center py-4">
+                <RefreshCw className="h-6 w-6 animate-spin text-blue-500 mr-2" />
+                <span className="text-blue-700">Generating summary...</span>
               </div>
-            </CardContent>
-          </div>
-        )}
+            ) : summary ? (
+              <div className="space-y-4">
+                <div className="p-4 bg-white rounded-lg border border-blue-200 shadow-sm">
+                  <p className="text-blue-800">{summary.summary}</p>
+                </div>
+                
+                {summary.keyPoints && summary.keyPoints.length > 0 && (
+                  <div>
+                    <h4 className="font-medium text-blue-800 mb-2 flex items-center">
+                      <Lightbulb className="h-4 w-4 mr-2" />
+                      Key Points
+                    </h4>
+                    <ul className="space-y-2">
+                      {summary.keyPoints.map((point: string, index: number) => (
+                        <li key={index} className="text-blue-700 text-sm flex items-start">
+                          <span className="text-blue-500 mr-2 mt-1">•</span>
+                          {point}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
+                <div className="flex flex-wrap items-center gap-4 pt-2">
+                  {summary.sentiment && (
+                    <div className="flex items-center bg-white px-3 py-1.5 rounded-full border border-blue-200">
+                      <TrendingUp className="h-4 w-4 text-blue-600 mr-1" />
+                      <span className="text-sm text-blue-700">
+                        Sentiment: <Badge variant="outline" className="ml-1 text-blue-700 border-blue-300">
+                          {summary.sentiment}
+                        </Badge>
+                      </span>
+                    </div>
+                  )}
+                  
+                  {summary.topics && summary.topics.length > 0 && (
+                    <div className="flex items-center bg-white px-3 py-1.5 rounded-full border border-blue-200">
+                      <MessageSquare className="h-4 w-4 text-blue-600 mr-1" />
+                      <span className="text-sm text-blue-700">
+                        Topics: {summary.topics.slice(0, 3).map((topic: string) => (
+                          <Badge key={topic} variant="outline" className="ml-1 text-blue-700 border-blue-300">
+                            {topic}
+                          </Badge>
+                        ))}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {summary.isCached && summary.generatedAt && (
+                    <div className="text-xs text-blue-500 italic bg-blue-50 px-2 py-1 rounded">
+                      Cached from {new Date(summary.generatedAt).toLocaleString()}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FileText className="h-8 w-8 text-blue-500" />
+                </div>
+                <p className="text-blue-700 mb-3">No summary available for this thread</p>
+                <Button 
+                  onClick={fetchSummary} 
+                  variant="outline" 
+                  className="text-blue-700 border-blue-300 hover:bg-blue-100"
+                >
+                  Generate AI Summary
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </div>
+
+        {/* Reply Form */}
+        <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 mb-6 overflow-hidden">
+          <CreateReplyForm 
+            postId={id || ''} 
+            onReplyCreated={fetchReplies}
+            placeholder="Share your thoughts on this post..."
+          />
+        </div>
+
+        {/* Replies Section */}
+        <div className="mt-8">
+          <h2 className="text-xl md:text-2xl font-semibold mb-6 text-gray-900 flex items-center">
+            <MessageCircle className="h-5 w-5 mr-2 text-blue-600" />
+            Replies ({replies.length})
+          </h2>
+          
+          {replies.length > 0 ? (
+            <div className="space-y-4">
+              {renderReplies(replies)}
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden">
+              <CardContent className="pt-8 pb-12 text-center">
+                <div className="py-4">
+                  <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <MessageCircle className="h-8 w-8 text-blue-500" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No replies yet
+                  </h3>
+                  <p className="text-gray-500 mb-4 max-w-md mx-auto">
+                    Be the first to share your thoughts
+                  </p>
+                </div>
+              </CardContent>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

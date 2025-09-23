@@ -1,4 +1,3 @@
-// E:\mannsahay\src\components\counselor\counselor-schedule.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -103,72 +102,92 @@ export default function CounselorSchedule() {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="calendar" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="calendar">Calendar View</TabsTrigger>
-          <TabsTrigger value="bookings">Upcoming Sessions</TabsTrigger>
-          <TabsTrigger value="availability">Manage Availability</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 bg-white p-1 rounded-lg shadow-sm">
+          <TabsTrigger value="calendar" className="text-sm font-medium data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 rounded-md transition-all">
+            <Calendar className="h-4 w-4 mr-2" />
+            Calendar View
+          </TabsTrigger>
+          <TabsTrigger value="bookings" className="text-sm font-medium data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 rounded-md transition-all">
+            <Clock className="h-4 w-4 mr-2" />
+            Upcoming Sessions
+          </TabsTrigger>
+          <TabsTrigger value="availability" className="text-sm font-medium data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 rounded-md transition-all">
+            <Plus className="h-4 w-4 mr-2" />
+            Manage Availability
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="calendar" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Calendar className="h-5 w-5 mr-2" />
+          <Card className="bg-white shadow-md hover:shadow-lg transition-all duration-300 border-0 overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100 pb-4">
+              <CardTitle className="flex items-center text-lg md:text-xl font-bold text-gray-900">
+                <div className="bg-blue-100 p-2 rounded-lg mr-3">
+                  <Calendar className="h-5 w-5 text-blue-600" />
+                </div>
                 Your Schedule
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-gray-600 ml-11">
                 View your upcoming sessions and availability
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 md:p-6">
               <BookingCalendar counselorId="current-counselor" onSlotSelect={() => {}} />
             </CardContent>
           </Card>
         </TabsContent>
         
         <TabsContent value="bookings" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Clock className="h-5 w-5 mr-2" />
+          <Card className="bg-white shadow-md hover:shadow-lg transition-all duration-300 border-0 overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b border-gray-100 pb-4">
+              <CardTitle className="flex items-center text-lg md:text-xl font-bold text-gray-900">
+                <div className="bg-green-100 p-2 rounded-lg mr-3">
+                  <Clock className="h-5 w-5 text-green-600" />
+                </div>
                 Upcoming Sessions
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-gray-600 ml-11">
                 Manage your upcoming counseling sessions
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 md:p-6">
               {loading ? (
-                <div className="text-center py-8">Loading bookings...</div>
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <span className="ml-3 text-gray-600">Loading bookings...</span>
+                </div>
               ) : bookings.length > 0 ? (
                 <div className="space-y-4">
                   {bookings.map(booking => (
-                    <Card key={booking.id}>
+                    <Card key={booking.id} className="border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden">
                       <CardContent className="pt-6">
-                        <div className="flex justify-between items-start">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                           <div className="space-y-2">
                             <div className="flex items-center">
-                              <div className="font-medium">{booking.user.name}</div>
+                              <div className="font-medium text-gray-900">{booking.user.name}</div>
                               <Badge className={`ml-2 ${statusColors[booking.status] || ''}`}>
                                 {booking.status}
                               </Badge>
                             </div>
                             
-                            <div className="flex items-center text-sm text-gray-500">
-                              <Calendar className="h-4 w-4 mr-1" />
-                              <span>{new Date(booking.slotTime).toLocaleDateString()}</span>
-                              <Clock className="h-4 w-4 ml-3 mr-1" />
-                              <span>{new Date(booking.slotTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            <div className="flex flex-wrap items-center text-sm text-gray-500 gap-3">
+                              <div className="flex items-center">
+                                <Calendar className="h-4 w-4 mr-1" />
+                                <span>{new Date(booking.slotTime).toLocaleDateString()}</span>
+                              </div>
+                              <div className="flex items-center">
+                                <Clock className="h-4 w-4 mr-1" />
+                                <span>{new Date(booking.slotTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                              </div>
                             </div>
                             
                             {booking.notes && (
-                              <p className="text-sm text-gray-600">{booking.notes}</p>
+                              <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">{booking.notes}</p>
                             )}
                           </div>
                           
-                          <div className="flex space-x-2">
+                          <div className="flex flex-wrap gap-2">
                             {booking.videoSession?.meetingUrl && (
-                              <Button asChild size="sm">
+                              <Button asChild size="sm" className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white">
                                 <a href={booking.videoSession.meetingUrl} target="_blank" rel="noopener noreferrer">
                                   <Video className="h-4 w-4 mr-1" />
                                   Join
@@ -181,6 +200,7 @@ export default function CounselorSchedule() {
                                 <Button 
                                   size="sm" 
                                   onClick={() => handleUpdateBookingStatus(booking.id, 'CONFIRMED')}
+                                  className="bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white"
                                 >
                                   <Check className="h-4 w-4 mr-1" />
                                   Confirm
@@ -189,6 +209,7 @@ export default function CounselorSchedule() {
                                   variant="outline" 
                                   size="sm"
                                   onClick={() => handleUpdateBookingStatus(booking.id, 'CANCELLED')}
+                                  className="border-red-200 text-red-700 hover:bg-red-50"
                                 >
                                   <X className="h-4 w-4 mr-1" />
                                   Cancel
@@ -202,8 +223,12 @@ export default function CounselorSchedule() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500">
-                  No upcoming sessions
+                <div className="text-center py-8">
+                  <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Calendar className="h-8 w-8 text-gray-500" />
+                  </div>
+                  <p className="text-gray-700 font-medium mb-2">No upcoming sessions</p>
+                  <p className="text-gray-500 text-sm">Your scheduled sessions will appear here</p>
                 </div>
               )}
             </CardContent>

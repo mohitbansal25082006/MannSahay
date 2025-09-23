@@ -1,4 +1,3 @@
-// E:\mannsahay\src\components\counselor\client-insights.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -141,52 +140,68 @@ export default function ClientInsights() {
     }
   };
 
+  const getRiskColor = (riskLevel: string) => {
+    switch (riskLevel) {
+      case 'HIGH': return 'border-red-500 bg-red-50';
+      case 'MEDIUM': return 'border-yellow-500 bg-yellow-50';
+      default: return 'border-green-500 bg-green-50';
+    }
+  };
+
   if (loading) {
     return (
-      <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-4 text-gray-600">Loading client insights...</p>
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading client insights...</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Brain className="h-5 w-5 mr-2 text-purple-600" />
+      <Card className="bg-white shadow-md hover:shadow-lg transition-all duration-300 border-0 overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-purple-50 to-violet-50 border-b border-gray-100 pb-4">
+          <CardTitle className="flex items-center text-lg md:text-xl font-bold text-gray-900">
+            <div className="bg-purple-100 p-2 rounded-lg mr-3">
+              <Brain className="h-5 w-5 text-purple-600" />
+            </div>
             Advanced Client Insights
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-gray-600 ml-11">
             Deep analysis of client progress, trends, and risk factors
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="insights" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="insights">Client Insights</TabsTrigger>
-              <TabsTrigger value="trends">Trend Analysis</TabsTrigger>
-              <TabsTrigger value="distribution">Issue Distribution</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 bg-white p-1 rounded-lg shadow-sm">
+              <TabsTrigger value="insights" className="text-sm font-medium data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 rounded-md transition-all">
+                Client Insights
+              </TabsTrigger>
+              <TabsTrigger value="trends" className="text-sm font-medium data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 rounded-md transition-all">
+                Trend Analysis
+              </TabsTrigger>
+              <TabsTrigger value="distribution" className="text-sm font-medium data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700 rounded-md transition-all">
+                Issue Distribution
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="insights" className="space-y-4">
               {clientInsights.map((insight, index) => (
-                <Card key={index} className={`border-l-4 ${
-                  insight.riskLevel === 'HIGH' ? 'border-l-red-500' :
-                  insight.riskLevel === 'MEDIUM' ? 'border-l-yellow-500' :
-                  'border-l-green-500'
-                }`}>
+                <Card key={index} className={`border-l-4 ${getRiskColor(insight.riskLevel)} shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden`}>
                   <CardContent className="pt-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center space-x-4">
-                        <Avatar>
+                    <div className="flex flex-col md:flex-row items-start justify-between gap-4">
+                      <div className="flex items-start space-x-4">
+                        <Avatar className="h-12 w-12">
                           <AvatarImage src={`/api/placeholder/avatar/${insight.userId}`} />
-                          <AvatarFallback>{insight.name.charAt(0)}</AvatarFallback>
+                          <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
+                            {insight.name.charAt(0)}
+                          </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-1">
-                            <h3 className="font-semibold">{insight.name}</h3>
+                            <h3 className="font-semibold text-gray-900">{insight.name}</h3>
                             <Badge variant={insight.riskLevel === 'HIGH' ? 'destructive' : 
                                           insight.riskLevel === 'MEDIUM' ? 'default' : 'secondary'}>
                               {insight.riskLevel} RISK
@@ -222,7 +237,7 @@ export default function ClientInsights() {
                           </div>
                           
                           {insight.recentFeedback && (
-                            <p className="text-sm text-gray-600 italic">&ldquo;{insight.recentFeedback}&rdquo;</p>
+                            <p className="text-sm text-gray-600 italic bg-gray-50 p-3 rounded-lg">&ldquo;{insight.recentFeedback}&rdquo;</p>
                           )}
                         </div>
                       </div>
@@ -231,7 +246,13 @@ export default function ClientInsights() {
                           {insight.progressScore}%
                         </div>
                         <div className="text-xs text-gray-500">Progress Score</div>
-                        <Button size="sm" className="mt-2">
+                        <div className="h-2 w-24 bg-gray-200 rounded-full overflow-hidden mt-1">
+                          <div 
+                            className="h-full bg-gradient-to-r from-purple-500 to-violet-600 rounded-full" 
+                            style={{ width: `${insight.progressScore}%` }}
+                          ></div>
+                        </div>
+                        <Button size="sm" className="mt-2 bg-gradient-to-r from-purple-600 to-violet-700 hover:from-purple-700 hover:to-violet-800 text-white">
                           View Details
                         </Button>
                       </div>
@@ -251,29 +272,31 @@ export default function ClientInsights() {
             
             <TabsContent value="trends" className="space-y-4">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <BarChart3 className="h-5 w-5 mr-2" />
+                <Card className="bg-white shadow-md hover:shadow-lg transition-all duration-300 border-0 overflow-hidden">
+                  <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100 pb-4">
+                    <CardTitle className="flex items-center text-lg md:text-xl font-bold text-gray-900">
+                      <div className="bg-blue-100 p-2 rounded-lg mr-3">
+                        <BarChart3 className="h-5 w-5 text-blue-600" />
+                      </div>
                       Session & Mood Trends
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-4 md:p-6">
                     <div className="space-y-4">
                       {sessionTrends.map((trend, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                           <div className="flex items-center space-x-3">
-                            <div className="text-sm font-medium">{trend.month}</div>
-                            <div className="text-xs text-gray-500">{trend.sessions} sessions</div>
+                            <div className="text-sm font-medium text-gray-900">{trend.month}</div>
+                            <div className="text-xs text-gray-500 bg-blue-100 px-2 py-1 rounded">{trend.sessions} sessions</div>
                           </div>
                           <div className="flex items-center space-x-2">
                             <div className="w-16 bg-gray-200 rounded-full h-2">
                               <div 
-                                className="bg-blue-500 h-2 rounded-full" 
+                                className="bg-gradient-to-r from-blue-500 to-indigo-600 h-2 rounded-full" 
                                 style={{ width: `${(trend.mood / 10) * 100}%` }}
                               ></div>
                             </div>
-                            <span className="text-sm font-medium">{trend.mood}/10</span>
+                            <span className="text-sm font-medium text-gray-900">{trend.mood}/10</span>
                           </div>
                         </div>
                       ))}
@@ -281,16 +304,18 @@ export default function ClientInsights() {
                   </CardContent>
                 </Card>
                 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <PieChart className="h-5 w-5 mr-2" />
+                <Card className="bg-white shadow-md hover:shadow-lg transition-all duration-300 border-0 overflow-hidden">
+                  <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b border-gray-100 pb-4">
+                    <CardTitle className="flex items-center text-lg md:text-xl font-bold text-gray-900">
+                      <div className="bg-green-100 p-2 rounded-lg mr-3">
+                        <PieChart className="h-5 w-5 text-green-600" />
+                      </div>
                       Key Insights
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-4 md:p-6">
                     <div className="space-y-4">
-                      <div className="p-3 bg-green-50 rounded-md">
+                      <div className="p-3 bg-green-50 rounded-lg border border-green-100">
                         <div className="flex items-center space-x-2 mb-1">
                           <TrendingUp className="h-4 w-4 text-green-500" />
                           <span className="font-medium text-green-800">Positive Trend</span>
@@ -300,7 +325,7 @@ export default function ClientInsights() {
                         </p>
                       </div>
                       
-                      <div className="p-3 bg-blue-50 rounded-md">
+                      <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
                         <div className="flex items-center space-x-2 mb-1">
                           <Activity className="h-4 w-4 text-blue-500" />
                           <span className="font-medium text-blue-800">Engagement Up</span>
@@ -310,7 +335,7 @@ export default function ClientInsights() {
                         </p>
                       </div>
                       
-                      <div className="p-3 bg-yellow-50 rounded-md">
+                      <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-100">
                         <div className="flex items-center space-x-2 mb-1">
                           <AlertTriangle className="h-4 w-4 text-yellow-500" />
                           <span className="font-medium text-yellow-800">Focus Area</span>
@@ -326,24 +351,26 @@ export default function ClientInsights() {
             </TabsContent>
             
             <TabsContent value="distribution" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <PieChart className="h-5 w-5 mr-2" />
+              <Card className="bg-white shadow-md hover:shadow-lg transition-all duration-300 border-0 overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-purple-50 to-violet-50 border-b border-gray-100 pb-4">
+                  <CardTitle className="flex items-center text-lg md:text-xl font-bold text-gray-900">
+                    <div className="bg-purple-100 p-2 rounded-lg mr-3">
+                      <PieChart className="h-5 w-5 text-purple-600" />
+                    </div>
                     Mental Health Issues Distribution
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-4 md:p-6">
                   <div className="space-y-4">
                     {issueDistribution.map((issue, index) => (
                       <div key={index} className="space-y-2">
                         <div className="flex justify-between items-center">
-                          <span className="font-medium">{issue.issue}</span>
-                          <span className="text-sm text-gray-500">{issue.percentage}%</span>
+                          <span className="font-medium text-gray-900">{issue.issue}</span>
+                          <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">{issue.percentage}%</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-3">
                           <div 
-                            className="bg-blue-500 h-3 rounded-full transition-all duration-500" 
+                            className="bg-gradient-to-r from-purple-500 to-violet-600 h-3 rounded-full transition-all duration-500" 
                             style={{ width: `${issue.percentage}%` }}
                           ></div>
                         </div>

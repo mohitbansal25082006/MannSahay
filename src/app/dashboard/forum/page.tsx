@@ -110,16 +110,16 @@ function getLanguageName(language: string): string {
 
 function CommunityGuidelines() {
   return (
-    <div className="forum-card card-hover">
-      <CardHeader>
-        <CardTitle className="flex items-center">
-          <Shield className="h-5 w-5 mr-2" />
+    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl shadow-md overflow-hidden border border-blue-100 transition-all duration-300 hover:shadow-lg">
+      <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white pb-4">
+        <CardTitle className="flex items-center text-lg md:text-xl">
+          <Shield className="h-5 w-5 md:h-6 md:w-6 mr-2" />
           Community Guidelines
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-4 md:p-6">
         <div className="space-y-4">
-          <div>
+          <div className="bg-white rounded-lg p-4 shadow-sm border border-green-100">
             <h4 className="font-medium text-green-700 mb-2 flex items-center">
               <span className="text-green-500 mr-2">✓</span>
               Be Respectful and Supportive
@@ -129,7 +129,7 @@ function CommunityGuidelines() {
             </p>
           </div>
           
-          <div>
+          <div className="bg-white rounded-lg p-4 shadow-sm border border-green-100">
             <h4 className="font-medium text-green-700 mb-2 flex items-center">
               <span className="text-green-500 mr-2">✓</span>
               Protect Privacy
@@ -139,7 +139,7 @@ function CommunityGuidelines() {
             </p>
           </div>
           
-          <div>
+          <div className="bg-white rounded-lg p-4 shadow-sm border border-green-100">
             <h4 className="font-medium text-green-700 mb-2 flex items-center">
               <span className="text-green-500 mr-2">✓</span>
               Share Responsibly
@@ -149,7 +149,7 @@ function CommunityGuidelines() {
             </p>
           </div>
           
-          <div>
+          <div className="bg-white rounded-lg p-4 shadow-sm border border-green-100">
             <h4 className="font-medium text-green-700 mb-2 flex items-center">
               <span className="text-green-500 mr-2">✓</span>
               Be Honest and Authentic
@@ -160,46 +160,48 @@ function CommunityGuidelines() {
           </div>
           
           <div className="pt-2 border-t border-gray-100">
-            <h4 className="font-medium text-red-700 mb-2 flex items-center">
-              <span className="text-red-500 mr-2">✗</span>
-              No Harassment or Hate Speech
-            </h4>
-            <p className="text-sm text-gray-600 ml-6">
-              Bullying, harassment, hate speech, or discrimination based on race, gender, religion, or any other characteristic is strictly prohibited.
-            </p>
+            <div className="bg-white rounded-lg p-4 shadow-sm border border-red-100 mb-3">
+              <h4 className="font-medium text-red-700 mb-2 flex items-center">
+                <span className="text-red-500 mr-2">✗</span>
+                No Harassment or Hate Speech
+              </h4>
+              <p className="text-sm text-gray-600 ml-6">
+                Bullying, harassment, hate speech, or discrimination based on race, gender, religion, or any other characteristic is strictly prohibited.
+              </p>
+            </div>
+            
+            <div className="bg-white rounded-lg p-4 shadow-sm border border-red-100 mb-3">
+              <h4 className="font-medium text-red-700 mb-2 flex items-center">
+                <span className="text-red-500 mr-2">✗</span>
+                No Self-Harm Promotion
+              </h4>
+              <p className="text-sm text-gray-600 ml-6">
+                While we encourage open discussion about mental health, content that promotes or glorifies self-harm, suicide, or violence is not allowed.
+              </p>
+            </div>
+            
+            <div className="bg-white rounded-lg p-4 shadow-sm border border-red-100 mb-3">
+              <h4 className="font-medium text-red-700 mb-2 flex items-center">
+                <span className="text-red-500 mr-2">✗</span>
+                No Spam or Misinformation
+              </h4>
+              <p className="text-sm text-gray-600 ml-6">
+                Don&apos;t post spam, advertisements, or false information that could harm others. Always verify information before sharing.
+              </p>
+            </div>
+            
+            <div className="bg-white rounded-lg p-4 shadow-sm border border-red-100">
+              <h4 className="font-medium text-red-700 mb-2 flex items-center">
+                <span className="text-red-500 mr-2">✗</span>
+                No Explicit Content
+              </h4>
+              <p className="text-sm text-gray-600 ml-6">
+                Explicit, violent, or sexually suggestive content is not appropriate for this supportive community forum.
+              </p>
+            </div>
           </div>
           
-          <div>
-            <h4 className="font-medium text-red-700 mb-2 flex items-center">
-              <span className="text-red-500 mr-2">✗</span>
-              No Self-Harm Promotion
-            </h4>
-            <p className="text-sm text-gray-600 ml-6">
-              While we encourage open discussion about mental health, content that promotes or glorifies self-harm, suicide, or violence is not allowed.
-            </p>
-          </div>
-          
-          <div>
-            <h4 className="font-medium text-red-700 mb-2 flex items-center">
-              <span className="text-red-500 mr-2">✗</span>
-              No Spam or Misinformation
-            </h4>
-            <p className="text-sm text-gray-600 ml-6">
-              Don&apos;t post spam, advertisements, or false information that could harm others. Always verify information before sharing.
-            </p>
-          </div>
-          
-          <div>
-            <h4 className="font-medium text-red-700 mb-2 flex items-center">
-              <span className="text-red-500 mr-2">✗</span>
-              No Explicit Content
-            </h4>
-            <p className="text-sm text-gray-600 ml-6">
-              Explicit, violent, or sexually suggestive content is not appropriate for this supportive community forum.
-            </p>
-          </div>
-          
-          <div className="mt-4 p-3 bg-blue-50 rounded-md border border-blue-200">
+          <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 shadow-sm">
             <h4 className="font-medium text-blue-800 mb-1 flex items-center">
               <Bot className="h-4 w-4 mr-2" />
               AI-Powered Moderation
@@ -441,237 +443,161 @@ export default function ForumPage() {
   ];
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 forum-gradient min-h-screen">
-      <div className="mb-8 fade-in">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Peer Support Forum
-        </h1>
-        <p className="text-gray-600">
-          Connect with fellow students in a safe, anonymous environment
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="forum-card card-hover">
-            <CreatePostForm onPostCreated={() => {
-              fetchPosts();
-              fetchForumStats();
-            }} />
-          </div>
-
-          <div className="forum-card card-hover">
-            <CardContent className="pt-6">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    placeholder="Search posts..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-                
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder="Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.value} value={cat.value}>
-                        {cat.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                
-                <Select value={sort} onValueChange={setSort}>
-                  <SelectTrigger className="w-full sm:w-[160px]">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sortOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                
-                <div className="flex border rounded-md">
-                  <Button
-                    variant={viewMode === 'list' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setViewMode('list')}
-                    className="rounded-r-none"
-                  >
-                    <List className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setViewMode('grid')}
-                    className="rounded-l-none"
-                  >
-                    <Grid className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </div>
-
-          {loading ? (
-            <div className="space-y-4">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="forum-card animate-pulse">
-                  <CardHeader>
-                    <div className="h-6 bg-gray-200 rounded w-3/4 skeleton"></div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="h-4 bg-gray-200 rounded skeleton"></div>
-                      <div className="h-4 bg-gray-200 rounded w-5/6 skeleton"></div>
-                      <div className="h-4 bg-gray-200 rounded w-4/6 skeleton"></div>
-                    </div>
-                  </CardContent>
-                </div>
-              ))}
-            </div>
-          ) : filteredPosts.length > 0 ? (
-            <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 gap-4' : 'space-y-4'}>
-              {filteredPosts.map((post) => (
-                <div key={post.id} className="forum-card card-hover fade-in">
-                  <PostItem
-                    post={post}
-                    currentUserId={session?.user?.id}
-                    isLiked={likedPosts[post.id]}
-                    isBookmarked={bookmarkedPosts[post.id]}
-                    onLike={() => handleLike(post.id)}
-                    onBookmark={() => handleBookmark(post.id)}
-                    onFlag={() => handleFlag(post.id)}
-                    onDelete={() => handleDelete(post.id)}
-                  />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="forum-card card-hover">
-              <CardContent className="pt-6 text-center">
-                <div className="py-12">
-                  <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    No posts found
-                  </h3>
-                  <p className="text-gray-500 mb-4">
-                    {searchTerm || category !== 'all'
-                      ? 'Try adjusting your search or filters'
-                      : 'Be the first to share your thoughts'}
-                  </p>
-                  <Button onClick={() => {
-                    setSearchTerm('');
-                    setCategory('all');
-                  }}>
-                    Clear Filters
-                  </Button>
-                </div>
-              </CardContent>
-            </div>
-          )}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+        <div className="mb-8 text-center fade-in">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-700">
+            Peer Support Forum
+          </h1>
+          <p className="text-gray-600 max-w-2xl mx-auto text-base md:text-lg">
+            Connect with fellow students in a safe, anonymous environment
+          </p>
         </div>
 
-        <div className="space-y-6">
-          <div className="forum-card card-hover">
-            <CardContent>
-              <UserPreferences onLanguageChange={handleLanguageChange} />
-            </CardContent>
-          </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <div className="bg-white rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg border border-blue-100">
+              <CreatePostForm onPostCreated={() => {
+                fetchPosts();
+                fetchForumStats();
+              }} />
+            </div>
 
-          <div className="forum-card card-hover">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <TrendingUp className="h-5 w-5 mr-2" />
-                Forum Stats
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <div className="space-y-4">
-                  {[...Array(3)].map((_, i) => (
-                    <div key={i} className="animate-pulse">
-                      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                      <div className="h-6 bg-gray-200 rounded w-1/2"></div>
-                    </div>
-                  ))}
-                </div>
-              ) : forumStats ? (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Total Posts</span>
-                    <Badge variant="secondary">{forumStats.totalPosts}</Badge>
+            <div className="bg-white rounded-xl shadow-md p-4 md:p-6 transition-all duration-300 hover:shadow-lg border border-blue-100">
+              <CardContent className="pt-0">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                      placeholder="Search posts..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Active Users</span>
-                    <Badge variant="secondary">{forumStats.activeUsers}</Badge>
+                  
+                  <Select value={category} onValueChange={setCategory}>
+                    <SelectTrigger className="w-full sm:w-[180px] border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                      <SelectValue placeholder="Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.value} value={cat.value}>
+                          {cat.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  
+                  <Select value={sort} onValueChange={setSort}>
+                    <SelectTrigger className="w-full sm:w-[160px] border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sortOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  
+                  <div className="flex border rounded-md overflow-hidden">
+                    <Button
+                      variant={viewMode === 'list' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('list')}
+                      className="rounded-r-none"
+                    >
+                      <List className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('grid')}
+                      className="rounded-l-none"
+                    >
+                      <Grid className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Today&apos;s Posts</span>
-                    <Badge variant="secondary">{forumStats.todaysPosts}</Badge>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500">Failed to load statistics</p>
-              )}
-            </CardContent>
-          </div>
-
-          {forumStats?.trendingPosts && forumStats.trendingPosts.length > 0 && (
-            <div className="forum-card card-hover">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <TrendingUp className="h-5 w-5 mr-2" />
-                  Recommended For You
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {forumStats.trendingPosts.map((post) => (
-                    <div key={post.id} className="pb-3 border-b border-gray-100 last:border-0 last:pb-0">
-                      <Link href={`/dashboard/forum/post/${post.id}`} className="block">
-                        <h4 className="font-medium text-sm mb-1 line-clamp-2">
-                          {post.title || post.content.substring(0, 60) + '...'}
-                        </h4>
-                        <div className="flex items-center text-xs text-gray-500">
-                          <div className="flex items-center mr-3">
-                            <Heart className="h-3 w-3 mr-1" />
-                            {post._count.likes}
-                          </div>
-                          <div className="flex items-center">
-                            <MessageSquare className="h-3 w-3 mr-1" />
-                            {post._count.replies}
-                          </div>
-                          <Badge variant="outline" className="ml-2 text-xs flex items-center">
-                            <Globe className="h-3 w-3 mr-1" />
-                            {getLanguageName(post.language)}
-                          </Badge>
-                        </div>
-                      </Link>
-                    </div>
-                  ))}
                 </div>
               </CardContent>
             </div>
-          )}
 
-          {moderationStats && (
-            <div className="moderation-card card-hover">
-              <CardHeader>
-                <CardTitle className="flex items-center text-white">
-                  <Shield className="h-5 w-5 mr-2" />
-                  Moderation Stats
+            {loading ? (
+              <div className="space-y-4">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-xl shadow-md animate-pulse p-6 border border-blue-100">
+                    <CardHeader>
+                      <div className="h-6 bg-gray-200 rounded w-3/4 skeleton"></div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <div className="h-4 bg-gray-200 rounded skeleton"></div>
+                        <div className="h-4 bg-gray-200 rounded w-5/6 skeleton"></div>
+                        <div className="h-4 bg-gray-200 rounded w-4/6 skeleton"></div>
+                      </div>
+                    </CardContent>
+                  </div>
+                ))}
+              </div>
+            ) : filteredPosts.length > 0 ? (
+              <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 gap-4' : 'space-y-4'}>
+                {filteredPosts.map((post) => (
+                  <div key={post.id} className="bg-white rounded-xl shadow-md transition-all duration-300 hover:shadow-lg border border-blue-100 fade-in">
+                    <PostItem
+                      post={post}
+                      currentUserId={session?.user?.id}
+                      isLiked={likedPosts[post.id]}
+                      isBookmarked={bookmarkedPosts[post.id]}
+                      onLike={() => handleLike(post.id)}
+                      onBookmark={() => handleBookmark(post.id)}
+                      onFlag={() => handleFlag(post.id)}
+                      onDelete={() => handleDelete(post.id)}
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl shadow-md p-8 text-center transition-all duration-300 hover:shadow-lg border border-blue-100">
+                <CardContent className="pt-0">
+                  <div className="py-4 md:py-8">
+                    <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg md:text-xl font-medium text-gray-900 mb-2">
+                      No posts found
+                    </h3>
+                    <p className="text-gray-500 mb-4 max-w-md mx-auto">
+                      {searchTerm || category !== 'all'
+                        ? 'Try adjusting your search or filters'
+                        : 'Be the first to share your thoughts'}
+                    </p>
+                    <Button onClick={() => {
+                      setSearchTerm('');
+                      setCategory('all');
+                    }} className="bg-blue-600 hover:bg-blue-700">
+                      Clear Filters
+                    </Button>
+                  </div>
+                </CardContent>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-6">
+            <div className="bg-white rounded-xl shadow-md p-4 md:p-6 transition-all duration-300 hover:shadow-lg border border-blue-100">
+              <CardContent className="pt-0">
+                <UserPreferences onLanguageChange={handleLanguageChange} />
+              </CardContent>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg border border-blue-100">
+              <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white pb-4">
+                <CardTitle className="flex items-center text-lg md:text-xl">
+                  <TrendingUp className="h-5 w-5 md:h-6 md:w-6 mr-2" />
+                  Forum Stats
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 md:p-6">
                 {statsLoading ? (
                   <div className="space-y-4">
                     {[...Array(3)].map((_, i) => (
@@ -681,178 +607,262 @@ export default function ForumPage() {
                       </div>
                     ))}
                   </div>
-                ) : (
+                ) : forumStats ? (
                   <div className="space-y-4">
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">Posts</h4>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-600">Total Moderated</span>
-                          <Badge variant="outline">
-                            {moderationStats.moderatedPosts} / {moderationStats.totalPosts}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-600 flex items-center">
-                            <XCircle className="h-3 w-3 mr-1 text-red-500" />
-                            Auto Removed
-                          </span>
-                          <Badge variant="destructive" className="text-xs">
-                            {moderationStats.autoRemovedPosts}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-600 flex items-center">
-                            <Clock className="h-3 w-3 mr-1 text-yellow-500" />
-                            Pending Review
-                          </span>
-                          <Badge variant="outline" className="text-xs border-yellow-300 text-yellow-700">
-                            {moderationStats.pendingReviewPosts}
-                          </Badge>
-                        </div>
-                      </div>
+                    <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                      <span className="text-sm text-gray-700 font-medium">Total Posts</span>
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-200">{forumStats.totalPosts}</Badge>
                     </div>
-                    
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">Replies</h4>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-600">Total Moderated</span>
-                          <Badge variant="outline">
-                            {moderationStats.moderatedReplies} / {moderationStats.totalReplies}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-600 flex items-center">
-                            <XCircle className="h-3 w-3 mr-1 text-red-500" />
-                            Auto Removed
-                          </span>
-                          <Badge variant="destructive" className="text-xs">
-                            {moderationStats.autoRemovedReplies}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-600 flex items-center">
-                            <Clock className="h-3 w-3 mr-1 text-yellow-500" />
-                            Pending Review
-                          </span>
-                          <Badge variant="outline" className="text-xs border-yellow-300 text-yellow-700">
-                            {moderationStats.pendingReviewReplies}
-                          </Badge>
-                        </div>
-                      </div>
+                    <div className="flex items-center justify-between p-3 bg-indigo-50 rounded-lg">
+                      <span className="text-sm text-gray-700 font-medium">Active Users</span>
+                      <Badge variant="secondary" className="bg-indigo-100 text-indigo-800 hover:bg-indigo-200">{forumStats.activeUsers}</Badge>
                     </div>
-                    
-                    <div className="pt-2 border-t border-gray-100">
-                      <div className="flex items-center text-xs text-green-600">
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        <span>AI-powered moderation active</span>
-                      </div>
+                    <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                      <span className="text-sm text-gray-700 font-medium">Today&apos;s Posts</span>
+                      <Badge variant="secondary" className="bg-purple-100 text-purple-800 hover:bg-purple-200">{forumStats.todaysPosts}</Badge>
                     </div>
                   </div>
+                ) : (
+                  <p className="text-sm text-gray-500">Failed to load statistics</p>
                 )}
               </CardContent>
             </div>
-          )}
 
-          <div className="forum-card card-hover">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <BookOpen className="h-5 w-5 mr-2" />
-                Popular Categories
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <div className="space-y-3">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="animate-pulse">
-                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                    </div>
-                  ))}
-                </div>
-              ) : forumStats?.postsByCategory ? (
-                <div className="space-y-3">
-                  {forumStats.postsByCategory.map((cat) => (
-                    <div
-                      key={cat.category}
-                      className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-2 rounded-md"
-                      onClick={() => setCategory(cat.category)}
-                    >
-                      <span className="text-sm capitalize">
-                        {cat.category.replace('-', ' ')}
-                      </span>
-                      <Badge 
-                        variant={category === cat.category ? "default" : "outline"}
-                        className="text-xs"
-                      >
-                        {cat._count.category}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500">Failed to load categories</p>
-              )}
-            </CardContent>
-          </div>
+            {forumStats?.trendingPosts && forumStats.trendingPosts.length > 0 && (
+              <div className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg border border-blue-100">
+                <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white pb-4">
+                  <CardTitle className="flex items-center text-lg md:text-xl">
+                    <TrendingUp className="h-5 w-5 md:h-6 md:w-6 mr-2" />
+                    Recommended For You
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 md:p-6">
+                  <div className="space-y-3">
+                    {forumStats.trendingPosts.map((post) => (
+                      <div key={post.id} className="pb-3 border-b border-gray-100 last:border-0 last:pb-0 hover:bg-blue-50 p-2 rounded-md transition-colors">
+                        <Link href={`/dashboard/forum/post/${post.id}`} className="block">
+                          <h4 className="font-medium text-sm mb-1 line-clamp-2">
+                            {post.title || post.content.substring(0, 60) + '...'}
+                          </h4>
+                          <div className="flex items-center text-xs text-gray-500">
+                            <div className="flex items-center mr-3">
+                              <Heart className="h-3 w-3 mr-1" />
+                              {post._count.likes}
+                            </div>
+                            <div className="flex items-center">
+                              <MessageSquare className="h-3 w-3 mr-1" />
+                              {post._count.replies}
+                            </div>
+                            <Badge variant="outline" className="ml-2 text-xs flex items-center">
+                              <Globe className="h-3 w-3 mr-1" />
+                              {getLanguageName(post.language)}
+                            </Badge>
+                          </div>
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </div>
+            )}
 
-          {forumStats?.mostActiveUsers && forumStats.mostActiveUsers.length > 0 && (
-            <div className="forum-card card-hover">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Users className="h-5 w-5 mr-2" />
-                  Most Active Users
+            {moderationStats && (
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg border border-blue-100">
+                <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white pb-4">
+                  <CardTitle className="flex items-center text-lg md:text-xl">
+                    <Shield className="h-5 w-5 md:h-6 md:w-6 mr-2" />
+                    Moderation Stats
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 md:p-6">
+                  {statsLoading ? (
+                    <div className="space-y-4">
+                      {[...Array(3)].map((_, i) => (
+                        <div key={i} className="animate-pulse">
+                          <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                          <div className="h-6 bg-gray-200 rounded w-1/2"></div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                          <BookOpen className="h-4 w-4 mr-2 text-blue-600" />
+                          Posts
+                        </h4>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between p-2 bg-white rounded-lg shadow-sm">
+                            <span className="text-xs text-gray-600">Total Moderated</span>
+                            <Badge variant="outline" className="text-xs">
+                              {moderationStats.moderatedPosts} / {moderationStats.totalPosts}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center justify-between p-2 bg-white rounded-lg shadow-sm">
+                            <span className="text-xs text-gray-600 flex items-center">
+                              <XCircle className="h-3 w-3 mr-1 text-red-500" />
+                              Auto Removed
+                            </span>
+                            <Badge variant="destructive" className="text-xs">
+                              {moderationStats.autoRemovedPosts}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center justify-between p-2 bg-white rounded-lg shadow-sm">
+                            <span className="text-xs text-gray-600 flex items-center">
+                              <Clock className="h-3 w-3 mr-1 text-yellow-500" />
+                              Pending Review
+                            </span>
+                            <Badge variant="outline" className="text-xs border-yellow-300 text-yellow-700">
+                              {moderationStats.pendingReviewPosts}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                          <MessageSquare className="h-4 w-4 mr-2 text-blue-600" />
+                          Replies
+                        </h4>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between p-2 bg-white rounded-lg shadow-sm">
+                            <span className="text-xs text-gray-600">Total Moderated</span>
+                            <Badge variant="outline" className="text-xs">
+                              {moderationStats.moderatedReplies} / {moderationStats.totalReplies}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center justify-between p-2 bg-white rounded-lg shadow-sm">
+                            <span className="text-xs text-gray-600 flex items-center">
+                              <XCircle className="h-3 w-3 mr-1 text-red-500" />
+                              Auto Removed
+                            </span>
+                            <Badge variant="destructive" className="text-xs">
+                              {moderationStats.autoRemovedReplies}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center justify-between p-2 bg-white rounded-lg shadow-sm">
+                            <span className="text-xs text-gray-600 flex items-center">
+                              <Clock className="h-3 w-3 mr-1 text-yellow-500" />
+                              Pending Review
+                            </span>
+                            <Badge variant="outline" className="text-xs border-yellow-300 text-yellow-700">
+                              {moderationStats.pendingReviewReplies}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="pt-2 border-t border-gray-100">
+                        <div className="flex items-center text-xs text-green-600 bg-green-50 p-2 rounded-lg">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          <span>AI-powered moderation active</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </div>
+            )}
+
+            <div className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg border border-blue-100">
+              <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white pb-4">
+                <CardTitle className="flex items-center text-lg md:text-xl">
+                  <BookOpen className="h-5 w-5 md:h-6 md:w-6 mr-2" />
+                  Popular Categories
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {forumStats.mostActiveUsers.map((user, index) => (
-                    <div key={user.id} className="flex items-center space-x-3">
-                      <div className="relative">
-                        <div className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                          {index + 1}
+              <CardContent className="p-4 md:p-6">
+                {statsLoading ? (
+                  <div className="space-y-3">
+                    {[...Array(5)].map((_, i) => (
+                      <div key={i} className="animate-pulse">
+                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : forumStats?.postsByCategory ? (
+                  <div className="space-y-3">
+                    {forumStats.postsByCategory.map((cat) => (
+                      <div
+                        key={cat.category}
+                        className="flex items-center justify-between cursor-pointer hover:bg-blue-50 p-3 rounded-lg transition-colors"
+                        onClick={() => setCategory(cat.category)}
+                      >
+                        <span className="text-sm capitalize font-medium">
+                          {cat.category.replace('-', ' ')}
+                        </span>
+                        <Badge 
+                          variant={category === cat.category ? "default" : "outline"}
+                          className="text-xs"
+                        >
+                          {cat._count.category}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">Failed to load categories</p>
+                )}
+              </CardContent>
+            </div>
+
+            {forumStats?.mostActiveUsers && forumStats.mostActiveUsers.length > 0 && (
+              <div className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg border border-blue-100">
+                <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white pb-4">
+                  <CardTitle className="flex items-center text-lg md:text-xl">
+                    <Users className="h-5 w-5 md:h-6 md:w-6 mr-2" />
+                    Most Active Users
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 md:p-6">
+                  <div className="space-y-3">
+                    {forumStats.mostActiveUsers.map((user, index) => (
+                      <div key={user.id} className="flex items-center space-x-3 p-2 hover:bg-blue-50 rounded-lg transition-colors">
+                        <div className="relative">
+                          <div className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                            {index + 1}
+                          </div>
+                          <div className="bg-gradient-to-r from-blue-200 to-indigo-200 rounded-full w-10 h-10 flex items-center justify-center text-blue-800 font-bold">
+                            {user.name?.charAt(0).toUpperCase() || 'U'}
+                          </div>
                         </div>
-                        <div className="bg-gray-200 rounded-full w-8 h-8 flex items-center justify-center">
-                          {user.name?.charAt(0).toUpperCase() || 'U'}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">
+                            {user.name || 'Anonymous User'}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {user._count.posts} {user._count.posts === 1 ? 'post' : 'posts'}
+                          </p>
                         </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">
-                          {user.name || 'Anonymous User'}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {user._count.posts} {user._count.posts === 1 ? 'post' : 'posts'}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                </CardContent>
+              </div>
+            )}
+
+            <div className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg border border-blue-100">
+              <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white pb-4">
+                <CardTitle className="flex items-center text-lg md:text-xl">
+                  <Bookmark className="h-5 w-5 md:h-6 md:w-6 mr-2" />
+                  Quick Links
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 md:p-6">
+                <div className="space-y-2">
+                  <Link
+                    href="/dashboard/forum/bookmarks"
+                    className="flex items-center p-3 rounded-lg hover:bg-blue-50 transition-colors"
+                  >
+                    <Bookmark className="h-4 w-4 mr-2 text-blue-500" />
+                    <span className="text-sm font-medium">Your Bookmarks</span>
+                  </Link>
                 </div>
               </CardContent>
             </div>
-          )}
 
-          <div className="forum-card card-hover">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Bookmark className="h-5 w-5 mr-2" />
-                Quick Links
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <Link
-                  href="/dashboard/forum/bookmarks"
-                  className="flex items-center p-2 rounded-md hover:bg-gray-50 transition-colors"
-                >
-                  <Bookmark className="h-4 w-4 mr-2 text-blue-500" />
-                  <span className="text-sm">Your Bookmarks</span>
-                </Link>
-              </div>
-            </CardContent>
+            <CommunityGuidelines />
           </div>
-
-          <CommunityGuidelines />
         </div>
       </div>
     </div>

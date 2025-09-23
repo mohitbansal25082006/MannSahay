@@ -170,17 +170,17 @@ export default function AIAssistant({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-2xl h-[80vh] flex flex-col bg-white rounded-lg shadow-lg">
-        <CardHeader className="border-b p-4 flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-lg font-semibold">
-            <MessageSquare className="h-5 w-5 text-blue-600" />
+      <Card className="w-full max-w-2xl h-[80vh] flex flex-col bg-white rounded-xl shadow-2xl">
+        <CardHeader className="border-b p-4 flex items-center justify-between bg-gradient-to-r from-blue-600 to-indigo-700">
+          <CardTitle className="flex items-center gap-2 text-lg font-semibold text-white">
+            <MessageSquare className="h-5 w-5" />
             AI Resource Assistant
-            <Badge variant="secondary" className="ml-2">
-              <Sparkles className="h-3 w-3 mr-1" />
-              Powered by AI
-            </Badge>
           </CardTitle>
-          <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
+          <Badge variant="secondary" className="ml-2 bg-yellow-500 text-yellow-900">
+            <Sparkles className="h-3 w-3 mr-1" />
+            Powered by AI
+          </Badge>
+          <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0 text-white hover:bg-white/20">
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
@@ -251,10 +251,9 @@ export default function AIAssistant({
             <Button
               type="button"
               variant="outline"
-              size="sm"
               onClick={handleVoiceInput}
               disabled={isListening}
-              className="flex-shrink-0 h-10 w-10"
+              className="flex-shrink-0 h-10 w-10 border-gray-300"
             >
               {isListening ? (
                 <div className="flex space-x-1">
@@ -271,12 +270,12 @@ export default function AIAssistant({
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask a question about this resource..."
               disabled={isLoading}
-              className="flex-1 h-10 text-sm"
+              className="flex-1 h-10 text-sm border-gray-300 focus:border-blue-500 focus:ring-blue-500"
             />
             <Button
               type="submit"
               disabled={isLoading || !input.trim()}
-              className="h-10 w-10 p-0"
+              className="h-10 w-10 bg-blue-600 hover:bg-blue-700 text-white"
             >
               <Send className="h-4 w-4" />
             </Button>
