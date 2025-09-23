@@ -468,7 +468,7 @@ export default function BookingPage() {
                   </div>
                   <h3 className="text-xl font-semibold text-gray-800 mb-2">No counselors found</h3>
                   <p className="text-gray-600 max-w-md">
-                    We couldn't find any counselors matching your criteria. Try adjusting your filters or search terms.
+                    We couldn&apos;t find any counselors matching your criteria. Try adjusting your filters or search terms.
                   </p>
                   <Button 
                     variant="outline" 

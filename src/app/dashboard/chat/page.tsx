@@ -50,6 +50,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useRouter } from 'next/navigation';
 
 const suggestedMessages = [
   "I'm feeling really stressed about my exams",
@@ -89,6 +90,7 @@ const emergencyContacts = [
 ];
 
 export default function ChatPage() {
+  const router = useRouter();
   const { data: session } = useSession();
   const [language, setLanguage] = useState<'en' | 'hi'>('en');
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -524,7 +526,11 @@ export default function ChatPage() {
                               <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
                                 Consider booking a session with our professional counselors.
                               </p>
-                              <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700" size="sm">
+                              <Button 
+                                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700" 
+                                size="sm"
+                                onClick={() => router.push('/booking')}
+                              >
                                 <Phone className="h-4 w-4 mr-2" />
                                 Book Counselor
                               </Button>
@@ -979,7 +985,11 @@ export default function ChatPage() {
                 <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
                   Consider booking a session with our professional counselors.
                 </p>
-                <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700" size="sm">
+                <Button 
+                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700" 
+                  size="sm"
+                  onClick={() => router.push('/booking')}
+                >
                   <Phone className="h-4 w-4 mr-2" />
                   Book Counselor
                 </Button>

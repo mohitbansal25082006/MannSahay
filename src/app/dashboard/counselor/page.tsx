@@ -25,7 +25,7 @@ export default function CounselorDashboard() {
               Counselor <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-700">Dashboard</span>
             </h1>
             <p className="text-gray-600 max-w-2xl">
-              Welcome back, <span className="font-medium">{session?.user?.name || 'Counselor'}</span>! Here's your overview.
+              Welcome back, <span className="font-medium">{session?.user?.name || 'Counselor'}</span>! Here&apos;s your overview.
             </p>
             <div className="mt-6 h-1 w-24 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full"></div>
           </div>
