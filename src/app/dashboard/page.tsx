@@ -3,7 +3,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, Calendar, Users, BookOpen, Clock, TrendingUp, UserCheck } from 'lucide-react';
+import { MessageCircle, Calendar, Users, BookOpen, Clock, TrendingUp, UserCheck, Mail } from 'lucide-react';
 import Link from 'next/link';
 import { Session } from 'next-auth';
 
@@ -128,6 +128,9 @@ export default async function DashboardPage() {
   // Check if user is a counselor
   const isCounselor = session.user.email ? await checkCounselorStatus(session.user.email) : false;
 
+  // Check if user is admin
+  const isAdmin = session.user.email === process.env.ADMIN_EMAIL;
+
   // Now fetch stats
   const stats = await getUserStats(userId);
 
@@ -185,15 +188,28 @@ export default async function DashboardPage() {
               </p>
             </div>
 
-            {/* Counselor Dashboard Button */}
-            {isCounselor && (
-              <Button asChild className="bg-gradient-to-r from-indigo-600 to-purple-700 hover:from-indigo-700 hover:to-purple-800 text-white font-medium py-3 px-6 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105">
-                <Link href="/dashboard/counselor" className="flex items-center">
-                  <UserCheck className="h-5 w-5 mr-2" />
-                  Counselor Dashboard
-                </Link>
-              </Button>
-            )}
+            {/* Counselor Dashboard and Query Reply Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+              {/* Query Reply Button - Only for Admin */}
+              {isAdmin && (
+                <Button asChild className="bg-gradient-to-r from-red-600 to-pink-700 hover:from-red-700 hover:to-pink-800 text-white font-medium py-3 px-6 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105">
+                  <Link href="/dashboard/admin/contact" className="flex items-center justify-center">
+                    <Mail className="h-5 w-5 mr-2" />
+                    Query Reply
+                  </Link>
+                </Button>
+              )}
+
+              {/* Counselor Dashboard Button */}
+              {isCounselor && (
+                <Button asChild className="bg-gradient-to-r from-indigo-600 to-purple-700 hover:from-indigo-700 hover:to-purple-800 text-white font-medium py-3 px-6 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105">
+                  <Link href="/dashboard/counselor" className="flex items-center justify-center">
+                    <UserCheck className="h-5 w-5 mr-2" />
+                    Counselor Dashboard
+                  </Link>
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
