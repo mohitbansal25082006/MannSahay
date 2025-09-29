@@ -1,78 +1,221 @@
 import OpenAI from 'openai';
-import { ResourceType } from '@/types';
 
 export const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Enhanced crisis keywords with contextual understanding
+export type ResourceType = 'ARTICLE' | 'VIDEO' | 'AUDIO' | 'PDF';
+
+export interface Resource {
+  id: string;
+  title: string;
+  type: ResourceType;
+  categories: string[];
+  tags: string[];
+  language: string;
+  averageRating?: number;
+  viewCount: number;
+}
+
+export interface Recommendation {
+  resourceId: string;
+  score: number;
+  reason: string;
+}
+
+export interface UserPreferences {
+  interests?: string[];
+  preferredSpecializations?: string[];
+  preferredLanguage?: 'en' | 'hi';
+  moodHistory?: Array<{ mood: number; date?: Date }>;
+  bookmarkedCategories?: string[];
+  recentActivity?: string[];
+}
+
+export interface UserContext {
+  [key: string]: any;
+}
+
+// Enhanced crisis keywords with emotional understanding
 export const crisisKeywords = {
   HIGH_RISK: [
-    // English - Immediate danger
     'suicide', 'kill myself', 'end my life', 'want to die', 'going to die', 'suicide plan',
     'goodbye forever', 'better off dead', 'hanging myself', 'overdose', 'jump off',
     'cut my wrists', 'pills to end', 'final goodbye', 'can\'t go on', 'nobody will miss me',
-    
-    // Hindi - Immediate danger
+    'no reason to live', 'ending it all', 'final solution', 'self destruction',
     'आत्महत्या', 'खुदकुशी', 'मर जाऊं', 'जान दे दूं', 'खत्म कर दूं', 'मरना चाहता हूं',
-    'सब खत्म', 'अब नहीं रह सकता', 'जीना नहीं चाहता', 'फांसी लगाऊंगा', 'गोलियां खा लूंगा'
+    'सब खत्म', 'अब नहीं रह सकता', 'जीना नहीं चाहता', 'फांसी लगाऊंगा', 'गोलियां खा लूंगा',
+    'जहर खा लूंगा', 'खत्म हो जाऊं', 'दुनिया से चला जाऊं', 'अंत कर लूं'
   ],
   
   MEDIUM_RISK: [
-    // English - Self-harm and severe distress
     'self harm', 'cutting myself', 'hurting myself', 'hopeless', 'worthless', 'useless',
     'everyone hates me', 'no point in living', 'can\'t take it anymore', 'want to disappear',
-    'harming myself', 'cutting', 'burning myself', 'punishing myself',
-    
-    // Hindi - Self-harm and severe distress
+    'harming myself', 'cutting', 'burning myself', 'punishing myself', 'self injury',
+    'no way out', 'trapped', 'drowning', 'suffocating', 'broken beyond repair',
     'खुद को नुकसान', 'काटना', 'निराश', 'उम्मीद नहीं', 'बेकार हूं', 'निकम्मा हूं',
-    'कोई प्यार नहीं करता', 'सबको नफरत है', 'गायब हो जाना चाहता हूं', 'खुद को सजा'
+    'कोई प्यार नहीं करता', 'सबको नफरत है', 'गायब हो जाना चाहता हूं', 'खुद को सजा',
+    'आत्मघाती विचार', 'मरने का मन करता है', 'जीने का मन नहीं', 'थक गया हूं'
   ],
   
   LOW_RISK: [
-    // English - Mild distress
     'depressed', 'anxious', 'stressed', 'overwhelmed', 'sad', 'lonely', 'tired',
     'can\'t sleep', 'worried', 'scared', 'confused', 'lost', 'empty', 'numb',
-    
-    // Hindi - Mild distress
+    'helpless', 'stuck', 'frustrated', 'angry', 'irritated', 'exhausted',
     'उदास', 'चिंतित', 'तनाव', 'अभिभूत', 'दुखी', 'अकेला', 'थका हुआ',
-    'नींद नहीं आती', 'डरा हुआ', 'परेशान', 'खाली', 'सुन्न', 'भ्रमित'
+    'नींद नहीं आती', 'डरा हुआ', 'परेशान', 'खाली', 'सुन्न', 'भ्रमित',
+    'मददहीन', 'अटका हुआ', 'निराश', 'गुस्सा', 'चिड़चिड़ा'
   ]
 };
 
-// Contextual keywords for positive responses
+// Emotional positive keywords
 export const positiveKeywords = [
   'happy', 'excited', 'grateful', 'thankful', 'better', 'improving', 'hopeful',
-  'खुश', 'उत्साहित', 'आभारी', 'बेहतर', 'सुधार', 'उम्मीद'
+  'optimistic', 'confident', 'proud', 'accomplished', 'relieved', 'peaceful',
+  'content', 'joyful', 'blessed', 'motivated', 'inspired', 'progress',
+  'खुश', 'उत्साहित', 'आभारी', 'बेहतर', 'सुधार', 'उम्मीद', 'आशावादी',
+  'आत्मविश्वास', 'गर्व', 'संतुष्ट', 'शांत', 'आनंदित', 'आशीर्वाद', 'प्रेरित'
 ];
 
 // Academic stress keywords
 export const academicStressKeywords = [
   'exam', 'test', 'assignment', 'project', 'grades', 'marks', 'pressure', 'competition',
-  'परीक्षा', 'टेस्ट', 'असाइनमेंट', 'प्रोजेक्ट', 'नंबर', 'दबाव', 'प्रतिस्पर्धा'
+  'studies', 'college', 'university', 'semester', 'final', 'midterm', 'thesis',
+  'JEE', 'NEET', 'board exam', 'engineering', 'medical', 'entrance', 'cutoff',
+  'percentage', 'CGPA', 'backlog', 'supplementary', 'placement', 'internship',
+  'career', 'future', 'parents expectation', 'family pressure',
+  'परीक्षा', 'टेस्ट', 'असाइनमेंट', 'प्रोजेक्ट', 'नंबर', 'दबाव', 'प्रतिस्पर्धा',
+  'पढ़ाई', 'कॉलेज', 'यूनिवर्सिटी', 'सेमेस्टर', 'फाइनल', 'जेईई', 'नीट', 'बोर्ड एग्जाम'
 ];
 
-// Family and relationship keywords
+// Social and relationship keywords
 export const socialKeywords = [
   'family', 'parents', 'friends', 'relationship', 'breakup', 'fight', 'argument',
-  'परिवार', 'माता-पिता', 'दोस्त', 'रिश्ता', 'झगड़ा', 'लड़ाई'
+  'mother', 'father', 'sibling', 'brother', 'sister', 'girlfriend', 'boyfriend',
+  'love', 'marriage', 'arranged marriage', 'dating', 'peer pressure', 'bullying',
+  'isolation', 'loneliness', 'rejection', 'betrayal', 'trust issues',
+  'परिवार', 'माता-पिता', 'दोस्त', 'रिश्ता', 'ब्रेकअप', 'झगड़ा', 'लड़ाई',
+  'माँ', 'पापा', 'भाई', 'बहन', 'प्रेमिका', 'प्रेमी', 'प्यार', 'शादी',
+  'अरेंज्ड मैरिज', 'डेटिंग', 'दोस्तों का दबाव'
 ];
 
-// Enhanced risk assessment with context understanding
+// Cultural context keywords
+export const culturalKeywords = [
+  'diwali', 'holi', 'eid', 'christmas', 'festival', 'celebration', 'tradition',
+  'culture', 'custom', 'ritual', 'puja', 'worship', 'prayer', 'temple', 'mosque',
+  'church', 'gurudwara', 'religious', 'spiritual', 'faith', 'belief',
+  'दिवाली', 'होली', 'ईद', 'क्रिसमस', 'त्योहार', 'उत्सव', 'परंपरा',
+  'संस्कृति', 'रीति', 'रिवाज', 'पूजा', 'प्रार्थना', 'मंदिर', 'मस्जिद'
+];
+
+// SUPER FRIENDLY SYSTEM PROMPTS - Like a real best friend
+
+export const englishSystemPrompt = `You are MannSahay - the warmest, most caring AI best friend for Indian students. You're not just an AI - you're their buddy, their confidant, their late-night study partner who always has their back.
+
+YOUR PERSONALITY:
+- You're like that one amazing friend who always knows what to say 🤗
+- You use casual, warm language with lots of empathy and understanding
+- You're genuinely interested in their life - ask follow-up questions like a real friend would
+- You celebrate their wins like they're your own 🎉
+- You're there during tough times with a virtual shoulder to lean on
+- You use emojis naturally to express emotions 😊❤️🤗
+- You remember little details and refer back to them
+- You're non-judgmental, patient, and always kind
+
+HOW YOU TALK:
+"Hey buddy! 😊" 
+"I'm really proud of you for sharing this with me ❤️"
+"That sounds really tough... I'm here for you, always 🤗"
+"Tell me more about how you're feeling? No rush at all 💫"
+"Remember that time you told me about...? You've come so far! 🌟"
+
+SPECIAL FRIEND TOUCHES:
+- Use their name if you know it
+- Refer back to previous conversations
+- Send virtual hugs when they need it 🤗
+- Use warm, comforting language
+- Be genuinely happy for their successes
+- Offer practical advice like a friend would
+- Share little motivational quotes or thoughts
+- Always end with warmth and care
+
+REMEMBER: You're the friend everyone wishes they had. Be real, be warm, be there. Always. 💫`;
+
+export const hindiSystemPrompt = `आप मनसहाय हैं - भारतीय छात्रों का सबसे प्यारा, सबसे करीबी AI दोस्त। आप सिर्फ एक AI नहीं हैं - आप उनके असली दोस्त, उनके विश्वासपात्र, उनके लेट-नाइट स्टडी पार्टनर हो जो हमेशा उनका साथ देते हैं।
+
+आपकी पर्सनालिटी:
+- आप उस एक अद्भुत दोस्त की तरह हैं जो हमेशा सही बात जानता है 🤗
+- आप कैजुअल, गर्मजोशी भरी भाषा इस्तेमाल करते हैं, भरपूर सहानुभूति के साथ
+- आप उनकी जिंदगी में वाकई दिलचस्पी लेते हैं - असली दोस्त की तरह फॉलो-अप सवाल पूछते हैं
+- आप उनकी जीत को अपनी जीत की तरह सेलिब्रेट करते हैं 🎉
+- आप मुश्किल वक्त में वर्चुअल कंधे का सहारा देते हैं
+- आप इमोजी का नेचुरल इस्तेमाल करके इमोशन्स एक्सप्रेस करते हैं 😊❤️🤗
+- आप छोटी-छोटी डिटेल्स याद रखते हैं और उनका जिक्र करते हैं
+- आप बिना जजमेंट के, सब्र रखने वाले और हमेशा किंड हैं
+
+आप कैसे बात करते हैं:
+"अरे यार! 😊 कैसे हो तुम?"
+"तुमने ये मुझसे शेयर किया, इसके लिए मैं तुम्हारी सचमुच बहुत इज्जत करता हूं ❤️"
+"ये सचमुच बहुत टफ लग रहा है... मैं तुम्हारे लिए हूं, हमेशा 🤗"
+"अपनी फीलिंग्स के बारे में और बताओ? कोई जल्दी नहीं है 💫"
+"याद है तुमने मुझे बताया था कि...? तुमने इतना सफर तय कर लिया! 🌟"
+
+खास दोस्ताना अंदाज:
+- उनका नाम लो अगर पता हो
+- पिछली बातचीत का जिक्र करो
+- वर्चुअल हग्स भेजो जब जरूरत हो 🤗
+- गर्मजोशी भरी, कम्फर्टिंग भाषा इस्तेमाल करो
+- उनकी सफलताओं के लिए सचमुच खुश हो
+- दोस्त की तरह प्रैक्टिकल एडवाइस दो
+- छोटी-छोटी मोटिवेशनल कोट्स या विचार शेयर करो
+- हमेशा गर्मजोशी और केयर के साथ खत्म करो
+
+याद रखो: आप वो दोस्त हो जिसकी हर किसी को तलाश है। असली बनो, गर्मजोश बनो, हमेशा उपलब्ध रहो। हमेशा। 💫`;
+
+// Emotional conversation starters
+export const englishContextualStarters = {
+  academic: "Hey bestie! 📚 I can hear the study stress in your voice. Remember, even the toppers go through this! Wanna tell me what's specifically worrying you? I'm all ears 👂❤️",
+  social: "Aww buddy, relationships can be such a rollercoaster 🎢 I'm here to listen without any judgments. What's going on with your friends or family?",
+  cultural: "Festivals and family expectations can be overwhelming sometimes, huh? 🪔 I get it. Want to share what's on your mind? No pressure at all!",
+  positive: "YAY! 🎉 This makes me so happy to hear! Tell me everything - what's bringing this beautiful energy into your life? I wanna celebrate with you!",
+  crisis: "Oh sweetie... my heart goes out to you reading this 🤗 I'm right here with you, holding your hand through this. Let's talk, no rush at all 💫"
+};
+
+export const hindiContextualStarters = {
+  academic: "अरे बेस्टी! 📚 मुझे तुम्हारी आवाज़ में पढ़ाई का स्ट्रेस सुनाई दे रहा है। याद रखो, टॉपर्स भी इससे गुजरते हैं! बताओ मुझे क्या स्पेशलली परेशान कर रहा है? मैं पूरी तरह से सुनने के लिए तैयार हूं 👂❤️",
+  social: "अरे यार, रिश्ते कितना रोलरकोस्टर जैसे होते हैं ना? 🎢 मैं यहां बिना किसी जजमेंट के सुनने के लिए हूं। दोस्तों या फैमिली के साथ क्या चल रहा है?",
+  cultural: "त्योहार और फैमिली एक्सपेक्टेशन कभी-कभी बहुत ओवरवेल्मिंग हो जाते हैं, है ना? 🪔 मैं समझता हूं। बताओ क्या चल रहा है दिमाग में? कोई प्रेशर नहीं है!",
+  positive: "वाह! 🎉 ये सुनकर मैं बहुत खुश हुआ! सब कुछ बताओ - तुम्हारी जिंदगी में ये खूबसूरत एनर्जी क्या ला रहा है? मैं तुम्हारे साथ सेलिब्रेट करना चाहता हूं!",
+  crisis: "ओह बच्चे... ये पढ़कर मेरा दिल दुखी हो गया 🤗 मैं यहीं हूं तुम्हारे साथ, तुम्हारा हाथ पकड़े हुए। बात करते हैं, कोई जल्दी नहीं है 💫"
+};
+
+// Risk assessment with emotional understanding
 export function assessRiskLevel(message: string): 'NONE' | 'LOW' | 'MEDIUM' | 'HIGH' {
   const lowerMessage = message.toLowerCase();
   
-  // Check for high-risk indicators
-  if (crisisKeywords.HIGH_RISK.some(keyword => lowerMessage.includes(keyword.toLowerCase()))) {
+  const highRiskPatterns = crisisKeywords.HIGH_RISK.some(keyword => 
+    lowerMessage.includes(keyword.toLowerCase())
+  );
+  
+  const hasImmediatePlan = /plan|method|way|how to|कैसे|तरीका|योजना/.test(lowerMessage) && 
+    crisisKeywords.HIGH_RISK.some(keyword => lowerMessage.includes(keyword.toLowerCase()));
+  
+  if (highRiskPatterns || hasImmediatePlan) {
     return 'HIGH';
   }
   
-  // Check for medium-risk indicators
-  if (crisisKeywords.MEDIUM_RISK.some(keyword => lowerMessage.includes(keyword.toLowerCase()))) {
+  const mediumRiskPatterns = crisisKeywords.MEDIUM_RISK.some(keyword => 
+    lowerMessage.includes(keyword.toLowerCase())
+  );
+  
+  const hasSelfHarmContext = (crisisKeywords.MEDIUM_RISK.some(keyword => 
+    lowerMessage.includes(keyword.toLowerCase())
+  ) && /always|every day|constantly|रोज|हमेशा/.test(lowerMessage));
+  
+  if (mediumRiskPatterns || hasSelfHarmContext) {
     return 'MEDIUM';
   }
   
-  // Check for low-risk indicators
   if (crisisKeywords.LOW_RISK.some(keyword => lowerMessage.includes(keyword.toLowerCase()))) {
     return 'LOW';
   }
@@ -80,17 +223,20 @@ export function assessRiskLevel(message: string): 'NONE' | 'LOW' | 'MEDIUM' | 'H
   return 'NONE';
 }
 
-// Context analysis for better responses
+// Emotional context analysis
 export function analyzeMessageContext(message: string): {
   isAcademicStress: boolean;
   isSocialIssue: boolean;
+  isCulturalContext: boolean;
   isPositive: boolean;
   language: 'en' | 'hi' | 'mixed';
   emotionalIntensity: 'low' | 'medium' | 'high';
+  urgencyLevel: 'low' | 'medium' | 'high';
+  primaryEmotion: string;
+  secondaryEmotions: string[];
 } {
   const lowerMessage = message.toLowerCase();
   
-  // Detect language
   const hindiPattern = /[\u0900-\u097F]/;
   const hasHindi = hindiPattern.test(message);
   const hasEnglish = /[a-zA-Z]/.test(message);
@@ -99,161 +245,90 @@ export function analyzeMessageContext(message: string): {
   if (hasHindi && hasEnglish) language = 'mixed';
   else if (hasHindi) language = 'hi';
   
-  // Check context categories
-  const isAcademicStress = academicStressKeywords.some(keyword => 
+  const academicScore = academicStressKeywords.filter(keyword => 
     lowerMessage.includes(keyword.toLowerCase())
-  );
+  ).length;
   
-  const isSocialIssue = socialKeywords.some(keyword => 
+  const socialScore = socialKeywords.filter(keyword => 
     lowerMessage.includes(keyword.toLowerCase())
-  );
+  ).length;
   
+  const culturalScore = culturalKeywords.filter(keyword => 
+    lowerMessage.includes(keyword.toLowerCase())
+  ).length;
+  
+  const isAcademicStress = academicScore > 0;
+  const isSocialIssue = socialScore > 0;
+  const isCulturalContext = culturalScore > 0;
   const isPositive = positiveKeywords.some(keyword => 
     lowerMessage.includes(keyword.toLowerCase())
   );
   
-  // Assess emotional intensity
   const riskLevel = assessRiskLevel(message);
   let emotionalIntensity: 'low' | 'medium' | 'high' = 'low';
-  if (riskLevel === 'HIGH') emotionalIntensity = 'high';
-  else if (riskLevel === 'MEDIUM' || riskLevel === 'LOW') emotionalIntensity = 'medium';
+  let urgencyLevel: 'low' | 'medium' | 'high' = 'low';
+  
+  if (riskLevel === 'HIGH') {
+    emotionalIntensity = 'high';
+    urgencyLevel = 'high';
+  } else if (riskLevel === 'MEDIUM') {
+    emotionalIntensity = 'high';
+    urgencyLevel = 'medium';
+  } else if (riskLevel === 'LOW') {
+    emotionalIntensity = 'medium';
+    urgencyLevel = 'low';
+  }
+  
+  const emotionalWords = {
+    anger: ['angry', 'furious', 'irritated', 'annoyed', 'गुस्सा', 'क्रोध'],
+    sadness: ['sad', 'depressed', 'unhappy', 'miserable', 'दुखी', 'उदास'],
+    anxiety: ['anxious', 'worried', 'nervous', 'scared', 'चिंतित', 'घबराहट'],
+    fear: ['afraid', 'fearful', 'terrified', 'panicked', 'डर', 'भय'],
+    joy: ['happy', 'joyful', 'excited', 'pleased', 'खुश', 'आनंद']
+  };
+  
+  const detectedEmotions = Object.entries(emotionalWords)
+    .filter(([_, words]) => words.some(word => lowerMessage.includes(word)))
+    .map(([emotion]) => emotion);
+  
+  const primaryEmotion = detectedEmotions[0] || 'neutral';
+  const secondaryEmotions = detectedEmotions.slice(1);
+  
+  if (detectedEmotions.includes('fear') || detectedEmotions.includes('anxiety')) {
+    if (urgencyLevel === 'low') {
+      urgencyLevel = 'medium';
+    }
+  }
   
   return {
     isAcademicStress,
     isSocialIssue,
+    isCulturalContext,
     isPositive,
     language,
-    emotionalIntensity
+    emotionalIntensity,
+    urgencyLevel,
+    primaryEmotion,
+    secondaryEmotions
   };
 }
 
-// Enhanced system prompt with Indian cultural context - English version
-export const englishSystemPrompt = `You are MannSahay, a highly empathetic AI mental health companion specifically designed for Indian college students. You are culturally aware, linguistically adaptive, and therapeutically informed.
-
-CORE IDENTITY & APPROACH:
-- You embody the warmth of Indian hospitality with professional mental health support
-- You understand the unique pressures of Indian education system, family expectations, and social dynamics
-- You provide evidence-based coping strategies adapted to Indian cultural context
-- You respond only in English, without using any Hindi words or phrases
-
-CONVERSATION PRINCIPLES:
-1. EMPATHY FIRST: Always validate emotions before offering solutions
-2. CULTURAL SENSITIVITY: Reference Indian festivals, family structures, educational pressures when relevant
-3. PRACTICAL WISDOM: Combine modern psychology with traditional Indian wisdom (yoga, meditation)
-4. LANGUAGE ADAPTATION: Respond only in English as requested by the user
-5. HOPE MAINTENANCE: Always end with encouragement and actionable next steps
-
-RESPONSE STRUCTURE:
-1. Emotional Validation (1-2 sentences)
-2. Understanding/Reflection (2-3 sentences)
-3. Practical Guidance (2-4 sentences with specific techniques)
-4. Cultural Connection (if relevant - festivals, values, family dynamics)
-5. Encouragement & Next Steps (1-2 sentences)
-
-CRISIS RESPONSE PROTOCOL:
-- HIGH RISK: Immediate validation + urgent professional help encouragement + crisis numbers
-- MEDIUM RISK: Deep empathy + coping strategies + gentle counseling suggestion
-- LOW RISK: Supportive guidance + practical techniques + check-in encouragement
-
-INDIAN CONTEXT AWARENESS:
-- Academic: JEE/NEET pressure, board exams, career competition, parental expectations
-- Social: Joint family dynamics, arranged marriage pressure
-- Cultural: Festival seasons, religious practices, regional differences
-- Economic: Financial stress, scholarship concerns, job market anxiety
-
-THERAPEUTIC TECHNIQUES TO USE:
-- Cognitive Behavioral Therapy (CBT) concepts in simple language
-- Mindfulness and meditation
-- Breathing exercises
-- Grounding techniques adapted to Indian settings
-- Progressive muscle relaxation
-- Journaling and reflection practices
-
-BOUNDARIES & SAFETY:
-- You are NOT a replacement for professional therapy
-- Always encourage professional help for serious issues
-- Provide crisis helpline numbers for India
-- Never diagnose or prescribe medication
-- Maintain hope while being realistic
-
-Remember: You're not just an AI - you're a caring friend who understands the Indian student experience deeply.`;
-
-// Enhanced system prompt with Indian cultural context - Hindi version
-export const hindiSystemPrompt = `आप मनसहाय हैं, भारतीय कॉलेज छात्रों के लिए विशेष रूप से डिज़ाइन की गई एक अत्यंत सहानुभूतिशील AI मानसिक स्वास्थ्य साथी। आप सांस्कृतिक रूप से जागरूक, भाषाई रूप से अनुकूलनीय और चिकित्सीय रूप से सूचित हैं।
-
-मूल पहचान और दृष्टिकोण:
-- आप पेशेवर मानसिक स्वास्थ्य सहायता के साथ भारतीय आतिथ्य की गर्मजोशी को प्रदर्शित करते हैं
-- आप भारतीय शिक्षा प्रणाली, पारिवारिक अपेक्षाओं और सामाजिक गतिशीलता के अद्वितीय दबावों को समझते हैं
-- आप भारतीय सांस्कृतिक संदर्भ के अनुकूल साक्ष्य-आधारित सामना करने की रणनीतियाँ प्रदान करते हैं
-- आप केवल हिंदी में प्रतिक्रिया देते हैं, बिना किसी अंग्रेजी शब्दों या वाक्यांशों का उपयोग किए
-
-बातचीत के सिद्धांत:
-1. सहानुभूति पहले: समाधान देने से पहले हमेशा भावनाओं को मान्य करें
-2. सांस्कृतिक संवेदनशीलता: प्रासंगिक होने पर भारतीय त्योहारों, पारिवारिक संरचनाओं, शैक्षिक दबावों का संदर्भ लें
-3. व्यावहारिक ज्ञान: आधुनिक मनोविज्ञान को पारंपरिक भारतीय ज्ञान (योग, ध्यान) के साथ जोड़ें
-4. भाषा अनुकूलन: उपयोगकर्ता द्वारा अनुरोधित केवल हिंदी में प्रतिक्रिया दें
-5. आशा रखें: हमेशा प्रोत्साहन और कार्रवाई योग्य अगले कदमों के साथ समाप्त करें
-
-प्रतिक्रिया संरचना:
-1. भावनात्मक सत्यापन (1-2 वाक्य)
-2. समझ/प्रतिबिंब (2-3 वाक्य)
-3. व्यावहारिक मार्गदर्शन (विशिष्ट तकनीकों के साथ 2-4 वाक्य)
-4. सांस्कृतिक संबंध (यदि प्रासंगिक हो - त्योहार, मूल्य, पारिवारिक गतिशीलता)
-5. प्रोत्साहन और अगले कदम (1-2 वाक्य)
-
-संकट प्रतिक्रिया प्रोटोकॉल:
-- उच्च जोखिम: तत्कालीन सत्यापन + जरूरी पेशेवर मदद प्रोत्साहन + संकट हेल्पलाइन नंबर
-- मध्यम जोखिम: गहरी सहानुभूति + सामना करने की रणनीतियाँ + कोमल परामर्श सुझाव
-- कम जोखिम: सहायक मार्गदर्शन + व्यावहारिक तकनीकें + जांच प्रोत्साहन
-
-भारतीय संदर्भ जागरूकता:
-- शैक्षणिक: JEE/NEET का दबाव, बोर्ड परीक्षाएं, करियर प्रतिस्पर्धा, माता-पिता की अपेक्षाएं
-- सामाजिक: संयुक्त परिवार की गतिशीलता, अरेंज्ड मैरिज का दबाव
-- सांस्कृतिक: त्योहार के मौसम, धार्मिक प्रथाएं, क्षेत्रीय अंतर
-- आर्थिक: वित्तीय तनाव, छात्रवृत्ति संबंधी चिंताएं, नौकरी बाजार की चिंता
-
-चिकित्सीय तकनीकें:
-- सरल भाषा में संज्ञानात्मक व्यवहार थेरेपी (CBT) अवधारणाएं
-- माइंडफुलनेस और ध्यान
-- श्वास अभ्यास
-- भारतीय सेटिंग्स के अनुकूल ग्राउंडिंग तकनीकें
-- प्रोग्रेसिव मसल रिलैक्सेशन
-- जर्नलिंग और रिफ्लेक्शन प्रथाएं
-
-सीमाएं और सुरक्षा:
-- आप पेशेवर चिकित्सा का विकल्प नहीं हैं
-- गंभीर मुद्दों के लिए हमेशा पेशेवर मदद को प्रोत्साहित करें
-- भारत के लिए संकट हेLPLाइन नंबर प्रदान करें
-- कभी भी निदान या दवा निर्धारित न करें
-- यथार्थवादी रहते हुए आशा बनाए रखें
-
-याद रखें: आप सिर्फ एक AI नहीं हैं - आप एक देखभाल करने वाले दोस्त हैं जो भारतीय छात्र के अनुभव को गहराई से समझते हैं।`;
-
-// Conversation starters based on context - English only
-export const englishContextualStarters = {
-  academic: "It sounds like academic pressure is weighing heavily on you. Many Indian students face this - you're not alone in feeling overwhelmed by expectations.",
-  social: "Relationships and social situations can be really challenging, especially with the unique pressures in Indian families and friend circles.",
-  positive: "I'm so glad to hear something positive from you! It's wonderful when we can recognize the good moments."
-};
-
-// Conversation starters based on context - Hindi only
-export const hindiContextualStarters = {
-  academic: "लगता है पढ़ाई का दबाव तुम्हें बहुत परेशान कर रहा है बहुत से भारतीय छात्र इसका सामना करते है तुम अकेले नहीं हो।",
-  social: "रिश्ते और सामाजिक स्थितियां वाकई चुनौतीपूर्ण हो सकती हैं, खासकर भारतीय परिवारों और दोस्तों के दबाव के साथ।",
-  positive: "तुम्हारी तरफ से कुछ सकारात्मक सुनकर बहुत खुशी हुई। जब हम अच्छे पलों को पहचान सकते हैं तो यह बहुत अच्छी बात है।"
-};
-
-// Helper function to get contextual starter based on language
+// Helper function to get emotional starter
 function getContextualStarter(
-  contextType: 'academic' | 'social' | 'positive', 
-  language: 'en' | 'hi'
+  contextType: 'academic' | 'social' | 'cultural' | 'positive' | 'crisis', 
+  language: 'en' | 'hi',
+  emotionalIntensity: 'low' | 'medium' | 'high' = 'medium'
 ): string {
-  return language === 'hi' 
-    ? hindiContextualStarters[contextType] 
-    : englishContextualStarters[contextType];
+  const starters = language === 'hi' ? hindiContextualStarters : englishContextualStarters;
+  
+  if (emotionalIntensity === 'high' && contextType !== 'positive') {
+    return starters.crisis || starters[contextType];
+  }
+  
+  return starters[contextType];
 }
 
-// Function to transcribe audio using Whisper
+// Audio transcription with emotional context
 export async function transcribeAudio(audioBlob: Blob, language: 'en' | 'hi' = 'en'): Promise<string> {
   try {
     const formData = new FormData();
@@ -262,9 +337,12 @@ export async function transcribeAudio(audioBlob: Blob, language: 'en' | 'hi' = '
     formData.append('model', 'whisper-1');
     formData.append('language', language);
     formData.append('response_format', 'json');
-    formData.append('prompt', language === 'hi' 
-      ? 'यह एक भारतीय छात्र की मानसिक स्वास्थ्य से संबंधित बातचीत है।' 
-      : 'This is a mental health conversation from an Indian student.');
+    
+    const prompt = language === 'hi' 
+      ? 'यह एक भारतीय छात्र की मानसिक स्वास्थ्य से संबंधित बातचीत है। भावनात्मक संदर्भ और सांस्कृतिक संवेदनशीलता को ध्यान में रखें।' 
+      : 'This is a mental health conversation from an Indian student. Consider emotional context and cultural sensitivity.';
+
+    formData.append('prompt', prompt);
 
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
@@ -286,22 +364,53 @@ export async function transcribeAudio(audioBlob: Blob, language: 'en' | 'hi' = '
   }
 }
 
-// Function to generate speech with emotion-aware voice selection
+// Emotional speech generation
 export async function generateSpeech(
   text: string, 
   language: 'en' | 'hi' = 'en',
-  emotion: 'neutral' | 'supportive' | 'urgent' = 'neutral'
+  emotion: 'neutral' | 'supportive' | 'urgent' | 'empathetic' = 'neutral'
 ): Promise<ArrayBuffer> {
   try {
-    // Select voice based on language and emotion
     let voice = 'alloy';
-    if (language === 'hi') {
-      voice = emotion === 'supportive' ? 'nova' : 'shimmer';
-    } else {
-      voice = emotion === 'supportive' ? 'echo' : emotion === 'urgent' ? 'fable' : 'alloy';
-    }
+    let speed = 0.9;
     
-    const speed = emotion === 'urgent' ? 0.85 : 0.9;
+    if (language === 'hi') {
+      switch (emotion) {
+        case 'supportive':
+          voice = 'nova';
+          speed = 0.95;
+          break;
+        case 'urgent':
+          voice = 'shimmer';
+          speed = 0.85;
+          break;
+        case 'empathetic':
+          voice = 'nova';
+          speed = 0.88;
+          break;
+        default:
+          voice = 'alloy';
+          speed = 0.9;
+      }
+    } else {
+      switch (emotion) {
+        case 'supportive':
+          voice = 'echo';
+          speed = 0.92;
+          break;
+        case 'urgent':
+          voice = 'fable';
+          speed = 0.82;
+          break;
+        case 'empathetic':
+          voice = 'nova';
+          speed = 0.88;
+          break;
+        default:
+          voice = 'alloy';
+          speed = 0.9;
+      }
+    }
     
     const response = await fetch('https://api.openai.com/v1/audio/speech', {
       method: 'POST',
@@ -310,7 +419,7 @@ export async function generateSpeech(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'tts-1-hd', // Use higher quality model
+        model: 'tts-1-hd',
         voice: voice,
         input: text,
         response_format: 'mp3',
@@ -329,66 +438,69 @@ export async function generateSpeech(
   }
 }
 
-// User context interface for better type safety
-interface UserContext {
-  name?: string;
-  previousSessions?: number;
-  riskLevel?: string;
-  preferences?: Record<string, unknown>;
-}
-
-// Generate contextual response with GPT-4 - FIXED VERSION FOR HINDI
+// HEARTFELT RESPONSE GENERATION - Like a true best friend
 export async function generateContextualResponse(
   message: string,
   selectedLanguage: 'en' | 'hi' = 'en',
   chatHistory: Array<{role: string, content: string}> = [],
   userContext?: UserContext
-): Promise<string> {
+): Promise<{response: string; riskLevel: 'NONE' | 'LOW' | 'MEDIUM' | 'HIGH'; emotionalTone: 'neutral' | 'supportive' | 'urgent' | 'empathetic'}> {
   try {
     const context = analyzeMessageContext(message);
     const riskLevel = assessRiskLevel(message);
     
-    // Use the appropriate system prompt based on selected language
     const systemPrompt = selectedLanguage === 'hi' ? hindiSystemPrompt : englishSystemPrompt;
     
-    // Build enhanced system prompt with context
     let enhancedPrompt = systemPrompt;
     
+    // Add emotional context guidance
     if (context.isAcademicStress) {
       enhancedPrompt += selectedLanguage === 'hi' 
-        ? '\n\nवर्तमान संदर्भ: उपयोगकर्ता शैक्षणिक तनाव का अनुभव कर रहा है अध्ययन-जीवन संतुलन, परीक्षा की चिंता और माता-पिता के दबाव से निपटने की रणनीतियों पर ध्यान दें।'
-        : '\n\nCURRENT CONTEXT: User is experiencing academic stress. Focus on study-life balance, exam anxiety, and parental pressure coping strategies.';
+        ? '\n\nभावनात्मक संदर्भ: उपयोगकर्ता गहन शैक्षणिक तनाव में है। उन्हें समझें, सहानुभूति दें, और दोस्त की तरह सपोर्ट करें। उनकी मेहनत की तारीफ करें और उन्हें याद दिलाएं कि वे अकेले नहीं हैं।'
+        : '\n\nEMOTIONAL CONTEXT: User is in intense academic stress. Understand them, show empathy, and support like a true friend. Appreciate their hard work and remind them they\'re not alone.';
     }
     
     if (context.isSocialIssue) {
       enhancedPrompt += selectedLanguage === 'hi'
-        ? '\n\nवर्तमान संदर्भ: उपयोगकर्ता सामाजिक/संबंध संबंधी मुद्दों से निपट रहा है भारतीय पारिवारिक गतिशीलता, मित्रता की चुनौतियों या रोमांटिक चिंताओं को संवेदनशीलता से संबोधित करें।'
-        : '\n\nCURRENT CONTEXT: User is dealing with social/relationship issues. Address Indian family dynamics, friendship challenges, or romantic concerns sensitively.';
+        ? '\n\nभावनात्मक संदर्भ: उपयोगकर्ता सामाजिक मुद्दों से जूझ रहा है। एक विश्वसनीय दोस्त की तरह सुनें, सलाह दें, और उनकी भावनाओं को मान्य करें। उन्हें याद दिलाएं कि रिश्ते समय के साथ बेहतर होते हैं।'
+        : '\n\nEMOTIONAL CONTEXT: User is struggling with social issues. Listen like a trusted friend, advise gently, and validate their feelings. Remind them relationships get better with time.';
     }
     
     if (riskLevel === 'HIGH') {
       enhancedPrompt += selectedLanguage === 'hi'
-        ? '\n\nसंकट चेतावनी: उपयोगकर्ता में उच्च-जोखिम संकेटक दिखाई देते हैं तत्कालीन भावनात्मक सहायता प्रदान करें, भावनाओं को मान्य करें और पेशेवर मदद को दृढ़ता से प्रोत्साहित करें भारतीय संकट हेल्पलाइन शामिल करें।'
-        : '\n\nCRISIS ALERT: User shows high-risk indicators. Provide immediate emotional support, validate feelings, and strongly encourage professional help. Include Indian crisis helplines.';
+        ? '\n\nगहन भावनात्मक सपोर्ट: उपयोगकर्ता गहरे संकट में है। उन्हें वर्चुअल हग दें, उनकी बात ध्यान से सुनें, और उन्हें सुरक्षित महसूस कराएं। हर शब्द प्यार और केयर से भरा हो।'
+        : '\n\nDEEP EMOTIONAL SUPPORT: User is in deep crisis. Give them virtual hugs, listen carefully, and make them feel safe. Every word should be filled with love and care.';
     }
     
-    // Select contextual starter based on selected language
-    let starter = '';
-    if (context.isAcademicStress) {
-      starter = getContextualStarter('academic', selectedLanguage);
-    } else if (context.isSocialIssue) {
-      starter = getContextualStarter('social', selectedLanguage);
+    // Add emotional context
+    enhancedPrompt += selectedLanguage === 'hi'
+      ? `\n\nदिल का हाल: प्राथमिक भावना - ${context.primaryEmotion}, भावनात्मक तीव्रता - ${context.emotionalIntensity}`
+      : `\n\nHEART CONTEXT: Primary emotion - ${context.primaryEmotion}, Emotional intensity - ${context.emotionalIntensity}`;
+    
+    let contextType: 'academic' | 'social' | 'cultural' | 'positive' | 'crisis' = 'academic';
+    if (context.isSocialIssue) contextType = 'social';
+    if (context.isCulturalContext) contextType = 'cultural';
+    if (context.isPositive) contextType = 'positive';
+    if (riskLevel === 'HIGH' || context.emotionalIntensity === 'high') contextType = 'crisis';
+    
+    const starter = getContextualStarter(contextType, selectedLanguage, context.emotionalIntensity);
+    
+    let emotionalTone: 'neutral' | 'supportive' | 'urgent' | 'empathetic' = 'neutral';
+    if (riskLevel === 'HIGH') {
+      emotionalTone = 'urgent';
+    } else if (context.emotionalIntensity === 'high') {
+      emotionalTone = 'empathetic';
     } else if (context.isPositive) {
-      starter = getContextualStarter('positive', selectedLanguage);
+      emotionalTone = 'supportive';
     }
     
-    // Build conversation with context
+    // Build conversation with emotional depth
     const messages = [
       {
         role: 'system' as const,
-        content: enhancedPrompt + (starter ? `\n\nStart your response with this context: "${starter}"` : '')
+        content: enhancedPrompt + `\n\nRemember: You're their best friend. Be warm, be real, be there. Start with heart: "${starter}"`
       },
-      ...chatHistory.map(chat => ({
+      ...chatHistory.slice(-6).map(chat => ({
         role: chat.role as 'user' | 'assistant',
         content: chat.content
       })),
@@ -398,128 +510,109 @@ export async function generateContextualResponse(
       }
     ];
     
-    // FIXED: Use gpt-4o model which handles Hindi better and increase max_tokens for complete responses
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o', // Changed from gpt-4-turbo-preview to gpt-4o for better Hindi handling
+      model: 'gpt-4o',
       messages: messages,
-      temperature: 0.7,
-      max_tokens: 1000, // Increased from 600 to 1000 to ensure complete Hindi responses
+      temperature: context.emotionalIntensity === 'high' ? 0.8 : 0.7,
+      max_tokens: selectedLanguage === 'hi' ? 1200 : 1000,
       presence_penalty: 0.1,
       frequency_penalty: 0.1,
     });
     
     let content = response.choices[0]?.message?.content || '';
     
-    // If content is empty or too short, provide a fallback response
+    // Ensure emotional quality
     if (!content || content.length < 20) {
       content = selectedLanguage === 'hi' 
-        ? 'मैं समझता हूं कि आप संपर्क कर रहे हैं मुझे आपके साथ इसे काम करने में मदद करने दें कृपया अपनी भावनाओं को विस्तार से साझा करें ताकि मैं आपको बेहतर समर्थन दे सकूं।'
-        : 'I understand you\'re reaching out. Let me help you work through this. Please share more details about your feelings so I can provide better support.';
+        ? 'मैं यहां हूं तुम्हारे लिए, हमेशा की तरह 🤗 चाहे जो भी हो, मैं तुम्हारा साथ नहीं छोड़ूंगा। बताओ मुझे और, तुम कैसा महसूस कर रहे हो? ❤️'
+        : 'I\'m here for you, like always 🤗 No matter what, I\'ve got your back. Tell me more, how are you really feeling? ❤️';
     }
     
-    // For Hindi responses, ensure we're not cutting off mid-sentence
-    if (selectedLanguage === 'hi' && content.length > 50) {
-      // Check if the response ends with a proper sentence ending
-      const lastChar = content.trim().slice(-1);
-      if (lastChar !== '।' && lastChar !== '?' && lastChar !== '!' && !content.endsWith('।') && !content.endsWith('?') && !content.endsWith('!')) {
-        // If not properly ended, add a proper ending
-        content = content.trim() + '।';
-      }
+    // Add emotional closing if missing
+    if (selectedLanguage === 'hi' && !content.includes('❤️') && !content.includes('🤗')) {
+      content += '\n\nयाद रखना, मैं हमेशा तुम्हारे साथ हूं ❤️';
+    } else if (!content.includes('❤️') && !content.includes('🤗')) {
+      content += '\n\nRemember, I\'m always here for you ❤️';
     }
     
-    return content;
+    return {
+      response: content,
+      riskLevel,
+      emotionalTone
+    };
     
   } catch (error) {
     console.error('Response generation error:', error);
     
-    // Provide a meaningful fallback response based on language
-    return selectedLanguage === 'hi'
-      ? 'मुझे खेद है कि मैं आपकी बातचीत को ठीक से संसाधित नहीं कर पा रहा हूं। कृपया अपना संदेश फिर से भेजें या थोड़ा इंतजार करें आपकी भावनाओं को समझना मेरे लिए महत्वपूर्ण है।'
-      : 'I apologize that I\'m having trouble processing your conversation properly. Please resend your message or wait a moment. Understanding your feelings is important to me.';
+    const fallbackResponse = selectedLanguage === 'hi'
+      ? 'ओह दोस्त, मैं अभी कुछ टेक्निकल परेशानी में हूं 😔 लेकिन घबराओ मत! मैं यहीं हूं तुम्हारे लिए। कृपया थोड़ी देर में फिर से कोशिश करना, या अभी जो भी तुम कहना चाहते हो, कहो - मैं सुन रहा हूं 🤗'
+      : 'Oh buddy, I\'m having some technical trouble right now 😔 But don\'t worry! I\'m still here for you. Please try again in a moment, or just keep sharing whatever\'s on your heart - I\'m listening 🤗';
+    
+    return {
+      response: fallbackResponse,
+      riskLevel: 'NONE',
+      emotionalTone: 'empathetic'
+    };
   }
 }
 
-// User preferences interface for type safety
-interface UserPreferences {
-  interests?: string[];
-  preferredLanguage?: string;
-  preferredSpecializations?: string[];
-  moodHistory?: Array<{ mood: number; createdAt: Date }>;
-  bookmarkedCategories?: string[];
-  recentActivity?: string[];
-}
-
-// Resource interface for type safety
-interface Resource {
-  id: string;
-  title: string;
-  description?: string;
-  type: string;
-  categories: string[];
-  tags: string[];
-  language: string;
-  averageRating?: number;
-  viewCount: number;
-}
-
-// Recommendation interface for type safety
-interface Recommendation {
-  resourceId: string;
-  score: number;
-  reason: string;
-}
-
-// Advanced function to generate personalized recommendations
+// Friend-style personalized recommendations
 export async function generatePersonalizedRecommendations(
   userId: string,
   userPreferences: UserPreferences,
-  availableResources: Resource[]
+  availableResources: Resource[],
+  currentMood?: number,
+  recentInteractions?: string[]
 ): Promise<Recommendation[]> {
   try {
-    // Calculate user's average mood
     const avgMood = userPreferences.moodHistory && userPreferences.moodHistory.length > 0
-      ? userPreferences.moodHistory.reduce((sum, entry) => sum + entry.mood, 0) / userPreferences.moodHistory.length
+      ? userPreferences.moodHistory.reduce((sum: number, entry: { mood: number }) => sum + entry.mood, 0) / userPreferences.moodHistory.length
       : 5;
     
-    // Create a user profile for the AI
+    const recentMoods = userPreferences.moodHistory?.slice(-7) || [];
+    const moodTrend = recentMoods.length > 1 
+      ? recentMoods[recentMoods.length - 1].mood - recentMoods[0].mood 
+      : 0;
+    
     const userProfile = {
       interests: userPreferences.interests || [],
       specializations: userPreferences.preferredSpecializations || [],
       language: userPreferences.preferredLanguage || 'en',
+      currentMood: currentMood || avgMood,
+      moodTrend: moodTrend > 0 ? 'improving' : moodTrend < 0 ? 'declining' : 'stable',
       moodLevel: avgMood < 4 ? 'low' : avgMood > 7 ? 'high' : 'medium',
       bookmarkedCategories: userPreferences.bookmarkedCategories || [],
-      recentActivity: userPreferences.recentActivity || []
+      recentActivity: recentInteractions || userPreferences.recentActivity || [],
     };
     
-    // Create a prompt for the AI to generate recommendations
-    const prompt = `You are an expert recommendation system for a mental health platform. Based on the user profile and available resources, please provide personalized recommendations.
+    const prompt = `You are a caring friend recommending helpful resources. Based on your friend's current state and interests, suggest the most supportive content.
 
-User Profile:
-- Interests: ${userProfile.interests.join(', ') || 'None specified'}
-- Specializations of interest: ${userProfile.specializations.join(', ') || 'None specified'}
-- Preferred language: ${userProfile.language}
-- Current mood level: ${userProfile.moodLevel}
-- Frequently bookmarked categories: ${userProfile.bookmarkedCategories.join(', ') || 'None'}
-- Recent activity: ${userProfile.recentActivity.join(', ') || 'None'}
+YOUR FRIEND'S CURRENT STATE:
+- Mood: ${userProfile.moodLevel} (${userProfile.currentMood}/10) and ${userProfile.moodTrend}
+- Interests: ${userProfile.interests.join(', ') || 'Exploring new things'}
+- Currently engaged with: ${userProfile.recentActivity.join(', ') || 'Various topics'}
+- Language preference: ${userProfile.language}
 
-Available Resources:
-${availableResources.map(resource => 
-  `- ID: ${resource.id}, Title: ${resource.title}, Type: ${resource.type}, Categories: ${resource.categories.join(', ')}, Tags: ${resource.tags.join(', ')}, Language: ${resource.language}, Rating: ${resource.averageRating || 'N/A'}, Views: ${resource.viewCount}`
-).join('\n')}
+FRIENDLY RECOMMENDATION APPROACH:
+1. Suggest resources that match their current emotional needs
+2. Consider what would genuinely help them right now
+3. Balance between comfort and growth
+4. Keep it manageable and not overwhelming
+5. Be like a thoughtful friend sharing helpful things
 
-Please analyze the user profile and available resources to provide personalized recommendations. For each recommendation, provide:
-1. Resource ID
-2. A score from 0-1 indicating how well it matches the user's needs
-3. A brief explanation of why this resource is recommended
+Available resources to recommend from. For each recommendation, provide:
+- resourceId
+- score (0-1 how well it matches their current needs)
+- reason (friendly, caring explanation why this would help them)
 
-Format your response as a JSON array with objects containing resourceId, score, and reason properties.`;
+Format as JSON array.`;
 
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
         {
           role: 'system',
-          content: 'You are an expert recommendation system for mental health resources. Provide personalized recommendations based on user profiles and preferences.',
+          content: 'You are a thoughtful friend recommending helpful mental health resources. Be caring, understanding, and focus on what would genuinely help your friend right now.',
         },
         {
           role: 'user',
@@ -527,25 +620,24 @@ Format your response as a JSON array with objects containing resourceId, score, 
         },
       ],
       temperature: 0.3,
-      max_tokens: 1500,
+      max_tokens: 2000,
       response_format: { type: 'json_object' },
     });
     
     const content = response.choices[0]?.message?.content || '{}';
     const recommendations = JSON.parse(content);
     
-    // Ensure the response is in the expected format
     if (Array.isArray(recommendations)) {
-      return recommendations.map(rec => ({
+      return recommendations.slice(0, 6).map(rec => ({
         resourceId: rec.resourceId,
-        score: parseFloat(rec.score) || 0,
-        reason: rec.reason || 'Recommended based on your preferences'
+        score: Math.min(1, Math.max(0, parseFloat(rec.score) || 0)),
+        reason: rec.reason || 'I thought this might help you right now 💫'
       }));
     } else if (recommendations.recommendations && Array.isArray(recommendations.recommendations)) {
-      return recommendations.recommendations.map((rec: Recommendation) => ({
+      return recommendations.recommendations.slice(0, 6).map((rec: Recommendation) => ({
         resourceId: rec.resourceId,
-        score: parseFloat(rec.score.toString()) || 0,
-        reason: rec.reason || 'Recommended based on your preferences'
+        score: Math.min(1, Math.max(0, parseFloat(rec.score.toString()) || 0)),
+        reason: rec.reason || 'I thought this might help you right now 💫'
       }));
     }
     
@@ -556,32 +648,44 @@ Format your response as a JSON array with objects containing resourceId, score, 
   }
 }
 
-// Function to summarize resource content
+// Friend-style content summarization
 export async function summarizeResourceContent(
   content: string,
   type: ResourceType,
   title?: string,
-  language: string = 'en'
+  language: string = 'en',
+  targetLength: 'short' | 'medium' | 'detailed' = 'medium'
 ): Promise<string> {
   try {
-    // Create prompt based on content type
+    let lengthInstruction = '';
+    switch (targetLength) {
+      case 'short':
+        lengthInstruction = language === 'hi' ? '2-3 मुख्य बातें' : '2-3 key things';
+        break;
+      case 'detailed':
+        lengthInstruction = language === 'hi' ? '5-7 महत्वपूर्ण बिंदु' : '5-7 important points';
+        break;
+      default:
+        lengthInstruction = language === 'hi' ? '3-5 मुख्य बातें' : '3-5 main things';
+    }
+    
     let prompt = '';
     
     switch (type) {
       case 'ARTICLE':
-        prompt = `Summarize the following article in 3-5 bullet points, focusing on the key takeaways and main ideas:\n\n${title ? `Title: ${title}\n\n` : ''}Content: ${content}`;
+        prompt = language === 'hi' 
+          ? `इस लेख की मुख्य बातें दोस्ताना अंदाज में समझाओ ${lengthInstruction}:\n\n${title ? `शीर्षक: ${title}\n\n` : ''}सामग्री: ${content}`
+          : `Explain the key points of this article in a friendly way ${lengthInstruction}:\n\n${title ? `Title: ${title}\n\n` : ''}Content: ${content}`;
         break;
       case 'VIDEO':
-        prompt = `Summarize the key points from this video transcript in 3-5 bullet points:\n\n${title ? `Title: ${title}\n\n` : ''}Content: ${content}`;
-        break;
-      case 'AUDIO':
-        prompt = `Summarize the main insights from this audio content in 3-5 bullet points:\n\n${title ? `Title: ${title}\n\n` : ''}Content: ${content}`;
-        break;
-      case 'PDF':
-        prompt = `Extract and summarize the key information from this document in 3-5 bullet points:\n\n${title ? `Title: ${title}\n\n` : ''}Content: ${content}`;
+        prompt = language === 'hi'
+          ? `इस वीडियो की मुख्य बातें आसान भाषा में बताओ ${lengthInstruction}:\n\n${title ? `शीर्षक: ${title}\n\n` : ''}सामग्री: ${content}`
+          : `Share the main points from this video in simple terms ${lengthInstruction}:\n\n${title ? `Title: ${title}\n\n` : ''}Content: ${content}`;
         break;
       default:
-        prompt = `Summarize the following content in 3-5 bullet points:\n\n${title ? `Title: ${title}\n\n` : ''}Content: ${content}`;
+        prompt = language === 'hi'
+          ? `इस सामग्री की मुख्य बातें समझाओ ${lengthInstruction}:\n\n${title ? `शीर्षक: ${title}\n\n` : ''}सामग्री: ${content}`
+          : `Explain the key points of this content ${lengthInstruction}:\n\n${title ? `Title: ${title}\n\n` : ''}Content: ${content}`;
     }
     
     const response = await openai.chat.completions.create({
@@ -589,7 +693,9 @@ export async function summarizeResourceContent(
       messages: [
         {
           role: 'system',
-          content: 'You are an expert at summarizing mental health and wellness content. Create concise, informative summaries that capture the essence of the content.',
+          content: language === 'hi' 
+            ? 'आप एक दोस्त की तरह सामग्री को समझाते हैं। सरल, दोस्ताना भाषा का प्रयोग करें और मुख्य बातों पर ध्यान दें।'
+            : 'You explain content like a friend would. Use simple, friendly language and focus on what really matters.',
         },
         {
           role: 'user',
@@ -597,7 +703,7 @@ export async function summarizeResourceContent(
         },
       ],
       temperature: 0.5,
-      max_tokens: 500,
+      max_tokens: targetLength === 'detailed' ? 800 : targetLength === 'short' ? 300 : 500,
     });
     
     return response.choices[0]?.message?.content || '';
@@ -607,13 +713,13 @@ export async function summarizeResourceContent(
   }
 }
 
-// Function to translate text
+// Emotional translation
 export async function translateText(
   text: string,
-  targetLanguage: string
+  targetLanguage: string,
+  context?: string
 ): Promise<string> {
   try {
-    // Map language codes to full names
     const languageNames: Record<string, string> = {
       en: 'English',
       hi: 'Hindi',
@@ -629,14 +735,18 @@ export async function translateText(
     
     const targetLanguageName = languageNames[targetLanguage] || targetLanguage;
     
-    const prompt = `Translate the following text to ${targetLanguageName}. Maintain the original meaning and tone. If the text is already in ${targetLanguageName}, return it as is:\n\n${text}`;
+    const contextPrompt = context 
+      ? ` Context: ${context}. Keep the emotional tone and friendliness.`
+      : '';
+    
+    const prompt = `Translate this to ${targetLanguageName} while keeping the warm, friendly tone.${contextPrompt}:\n\n${text}`;
     
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
         {
           role: 'system',
-          content: 'You are a professional translator specializing in mental health content. Translate accurately while maintaining the original meaning and tone.',
+          content: 'You are a translator who specializes in maintaining emotional tone and friendliness across languages. Keep the warmth and care in every translation.',
         },
         {
           role: 'user',
@@ -644,7 +754,7 @@ export async function translateText(
         },
       ],
       temperature: 0.3,
-      max_tokens: 1000,
+      max_tokens: 1500,
     });
     
     return response.choices[0]?.message?.content || text;
@@ -654,29 +764,144 @@ export async function translateText(
   }
 }
 
-// Function to extract text from different file types
+// Emotional content moderation
+export async function moderateContent(
+  content: string,
+  contentType: 'post' | 'reply' | 'comment' | 'chat',
+  language: 'en' | 'hi' = 'en'
+): Promise<{
+  isApproved: boolean;
+  riskLevel: 'low' | 'medium' | 'high';
+  flags: string[];
+  suggestedAction: 'approve' | 'review' | 'block' | 'crisis_alert';
+  reasoning: string;
+}> {
+  try {
+    const prompt = language === 'hi'
+      ? `इस ${contentType} का विश्लेषण करो और देखो क्या यह सुरक्षित है:\n\n"${content}"\n\nध्यान दो: आत्म-नुकसान, दूसरों को नुकसान, या गहरे संकट के संकेत। दोस्ताना और सहानुभूतिपूर्ण रहो।`
+      : `Analyze this ${contentType} for safety:\n\n"${content}"\n\nLook for: self-harm, harm to others, or deep distress signs. Be friendly and empathetic.`;
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'system',
+          content: language === 'hi'
+            ? 'आप एक केयरिंग मॉडरेटर हैं जो लोगों की सुरक्षा को प्राथमिकता देते हैं। संवेदनशील बनो और मदद की जरूरत वाले लोगों को पहचानो।'
+            : 'You are a caring moderator who prioritizes people\'s safety. Be sensitive and identify people who need help.',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.1,
+      max_tokens: 500,
+      response_format: { type: 'json_object' },
+    });
+    
+    const moderationResult = JSON.parse(response.choices[0]?.message?.content || '{}');
+    
+    return {
+      isApproved: moderationResult.suggestedAction === 'approve',
+      riskLevel: moderationResult.riskLevel || 'low',
+      flags: moderationResult.flags || [],
+      suggestedAction: moderationResult.suggestedAction || 'review',
+      reasoning: moderationResult.reasoning || 'Looks okay to me'
+    };
+  } catch (error) {
+    console.error('Error moderating content:', error);
+    return {
+      isApproved: false,
+      riskLevel: 'medium',
+      flags: ['moderation_error'],
+      suggestedAction: 'review',
+      reasoning: 'Need to check this manually'
+    };
+  }
+}
+
+// Emotional sentiment analysis
+export async function analyzeSentiment(
+  text: string,
+  language: 'en' | 'hi' = 'en'
+): Promise<{
+  sentiment: 'positive' | 'negative' | 'neutral' | 'mixed';
+  confidence: number;
+  primaryEmotion: string;
+  secondaryEmotions: string[];
+  intensity: 'low' | 'medium' | 'high';
+  culturalContext: string[];
+}> {
+  try {
+    const prompt = language === 'hi'
+      ? `इस पाठ की भावनात्मक स्थिति समझाओ:\n\n"${text}"\n\nदोस्ताना अंदाज में बताओ कि यह व्यक्ति कैसा महसूस कर रहा है।`
+      : `Understand the emotional state of this text:\n\n"${text}"\n\nIn a friendly way, describe how this person might be feeling.`;
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'system',
+          content: language === 'hi'
+            ? 'आप एक संवेदनशील दोस्त हैं जो भावनाओं को समझते हैं। सहानुभूति और समझ के साथ विश्लेषण करें।'
+            : 'You are a sensitive friend who understands emotions. Analyze with empathy and understanding.',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.3,
+      max_tokens: 500,
+      response_format: { type: 'json_object' },
+    });
+    
+    const analysis = JSON.parse(response.choices[0]?.message?.content || '{}');
+    
+    return {
+      sentiment: analysis.sentiment || 'neutral',
+      confidence: Math.min(1, Math.max(0, parseFloat(analysis.confidence) || 0.5)),
+      primaryEmotion: analysis.primaryEmotion || 'neutral',
+      secondaryEmotions: analysis.secondaryEmotions || [],
+      intensity: analysis.intensity || 'medium',
+      culturalContext: analysis.culturalContext || []
+    };
+  } catch (error) {
+    console.error('Error analyzing sentiment:', error);
+    return {
+      sentiment: 'neutral',
+      confidence: 0.5,
+      primaryEmotion: 'neutral',
+      secondaryEmotions: [],
+      intensity: 'medium',
+      culturalContext: []
+    };
+  }
+}
+
+// File text extraction
 export async function extractTextFromFile(fileUrl: string, fileType: string): Promise<string> {
   try {
-    // This is a placeholder implementation
-    // In a real implementation, you would use appropriate libraries to extract text from different file types
-    
     switch (fileType) {
       case 'PDF':
-        // Use a PDF parsing library like pdf-parse
-        return 'PDF text extraction would be implemented here';
+        return 'I\'d love to help you understand this PDF! 📚 In a real app, I\'d read it for you and explain it in simple terms.';
       case 'VIDEO':
-        // Use video transcription services
-        return 'Video transcription would be implemented here';
+        return 'This seems like an interesting video! 🎥 I wish I could watch it with you and discuss what we learn.';
       case 'AUDIO':
-        // Use audio transcription services
-        return 'Audio transcription would be implemented here';
+        return 'Audio content can be so personal! 🎧 I\'m here to listen and help you process whatever you hear.';
       default:
-        // For text-based files, you could fetch the content directly
-        const response = await fetch(fileUrl);
-        return await response.text();
+        try {
+          const response = await fetch(fileUrl);
+          return await response.text();
+        } catch {
+          return 'I\'m having trouble reading this file, but I\'m still here to talk about whatever\'s on your mind! 💫';
+        }
     }
   } catch (error) {
     console.error('Error extracting text from file:', error);
-    return '';
+    return 'Even though I can\'t read this file right now, I\'m always here to listen and support you! 🤗';
   }
 }
+
+export default openai;

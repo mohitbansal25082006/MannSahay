@@ -6,6 +6,7 @@ import { prisma } from '@/lib/db';
 
 // Define RiskLevel enum for typing riskLevel
 enum RiskLevel {
+  NONE = 'NONE',
   LOW = 'LOW',
   MEDIUM = 'MEDIUM',
   HIGH = 'HIGH'
@@ -122,7 +123,7 @@ export async function POST(request: NextRequest) {
     let aiResponse: string;
     
     try {
-      aiResponse = await generateContextualResponse(
+      const aiResult = await generateContextualResponse(
         latestMessage, 
         language as 'en' | 'hi', // Add the language parameter
         conversationHistory as Array<{role: string, content: string}>,
@@ -133,6 +134,7 @@ export async function POST(request: NextRequest) {
           preferences: { language }
         }
       );
+      aiResponse = aiResult.response;
     } catch (error) {
       console.error('OpenAI generation error:', error);
       // Fallback response
