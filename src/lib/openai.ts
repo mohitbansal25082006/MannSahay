@@ -33,7 +33,7 @@ export interface UserPreferences {
 }
 
 export interface UserContext {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 // Enhanced crisis keywords with emotional understanding
