@@ -60,19 +60,43 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useRouter } from 'next/navigation';
 
-const suggestedMessages = [
-  "I'm feeling really stressed about my exams",
-  "How can I manage anxiety?",
-  "I feel lonely at college",
-  "Help me with sleep issues",
-  "I'm overwhelmed with assignments",
-  // Hindi suggestions
-  "मैं अपनी परीक्षाओं को लेकर बहुत तनाव में हूं",
-  "चिंता को कैसे प्रबंधित कर सकता हूं?",
-  "मैं कॉलेज में अकेला महसूस करता हूं",
-  "नींद की समस्याओं में मदद करें",
-  "मैं असाइनमेंट्स से अभिभूत हूं"
-];
+const suggestedMessages = {
+  en: [
+    "I'm feeling really stressed about my exams",
+    "How can I manage anxiety?",
+    "I feel lonely at college",
+    "Help me with sleep issues",
+    "I'm overwhelmed with assignments"
+  ],
+  hi: [
+    "मैं अपनी परीक्षाओं को लेकर बहुत तनाव में हूं",
+    "चिंता को कैसे प्रबंधित कर सकता हूं?",
+    "मैं कॉलेज में अकेला महसूस करता हूं",
+    "नींद की समस्याओं में मदद करें",
+    "मैं असाइनमेंट्स से अभिभूत हूं"
+  ],
+  dog: [
+    "ਮੈਂ ਆਪਣੀਆਂ ਪਰੀਖਿਆਵਾਂ ਬਾਰੇ ਬਹੁਤ ਤਣਾਅ ਵਿੱਚ ਹਾਂ",
+    "ਮੈਂ ਚਿੰਤਾ ਦਾ ਪ੍ਰਬੰਧ ਕਿਵੇਂ ਕਰ ਸਕਦਾ ਹਾਂ?",
+    "ਮੈਂ ਕਾਲਜ ਵਿੱਚ ਇਕੱਲਾ ਮਹਿਸੂਸ ਕਰਦਾ ਹਾਂ",
+    "ਨੀਂਦ ਦੀਆਂ ਸਮੱਸਿਆਂ ਵਿੱਚ ਮੇਰੀ ਮਦਦ ਕਰੋ",
+    "ਮੈਂ ਅਸਾਈਨਮੈਂਟਾਂ ਤੋਂ ਭਾਰੇ ਹਾਂ"
+  ],
+  mr: [
+    "मी माझ्या परीक्षांमुळे खूप तणावात आहे",
+    "मी चिंता कशी व्यवस्थापित करू शकेन?",
+    "मला कॉलेजमध्ये एकटे वाटते",
+    "निद्रेच्या समस्यांमध्ये माझी मदत करा",
+    "मी असाइनमेंट्समुळे त्रस्त आहे"
+  ],
+  ta: [
+    "தேர்வுகள் குறித்து நான் மிகவும் அழுத்தமடைந்துள்ளேன்",
+    "பதட்டத்தை நான் எப்படி நிர்வகிக்க முடியும்?",
+    "கல்லூரியில் நான் தனிமையாக உணர்கிறேன்",
+    "உறக்கை பிரச்சனைகளில் எனக்கு உதவுங்கள்",
+    "வேலைகளால் நான் அதிகமாக அழுத்தமடைந்துள்ளேன்"
+  ]
+};
 
 const emergencyContacts = [
   {
@@ -99,13 +123,16 @@ const emergencyContacts = [
 
 const languageOptions = [
   { value: 'en', label: 'English', icon: '🇺🇸' },
-  { value: 'hi', label: 'हिन्दी', icon: '🇮🇳' }
+  { value: 'hi', label: 'हिन्दी', icon: '🇮🇳' },
+  { value: 'dog', label: 'ڈوڳری', icon: '🏳️' },
+  { value: 'mr', label: 'मराठी', icon: '🇮🇳' },
+  { value: 'ta', label: 'தமிழ்', icon: '🇮🇳' }
 ];
 
 export default function ChatPage() {
   const router = useRouter();
   const { data: session } = useSession();
-  const [language, setLanguage] = useState<'en' | 'hi'>('en');
+  const [language, setLanguage] = useState<'en' | 'hi' | 'dog' | 'mr' | 'ta'>('en');
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isGeneratingSpeech, setIsGeneratingSpeech] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -235,7 +262,11 @@ export default function ChatPage() {
 
   const handleNewSession = async () => {
     const newSession = await createSession(
-      language === 'hi' ? 'नई बातचीत' : 'New Conversation',
+      language === 'hi' ? 'नई बातचीत' : 
+      language === 'dog' ? 'ਨਵੀਂ ਗੱਲਬਾਤ' :
+      language === 'mr' ? 'नवीन चर्चा' :
+      language === 'ta' ? 'புதிய உரையாடல்' :
+      'New Conversation',
       language
     );
     if (newSession) {
@@ -325,7 +356,8 @@ export default function ChatPage() {
     setIsTranscribing(true);
     try {
       const formData = new FormData();
-      formData.append('audio', audioBlob);
+      const file = new File([audioBlob], 'audio.webm', { type: 'audio/webm' });
+      formData.append('audio', file);
       formData.append('language', language);
 
       const response = await fetch('/api/audio/transcribe', {
@@ -400,6 +432,22 @@ export default function ChatPage() {
 
   const currentLanguage = languageOptions.find(opt => opt.value === language) || languageOptions[0];
 
+  // Get placeholder text based on language
+  const getPlaceholderText = (): string => {
+    switch (language) {
+      case 'hi':
+        return 'अपने विचार साझा करें या माइक्रोफोन बटन दबाएं...';
+      case 'dog':
+        return 'ਆਪਣੇ ਵਿਚਾਰ ਸਾਂਝੇ ਕਰੋ ਜਾਂ ਮਾਈਕ੍ਰੋਫੋਨ ਬਟਨ ਦਬਾਓ...';
+      case 'mr':
+        return 'तुमचे विचार शेअर करा किंवा मायक्रोफोन बटण दाबा...';
+      case 'ta':
+        return 'உங்கள் எண்ணங்களைப் பகிருங்கள் அல்லது மைக்ரோஃபோன் பொத்தனை அழுத்தவும்...';
+      default:
+        return 'Share your thoughts or press the microphone button...';
+    }
+  };
+
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <div className="flex-1 flex overflow-hidden">
@@ -407,7 +455,7 @@ export default function ChatPage() {
         <div className="hidden lg:block w-80 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-r border-gray-200/50 dark:border-gray-700/50">
           <ChatSessionSidebar 
             onSessionSelect={handleSessionSelect}
-            language={language}
+            language={language as 'en' | 'hi'} // Cast to only the types the component accepts
           />
         </div>
         
@@ -427,7 +475,7 @@ export default function ChatPage() {
                       <div className="h-full">
                         <ChatSessionSidebar 
                           onSessionSelect={handleSessionSelect}
-                          language={language}
+                          language={language as 'en' | 'hi'} // Cast to only the types the component accepts
                         />
                       </div>
                     </SheetContent>
@@ -544,7 +592,7 @@ export default function ChatPage() {
                               <Button 
                                 className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700" 
                                 size="sm"
-                                onClick={() => router.push('/booking')}
+                                onClick={() => router.push('/dashboard/booking')}
                               >
                                 <Phone className="h-4 w-4 mr-2" />
                                 Book Counselor
@@ -570,7 +618,7 @@ export default function ChatPage() {
                       {languageOptions.map((option) => (
                         <DropdownMenuItem
                           key={option.value}
-                          onClick={() => setLanguage(option.value as 'en' | 'hi')}
+                          onClick={() => setLanguage(option.value as 'en' | 'hi' | 'dog' | 'mr' | 'ta')}
                           className="flex items-center space-x-2"
                         >
                           <span>{option.icon}</span>
@@ -705,14 +753,22 @@ export default function ChatPage() {
                         <Bot className="h-8 w-8 text-white" />
                       </div>
                       <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                        Welcome to MannSahay Chat! 🌟
+                        {language === 'hi' ? 'मनसहाय चैट में आपका स्वागत है! 🌟' :
+                         language === 'dog' ? 'ਮਨਸਹਾਇ ਚੈਟ ਵਿੱਚ ਤੁਹਾਡਾ ਸੁਆਗਤ ਹੈ! 🌟' :
+                         language === 'mr' ? 'मनसहाय चॅटमध्ये आपले स्वागत आहे! 🌟' :
+                         language === 'ta' ? 'மன்சாய் அரட்டையில் உங்களை வரவேற்றுகிறோம்! 🌟' :
+                         'Welcome to MannSahay Chat! 🌟'}
                       </h3>
                       <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-md mx-auto">
-                        I&apos;m here to listen and support you. How are you feeling today?
+                        {language === 'hi' ? 'मैं यहाँ सुनने के लिए और आपका समर्थन करने के लिए हूँ। आज आप कैसा महसूस कर रहे हैं?' :
+                         language === 'dog' ? 'ਮੈਂ ਸੁਣਨ ਅਤੇ ਤੁਹਾਡੇ ਸਾਥ ਦੇਣ ਲਈ ਇੱਥੇ ਹਾਂ। ਤੁਸੀਂ ਅੱਜ ਕਿਵੇਂ ਮਹਿਸੂਸ ਕਰ ਰਹੇ ਹੋ?' :
+                         language === 'mr' ? 'मी ऐकण्यासाठी आणि तुमच्या सहाय्यासाठी इथे आहे. तुम्ही आज कसा वाटत आहात?' :
+                         language === 'ta' ? 'நான் கேட்கவும், உங்களுக்கு ஆதரவளிக்கவும் இங்கே இருக்கிறேன். நீங்கள் இன்று எப்படி உணர்கிறீர்கள்?' :
+                         'I\'m here to listen and support you. How are you feeling today?'}
                       </p>
                       
                       <div className="flex flex-wrap justify-center gap-2 max-w-2xl mx-auto">
-                        {suggestedMessages.slice(0, isClient ? (window.innerWidth < 640 ? 4 : suggestedMessages.length) : 4).map((msg, index) => (
+                        {(suggestedMessages[language] || suggestedMessages.en).slice(0, isClient ? (window.innerWidth < 640 ? 4 : suggestedMessages[language]?.length || 5) : 4).map((msg, index) => (
                           <Button
                             key={index}
                             variant="outline"
@@ -738,7 +794,7 @@ export default function ChatPage() {
                         {message.role === 'user' ? (
                           <>
                             <AvatarImage src={session?.user?.image || ''} />
-                            <AvatarFallback className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
+                            <AvatarFallback className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
                               <User className="h-4 w-4" />
                             </AvatarFallback>
                           </>
@@ -884,11 +940,7 @@ export default function ChatPage() {
                       value={input}
                       onChange={handleInputChange}
                       onKeyPress={handleKeyPress}
-                      placeholder={
-                        language === 'hi' 
-                          ? 'अपने विचार साझा करें या माइक्रोफोन बटन दबाएं...' 
-                          : 'Share your thoughts or press the microphone button...'
-                      }
+                      placeholder={getPlaceholderText()}
                       className="flex-1 min-h-[44px] max-h-32 resize-none bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-500"
                       disabled={isLoading || isRecording}
                     />

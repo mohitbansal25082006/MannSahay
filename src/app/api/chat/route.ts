@@ -14,7 +14,7 @@ enum RiskLevel {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('Enhanced Chat API called');
+    console.log('Enhanced Multilingual Chat API called');
     
     const session = await getServerSession(authOptions);
     console.log('Session:', session);
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
     try {
       const aiResult = await generateContextualResponse(
         latestMessage, 
-        language as 'en' | 'hi', // Add the language parameter
+        language as 'en' | 'hi' | 'dog' | 'mr' | 'ta', // Add the language parameter
         conversationHistory as Array<{role: string, content: string}>,
         {
           name: user.name || undefined,
@@ -137,10 +137,15 @@ export async function POST(request: NextRequest) {
       aiResponse = aiResult.response;
     } catch (error) {
       console.error('OpenAI generation error:', error);
-      // Fallback response
-      aiResponse = language === 'hi' 
-        ? 'मैं समझ रहा हूं कि आप कुछ कहना चाह रहे हैं। कृपया मुझे बताएं कि मैं आपकी कैसे मदद कर सकता हूं?'
-        : 'I understand you\'re reaching out. Please tell me how I can help you today.';
+      // Fallback response based on language
+      const fallbackResponses = {
+        en: 'I understand you\'re reaching out. Please tell me how I can help you today.',
+        hi: 'मैं समझ रहा हूं कि आप कुछ कहना चाहते हैं। कृपया मुझे बताएं कि मैं आपकी कैसे मदद कर सकता हूं?',
+        dog: 'ਮੈਂ ਸਮਝਦਾ ਹਾਂ ਕਿ ਤੁਸੀਂ ਕੁਝ ਕਹਿਣਾ ਚਾਹੁੰਦੇ ਹੋ। ਕਿਰਪਾ ਕਰਕੇ ਮੈਨੂੰ ਦੱਸੋ ਕਿ ਮੈਂ ਤੁਹਾਡੀ ਕਿਵੇਂ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ?',
+        mr: 'मला समजते आहे की तुम्हाला काही सांगायचे आहे. कृपया मला सांगा की मी तुमची कशी मदत करू शकतो.',
+        ta: 'நான் புரிந்துகொள்கிறேன் நீங்கள் ஏதாவது சொல்ல விரும்புகிறீர்கள் என்று. தயவு செய்து எனக்குச் சொல்லுங்கள், நான் உங்களுக்கு எப்படி உதவ முடியும் என்று.'
+      };
+      aiResponse = fallbackResponses[language as keyof typeof fallbackResponses] || fallbackResponses.en;
     }
 
     // Create streaming response
@@ -204,7 +209,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Enhanced Chat API error:', error);
+    console.error('Enhanced Multilingual Chat API error:', error);
     return new Response('Internal Server Error', { status: 500 });
   }
 }

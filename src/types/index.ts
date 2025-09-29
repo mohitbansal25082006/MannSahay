@@ -6,7 +6,7 @@ export interface User {
   hashedId?: string | null
   language?: string | null
   isAdmin: boolean
-  preferredLanguage?: string | null
+  preferredLanguage?: 'en' | 'hi' | 'dog' | 'mr' | 'ta' | null
   interests?: string[]
   preferredSpecializations?: string[]
   preferredLanguages?: string[]
@@ -165,17 +165,17 @@ export interface VideoSession {
 
 // Interface for writing suggestions
 export interface WritingSuggestion {
-  suggestion: string
-  type: 'grammar' | 'clarity' | 'tone' | 'other'
-  startIndex: number
-  endIndex: number
+  suggestion: string;
+  type: 'grammar' | 'clarity' | 'tone' | 'other';
+  startIndex: number;
+  endIndex: number;
 }
 
 // Interface for tone analysis
 export interface ToneAnalysis {
-  sentiment: 'positive' | 'negative' | 'neutral' | 'mixed'
-  confidence: number
-  details?: string
+  sentiment: 'positive' | 'negative' | 'neutral' | 'mixed';
+  confidence: number;
+  details?: string;
 }
 
 export interface Chat {
@@ -185,7 +185,7 @@ export interface Chat {
   timestamp: Date
   userId: string
   sessionId: string
-  language?: string | null
+  language?: 'en' | 'hi' | 'dog' | 'mr' | 'ta' | null
   riskLevel: RiskLevel
   context?: Record<string, unknown>
   audioUrl?: string | null
@@ -211,7 +211,7 @@ export interface Post {
   summary?: string | null
   summaryGeneratedAt?: Date | null
   isHidden?: boolean
-  language: string
+  language: 'en' | 'hi' | 'dog' | 'mr' | 'ta'
   translatedContent?: Record<string, string>
   writingSuggestions?: WritingSuggestion[]
   toneAnalysis?: ToneAnalysis
@@ -233,7 +233,7 @@ export interface Reply {
   moderatedAt?: Date | null
   moderatedBy?: string | null
   isHidden?: boolean
-  language: string
+  language: 'en' | 'hi' | 'dog' | 'mr' | 'ta'
   translatedContent?: Record<string, string>
   writingSuggestions?: WritingSuggestion[]
   toneAnalysis?: ToneAnalysis
@@ -293,11 +293,11 @@ export interface Resource {
   description?: string | null
   content?: string | null
   type: ResourceType
-  language: string
+  language: 'en' | 'hi' | 'dog' | 'mr' | 'ta'
   fileUrl?: string | null
-  fileKey?: string | null
-  fileSize?: number | null
-  duration?: number | null
+  fileKey?: string | null // For cloud storage
+  fileSize?: number | null // In bytes
+  duration?: number | null // For audio/video in seconds
   author?: string | null
   tags: string[]
   categories: string[]
@@ -307,12 +307,26 @@ export interface Resource {
   downloadCount: number
   createdAt: Date
   updatedAt: Date
+  
+  // Translation fields
   translations?: Record<string, string>
-  summary?: string | null
+  summary?: string | null // AI-generated summary
   summaryGeneratedAt?: Date | null
-  averageRating?: number | null
+  
+  // Relations
+  ratings?: ResourceRating[]
+  bookmarks?: ResourceBookmark[]
+  downloads?: ResourceDownload[]
+  shares?: ResourceShare[]
+  views?: ResourceView[]
+  recommendations?: ResourceRecommendation[]
+  comments?: ResourceComment[]
+
+  // Computed/added fields from API
+  averageRating?: number
   userRating?: number | null
   isBookmarked?: boolean
+  cached?: boolean
 }
 
 export interface ResourceRating {
@@ -340,7 +354,7 @@ export interface ResourceDownload {
 
 export interface ResourceShare {
   id: string
-  platform: string
+  platform: string // "whatsapp", "facebook", "twitter", "copy_link", etc.
   createdAt: Date
   userId: string
   resourceId: string
@@ -349,7 +363,7 @@ export interface ResourceShare {
 export interface ResourceView {
   id: string
   createdAt: Date
-  userId?: string | null
+  userId?: string | null // Nullable for anonymous views
   resourceId: string
 }
 
@@ -360,6 +374,45 @@ export interface ResourceRecommendation {
   createdAt: Date
   userId: string
   resourceId: string
+}
+
+export interface ResourceComment {
+  id: string
+  content: string
+  createdAt: Date
+  updatedAt: Date
+  userId: string
+  resourceId: string
+  
+  // Relations
+  likes?: ResourceCommentLike[]
+  flags?: ResourceCommentFlag[]
+  replies?: ResourceComment[]
+  parent?: ResourceComment
+  parentId?: string | null
+}
+
+export interface ResourceCommentLike {
+  id: string
+  createdAt: Date
+  userId: string
+  commentId: string
+  
+  // Relations
+  user?: User
+  comment?: ResourceComment
+}
+
+export interface ResourceCommentFlag {
+  id: string
+  createdAt: Date
+  userId: string
+  commentId: string
+  reason?: string | null
+  
+  // Relations
+  user?: User
+  comment?: ResourceComment
 }
 
 export interface EmailOptions {

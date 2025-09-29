@@ -6,10 +6,11 @@ import { Globe } from 'lucide-react';
 const languages = [
   { code: 'en', name: 'English' },
   { code: 'hi', name: 'हिन्दी (Hindi)' },
+  { code: 'dog', name: 'ڈوڳری (Dogri)' },
+  { code: 'mr', name: 'मराठी (Marathi)' },
   { code: 'ta', name: 'தமிழ் (Tamil)' },
   { code: 'bn', name: 'বাংলা (Bengali)' },
   { code: 'te', name: 'తెలుగు (Telugu)' },
-  { code: 'mr', name: 'मराठी (Marathi)' },
   { code: 'gu', name: 'ગુજરાતી (Gujarati)' },
   { code: 'kn', name: 'ಕನ್ನಡ (Kannada)' },
   { code: 'ml', name: 'മലയാളം (Malayalam)' },
