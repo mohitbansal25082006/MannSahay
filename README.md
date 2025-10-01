@@ -611,7 +611,7 @@ enum ResourceType {
 ### Step 1: Clone Repository
 
 ```bash
-git clone https://github.com/botzilla/mannsahay.git
+git clone https://github.com/mohitbansal25082006/MannSahay.git
 cd mannsahay
 ```
 
