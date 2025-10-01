@@ -8,9 +8,9 @@
 [![Smart India Hackathon 2025](https://img.shields.io/badge/SIH-2025-orange?style=for-the-badge&logo=india&logoColor=white)](https://www.sih.gov.in/)
 [![Live Demo](https://img.shields.io/badge/Live-Demo-success?style=for-the-badge&logo=vercel&logoColor=white)](https://mannsahay.vercel.app/)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
-[![Team](https://img.shields.io/badge/Team-BotZilla-purple?style=for-the-badge&logo=github)](https://github.com/botzilla)
+[![Team](https://img.shields.io/badge/Team-BotZilla-purple?style=for-the-badge&logo=github)](https://github.com/mohitbansal25082006)
 
-**🏆 Smart India Hackathon 2025 | Problem Statement ID: SIH25092**  
+** Smart India Hackathon 2025 | Problem Statement ID: SIH25092**  
 **Organization:** Government of Jammu and Kashmir  
 **Category:** Software | **Theme:** MedTech / BioTech / HealthTech
 
@@ -232,7 +232,7 @@ Transform student mental health from **stigma-driven silence** to **proactive, c
 ┌─────────────────────────────────────────────────────────────────┐
 │                         AI SERVICES                             │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐         │
-│  │  OpenAI  │  │  Claude  │  │Translation│  │Moderation│        │
+│  │  OpenAI  │  │  Claude  │  │Translation│ │Moderation│         │
 │  │  GPT-4o  │  │ Sonnet 3 │  │  Service │  │ Service  │         │
 │  └──────────┘  └──────────┘  └──────────┘  └──────────┘         │
 └─────────────────────────────────────────────────────────────────┘
@@ -561,7 +561,6 @@ enum ResourceType {
 🌈 **Vibrant** - Calming color palette (blues, greens, purples)  
 ♿ **Accessible** - WCAG 2.1 AA compliant  
 📱 **Responsive** - Mobile-first design  
-🌙 **Dark Mode** - Eye strain reduction  
 ⚡ **Fast** - Optimized loading times  
 
 ### Key UI Components
@@ -753,14 +752,14 @@ Ensure all environment variables are set in Vercel dashboard:
 
 ### 🏆 Smart India Hackathon 2025 Participants
 
-| Role | Name | Responsibilities |
-|------|------|------------------|
-| 🎯 **Team Lead** | [Name] | Project management, architecture |
-| 💻 **Full-Stack Dev** | [Name] | Frontend & backend development |
-| 🤖 **AI Engineer** | [Name] | LLM integration, AI features |
-| 🎨 **UI/UX Designer** | [Name] | Interface design, user experience |
-| 📊 **Data Analyst** | [Name] | Analytics, insights, reporting |
-| 🔒 **Security Expert** | [Name] | Privacy, compliance, security |
+| Position | Name |
+|----------|------|
+| 🎯 **Team Lead** | Mohit Bansal |
+| 👨‍💻 **Member 1** | Mohit Gupta |
+| 👨‍💻 **Member 2** | Nakul Dadhich |
+| 👨‍💻 **Member 3** | Mridul Gupta |
+| 👨‍💻 **Member 4** | Kundan Bhatiya |
+| 👨‍💻 **Member 5** | Nirjala Lilhore |
 
 </div>
 
@@ -797,9 +796,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### Team BotZilla
 
-- **Email**: team.botzilla@example.com
+- **Email**: mohitbansal25082006@gmail.com
 - **GitHub**: [Mohit Bansal](https://github.com/mohitbansal25082006)
-- **LinkedIn**: [Mohit Bansal](www.linkedin.com/in/mohit-bansal-383440315)
+- **LinkedIn**: [Mohit Bansal](https://www.linkedin.com/in/mohit-bansal-383440315)
 
 ### Project Links
 
@@ -824,8 +823,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Made with ❤️ by Team BotZilla for Smart India Hackathon 2025**
 
-[![Star on GitHub](https://img.shields.io/github/stars/botzilla/mannsahay?style=social)](https://github.com/mohitbansal25082006/mannsahay)
-[![Follow on GitHub](https://img.shields.io/github/followers/botzilla?style=social)](https://github.com/mohitbansal25082006)
 
 ---
 
