@@ -1,0 +1,593 @@
+-- ============= CLEANUP (DROP IF EXISTS) =============
+
+DROP TABLE IF EXISTS "contact_replies" CASCADE;
+DROP TABLE IF EXISTS "contact_messages" CASCADE;
+DROP TABLE IF EXISTS "resource_comment_flags" CASCADE;
+DROP TABLE IF EXISTS "resource_comment_likes" CASCADE;
+DROP TABLE IF EXISTS "resource_comments" CASCADE;
+DROP TABLE IF EXISTS "resource_recommendations" CASCADE;
+DROP TABLE IF EXISTS "resource_views" CASCADE;
+DROP TABLE IF EXISTS "resource_shares" CASCADE;
+DROP TABLE IF EXISTS "resource_downloads" CASCADE;
+DROP TABLE IF EXISTS "resource_bookmarks" CASCADE;
+DROP TABLE IF EXISTS "resource_ratings" CASCADE;
+DROP TABLE IF EXISTS "resources" CASCADE;
+DROP TABLE IF EXISTS "notifications" CASCADE;
+DROP TABLE IF EXISTS "flags" CASCADE;
+DROP TABLE IF EXISTS "shares" CASCADE;
+DROP TABLE IF EXISTS "bookmarks" CASCADE;
+DROP TABLE IF EXISTS "likes" CASCADE;
+DROP TABLE IF EXISTS "replies" CASCADE;
+DROP TABLE IF EXISTS "posts" CASCADE;
+DROP TABLE IF EXISTS "video_sessions" CASCADE;
+DROP TABLE IF EXISTS "reminders" CASCADE;
+DROP TABLE IF EXISTS "feedbacks" CASCADE;
+DROP TABLE IF EXISTS "mood_entries" CASCADE;
+DROP TABLE IF EXISTS "counselor_notes" CASCADE;
+DROP TABLE IF EXISTS "session_notes" CASCADE;
+DROP TABLE IF EXISTS "waitlist_entries" CASCADE;
+DROP TABLE IF EXISTS "group_session_participants" CASCADE;
+DROP TABLE IF EXISTS "group_sessions" CASCADE;
+DROP TABLE IF EXISTS "bookings" CASCADE;
+DROP TABLE IF EXISTS "availability_slots" CASCADE;
+DROP TABLE IF EXISTS "counselors" CASCADE;
+DROP TABLE IF EXISTS "chats" CASCADE;
+DROP TABLE IF EXISTS "chat_sessions" CASCADE;
+DROP TABLE IF EXISTS "verificationtokens" CASCADE;
+DROP TABLE IF EXISTS "sessions" CASCADE;
+DROP TABLE IF EXISTS "accounts" CASCADE;
+DROP TABLE IF EXISTS "users" CASCADE;
+
+DROP TYPE IF EXISTS "BookingStatus" CASCADE;
+DROP TYPE IF EXISTS "SessionType" CASCADE;
+DROP TYPE IF EXISTS "RiskLevel" CASCADE;
+DROP TYPE IF EXISTS "ResourceType" CASCADE;
+DROP TYPE IF EXISTS "ModerationStatus" CASCADE;
+DROP TYPE IF EXISTS "AiReviewStatus" CASCADE;
+DROP TYPE IF EXISTS "ReminderType" CASCADE;
+DROP TYPE IF EXISTS "VideoPlatform" CASCADE;
+
+-- ============= ENUMS =============
+
+CREATE TYPE "BookingStatus" AS ENUM ('PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED', 'NO_SHOW');
+CREATE TYPE "SessionType" AS ENUM ('ONE_ON_ONE', 'GROUP');
+CREATE TYPE "RiskLevel" AS ENUM ('NONE', 'LOW', 'MEDIUM', 'HIGH');
+CREATE TYPE "ResourceType" AS ENUM ('ARTICLE', 'VIDEO', 'AUDIO', 'PDF', 'EXERCISE', 'MUSIC', 'MEDITATION', 'INFOGRAPHIC', 'WORKSHEET', 'GUIDE');
+CREATE TYPE "ModerationStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'UNDER_REVIEW');
+CREATE TYPE "AiReviewStatus" AS ENUM ('PENDING', 'REVIEWING', 'COMPLETED', 'ERROR');
+CREATE TYPE "ReminderType" AS ENUM ('EMAIL', 'SMS', 'PUSH_NOTIFICATION');
+CREATE TYPE "VideoPlatform" AS ENUM ('ZOOM', 'GOOGLE_MEET', 'MICROSOFT_TEAMS');
+
+-- ============= TABLES =============
+
+CREATE TABLE "users" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT,
+  email TEXT UNIQUE,
+  "emailVerified" TIMESTAMP,
+  image TEXT,
+  "hashedId" TEXT UNIQUE,
+  language TEXT DEFAULT 'en',
+  "isAdmin" BOOLEAN DEFAULT FALSE,
+  "preferredLanguage" TEXT DEFAULT 'en',
+  interests TEXT[] DEFAULT '{}',
+  "preferredSpecializations" TEXT[] DEFAULT '{}',
+  "preferredLanguages" TEXT[] DEFAULT '{"en"}',
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "updatedAt" TIMESTAMP DEFAULT now()
+);
+
+CREATE TABLE "accounts" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  "userId" TEXT NOT NULL,
+  type TEXT NOT NULL,
+  provider TEXT NOT NULL,
+  "providerAccountId" TEXT NOT NULL,
+  refresh_token TEXT,
+  access_token TEXT,
+  expires_at INTEGER,
+  token_type TEXT,
+  scope TEXT,
+  id_token TEXT,
+  session_state TEXT,
+  CONSTRAINT accounts_user_fkey FOREIGN KEY("userId") REFERENCES "users"(id) ON DELETE CASCADE,
+  CONSTRAINT accounts_provider_unique UNIQUE(provider, "providerAccountId")
+);
+
+CREATE TABLE "sessions" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  "sessionToken" TEXT UNIQUE NOT NULL,
+  "userId" TEXT NOT NULL,
+  expires TIMESTAMP NOT NULL,
+  CONSTRAINT sessions_user_fkey FOREIGN KEY("userId") REFERENCES "users"(id) ON DELETE CASCADE
+);
+
+CREATE TABLE "verificationtokens" (
+  identifier TEXT NOT NULL,
+  token TEXT UNIQUE NOT NULL,
+  expires TIMESTAMP NOT NULL,
+  CONSTRAINT verificationtokens_identifier_token UNIQUE(identifier, token)
+);
+
+-- ============= CONTACT MESSAGES TABLES =============
+
+CREATE TABLE "contact_messages" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  message TEXT NOT NULL,
+  urgency TEXT DEFAULT 'normal',
+  status TEXT DEFAULT 'pending',
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "updatedAt" TIMESTAMP DEFAULT now(),
+  "userId" TEXT,
+  CONSTRAINT contact_messages_user_fkey FOREIGN KEY("userId") REFERENCES "users"(id) ON DELETE SET NULL
+);
+
+CREATE TABLE "contact_replies" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  "messageId" TEXT NOT NULL,
+  content TEXT NOT NULL,
+  "isManual" BOOLEAN DEFAULT TRUE,
+  "sentAt" TIMESTAMP DEFAULT now(),
+  CONSTRAINT contact_replies_message_fkey FOREIGN KEY("messageId") REFERENCES "contact_messages"(id) ON DELETE CASCADE
+);
+
+CREATE TABLE "chat_sessions" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT,
+  "isActive" BOOLEAN DEFAULT TRUE,
+  "isArchived" BOOLEAN DEFAULT FALSE,
+  language TEXT DEFAULT 'en',
+  "riskLevel" "RiskLevel" DEFAULT 'NONE',
+  "totalMessages" INTEGER DEFAULT 0,
+  "lastMessageAt" TIMESTAMP DEFAULT now(),
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "updatedAt" TIMESTAMP DEFAULT now(),
+  "userId" TEXT NOT NULL,
+  CONSTRAINT chat_sessions_user_fkey FOREIGN KEY("userId") REFERENCES "users"(id) ON DELETE CASCADE
+);
+
+CREATE INDEX chat_sessions_user_active_idx ON "chat_sessions"("userId", "isActive");
+CREATE INDEX chat_sessions_user_last_idx ON "chat_sessions"("userId", "lastMessageAt");
+
+CREATE TABLE "chats" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  content TEXT NOT NULL,
+  role TEXT NOT NULL,
+  timestamp TIMESTAMP DEFAULT now(),
+  "userId" TEXT NOT NULL,
+  "sessionId" TEXT NOT NULL,
+  language TEXT DEFAULT 'en',
+  "riskLevel" "RiskLevel" DEFAULT 'NONE',
+  context JSONB,
+  "audioUrl" TEXT,
+  CONSTRAINT chats_user_fkey FOREIGN KEY("userId") REFERENCES "users"(id) ON DELETE CASCADE,
+  CONSTRAINT chats_session_fkey FOREIGN KEY("sessionId") REFERENCES "chat_sessions"(id) ON DELETE CASCADE
+);
+
+CREATE INDEX chats_session_time_idx ON "chats"("sessionId", timestamp);
+CREATE INDEX chats_user_time_idx ON "chats"("userId", timestamp);
+
+CREATE TABLE "counselors" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  bio TEXT,
+  specialties TEXT[] NOT NULL,
+  languages TEXT[] DEFAULT '{"en"}',
+  "isActive" BOOLEAN DEFAULT TRUE,
+  "profileImage" TEXT,
+  experience INTEGER,
+  education TEXT,
+  approach TEXT,
+  "consultationFee" DOUBLE PRECISION,
+  "maxDailySessions" INTEGER DEFAULT 8,
+  "bufferTimeMinutes" INTEGER DEFAULT 15,
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "updatedAt" TIMESTAMP DEFAULT now()
+);
+
+CREATE TABLE "availability_slots" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  "counselorId" TEXT NOT NULL,
+  "dayOfWeek" INTEGER NOT NULL,
+  "startTime" TIMESTAMP NOT NULL,
+  "endTime" TIMESTAMP NOT NULL,
+  "isBooked" BOOLEAN DEFAULT FALSE,
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "updatedAt" TIMESTAMP DEFAULT now(),
+  CONSTRAINT availability_slots_counselor_fkey FOREIGN KEY("counselorId") REFERENCES "counselors"(id) ON DELETE CASCADE,
+  CONSTRAINT availability_slots_unique UNIQUE("counselorId", "dayOfWeek", "startTime", "endTime")
+);
+
+CREATE TABLE "bookings" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  "slotTime" TIMESTAMP NOT NULL,
+  "endTime" TIMESTAMP NOT NULL,
+  status "BookingStatus" DEFAULT 'PENDING',
+  notes TEXT,
+  "sessionType" "SessionType" DEFAULT 'ONE_ON_ONE',
+  "isRecurring" BOOLEAN DEFAULT FALSE,
+  "recurringPattern" TEXT,
+  "recurringEndDate" TIMESTAMP,
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "updatedAt" TIMESTAMP DEFAULT now(),
+  "userId" TEXT NOT NULL,
+  "counselorId" TEXT NOT NULL,
+  "availabilitySlotId" TEXT UNIQUE,
+  CONSTRAINT bookings_user_fkey FOREIGN KEY("userId") REFERENCES "users"(id) ON DELETE CASCADE,
+  CONSTRAINT bookings_counselor_fkey FOREIGN KEY("counselorId") REFERENCES "counselors"(id),
+  CONSTRAINT bookings_availability_slot_fkey FOREIGN KEY("availabilitySlotId") REFERENCES "availability_slots"(id)
+);
+
+CREATE TABLE "group_sessions" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  description TEXT,
+  "maxParticipants" INTEGER DEFAULT 10,
+  "sessionDate" TIMESTAMP NOT NULL,
+  duration INTEGER NOT NULL,
+  "counselorId" TEXT NOT NULL,
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "updatedAt" TIMESTAMP DEFAULT now(),
+  CONSTRAINT group_sessions_counselor_fkey FOREIGN KEY("counselorId") REFERENCES "counselors"(id)
+);
+
+CREATE TABLE "group_session_participants" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  "groupSessionId" TEXT NOT NULL,
+  "userId" TEXT NOT NULL,
+  "joinedAt" TIMESTAMP DEFAULT now(),
+  CONSTRAINT group_session_participants_group_session_fkey FOREIGN KEY("groupSessionId") REFERENCES "group_sessions"(id) ON DELETE CASCADE,
+  CONSTRAINT group_session_participants_user_fkey FOREIGN KEY("userId") REFERENCES "users"(id) ON DELETE CASCADE,
+  CONSTRAINT group_session_participants_unique UNIQUE("groupSessionId", "userId")
+);
+
+CREATE TABLE "waitlist_entries" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  "userId" TEXT NOT NULL,
+  "counselorId" TEXT NOT NULL,
+  "preferredDay" INTEGER,
+  "preferredTime" TEXT,
+  notes TEXT,
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "updatedAt" TIMESTAMP DEFAULT now(),
+  contacted BOOLEAN DEFAULT FALSE,
+  CONSTRAINT waitlist_entries_user_fkey FOREIGN KEY("userId") REFERENCES "users"(id) ON DELETE CASCADE,
+  CONSTRAINT waitlist_entries_counselor_fkey FOREIGN KEY("counselorId") REFERENCES "counselors"(id),
+  CONSTRAINT waitlist_entries_unique UNIQUE("userId", "counselorId")
+);
+
+CREATE TABLE "session_notes" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  content TEXT NOT NULL,
+  "isPrivate" BOOLEAN DEFAULT TRUE,
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "updatedAt" TIMESTAMP DEFAULT now(),
+  "userId" TEXT NOT NULL,
+  "counselorId" TEXT NOT NULL,
+  "bookingId" TEXT NOT NULL,
+  CONSTRAINT session_notes_user_fkey FOREIGN KEY("userId") REFERENCES "users"(id),
+  CONSTRAINT session_notes_counselor_fkey FOREIGN KEY("counselorId") REFERENCES "counselors"(id),
+  CONSTRAINT session_notes_booking_fkey FOREIGN KEY("bookingId") REFERENCES "bookings"(id)
+);
+
+CREATE TABLE "counselor_notes" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  content TEXT NOT NULL,
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "updatedAt" TIMESTAMP DEFAULT now(),
+  "counselorId" TEXT NOT NULL,
+  "userId" TEXT NOT NULL,
+  CONSTRAINT counselor_notes_counselor_fkey FOREIGN KEY("counselorId") REFERENCES "counselors"(id),
+  CONSTRAINT counselor_notes_user_fkey FOREIGN KEY("userId") REFERENCES "users"(id)
+);
+
+CREATE TABLE "mood_entries" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  mood INTEGER NOT NULL,
+  notes TEXT,
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "userId" TEXT NOT NULL,
+  "bookingId" TEXT,
+  CONSTRAINT mood_entries_user_fkey FOREIGN KEY("userId") REFERENCES "users"(id) ON DELETE CASCADE,
+  CONSTRAINT mood_entries_booking_fkey FOREIGN KEY("bookingId") REFERENCES "bookings"(id)
+);
+
+CREATE TABLE "feedbacks" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  rating INTEGER NOT NULL,
+  content TEXT,
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "userId" TEXT NOT NULL,
+  "bookingId" TEXT NOT NULL,
+  CONSTRAINT feedbacks_user_fkey FOREIGN KEY("userId") REFERENCES "users"(id),
+  CONSTRAINT feedbacks_booking_fkey FOREIGN KEY("bookingId") REFERENCES "bookings"(id)
+);
+
+CREATE TABLE "reminders" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  type "ReminderType" NOT NULL,
+  message TEXT NOT NULL,
+  "sendAt" TIMESTAMP NOT NULL,
+  sent BOOLEAN DEFAULT FALSE,
+  "sentAt" TIMESTAMP,
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "bookingId" TEXT NOT NULL,
+  CONSTRAINT reminders_booking_fkey FOREIGN KEY("bookingId") REFERENCES "bookings"(id)
+);
+
+CREATE TABLE "video_sessions" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  platform "VideoPlatform" NOT NULL,
+  "meetingId" TEXT,
+  "meetingUrl" TEXT,
+  "hostUrl" TEXT,
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "updatedAt" TIMESTAMP DEFAULT now(),
+  "bookingId" TEXT UNIQUE NOT NULL,
+  CONSTRAINT video_sessions_booking_fkey FOREIGN KEY("bookingId") REFERENCES "bookings"(id)
+);
+
+CREATE TABLE "posts" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT,
+  content TEXT NOT NULL,
+  "isAnonymous" BOOLEAN DEFAULT TRUE,
+  flagged BOOLEAN DEFAULT FALSE,
+  "riskLevel" "RiskLevel" DEFAULT 'NONE',
+  category TEXT DEFAULT 'general',
+  views INTEGER DEFAULT 0,
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "updatedAt" TIMESTAMP DEFAULT now(),
+  "authorId" TEXT NOT NULL,
+  "moderationStatus" "ModerationStatus" DEFAULT 'PENDING',
+  "moderationReason" TEXT,
+  "moderationNote" TEXT,
+  "moderatedAt" TIMESTAMP,
+  "moderatedBy" TEXT,
+  summary TEXT,
+  "summaryGeneratedAt" TIMESTAMP,
+  "isHidden" BOOLEAN DEFAULT FALSE,
+  language TEXT DEFAULT 'en',
+  "translatedContent" JSONB,
+  "writingSuggestions" JSONB,
+  "toneAnalysis" JSONB,
+  CONSTRAINT posts_author_fkey FOREIGN KEY("authorId") REFERENCES "users"(id) ON DELETE CASCADE
+);
+
+CREATE TABLE "replies" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  content TEXT NOT NULL,
+  flagged BOOLEAN DEFAULT FALSE,
+  "riskLevel" "RiskLevel" DEFAULT 'NONE',
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "updatedAt" TIMESTAMP DEFAULT now(),
+  "postId" TEXT NOT NULL,
+  "authorId" TEXT NOT NULL,
+  "parentId" TEXT,
+  "moderationStatus" "ModerationStatus" DEFAULT 'PENDING',
+  "moderationReason" TEXT,
+  "moderationNote" TEXT,
+  "moderatedAt" TIMESTAMP,
+  "moderatedBy" TEXT,
+  "isHidden" BOOLEAN DEFAULT FALSE,
+  language TEXT DEFAULT 'en',
+  "translatedContent" JSONB,
+  "writingSuggestions" JSONB,
+  "toneAnalysis" JSONB,
+  CONSTRAINT replies_post_fkey FOREIGN KEY("postId") REFERENCES "posts"(id) ON DELETE CASCADE,
+  CONSTRAINT replies_author_fkey FOREIGN KEY("authorId") REFERENCES "users"(id) ON DELETE CASCADE,
+  CONSTRAINT replies_parent_fkey FOREIGN KEY("parentId") REFERENCES "replies"(id)
+);
+
+CREATE TABLE "likes" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "userId" TEXT NOT NULL,
+  "postId" TEXT,
+  "replyId" TEXT,
+  CONSTRAINT likes_user_fkey FOREIGN KEY("userId") REFERENCES "users"(id) ON DELETE CASCADE,
+  CONSTRAINT likes_post_fkey FOREIGN KEY("postId") REFERENCES "posts"(id) ON DELETE CASCADE,
+  CONSTRAINT likes_reply_fkey FOREIGN KEY("replyId") REFERENCES "replies"(id) ON DELETE CASCADE,
+  CONSTRAINT likes_user_post_unique UNIQUE("userId", "postId"),
+  CONSTRAINT likes_user_reply_unique UNIQUE("userId", "replyId")
+);
+
+CREATE TABLE "bookmarks" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "userId" TEXT NOT NULL,
+  "postId" TEXT NOT NULL,
+  CONSTRAINT bookmarks_user_fkey FOREIGN KEY("userId") REFERENCES "users"(id) ON DELETE CASCADE,
+  CONSTRAINT bookmarks_post_fkey FOREIGN KEY("postId") REFERENCES "posts"(id) ON DELETE CASCADE,
+  CONSTRAINT bookmarks_user_post_unique UNIQUE("userId", "postId")
+);
+
+CREATE TABLE "shares" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  platform TEXT NOT NULL,
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "userId" TEXT NOT NULL,
+  "postId" TEXT NOT NULL,
+  CONSTRAINT shares_user_fkey FOREIGN KEY("userId") REFERENCES "users"(id) ON DELETE CASCADE,
+  CONSTRAINT shares_post_fkey FOREIGN KEY("postId") REFERENCES "posts"(id) ON DELETE CASCADE
+);
+
+CREATE TABLE "flags" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  reason TEXT,
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "userId" TEXT NOT NULL,
+  "postId" TEXT,
+  "replyId" TEXT,
+  resolved BOOLEAN DEFAULT FALSE,
+  "aiReviewStatus" "AiReviewStatus" DEFAULT 'PENDING',
+  "aiReviewResult" TEXT,
+  "aiReviewedAt" TIMESTAMP,
+  "aiConfidence" DOUBLE PRECISION,
+  CONSTRAINT flags_user_fkey FOREIGN KEY("userId") REFERENCES "users"(id) ON DELETE CASCADE,
+  CONSTRAINT flags_post_fkey FOREIGN KEY("postId") REFERENCES "posts"(id) ON DELETE CASCADE,
+  CONSTRAINT flags_reply_fkey FOREIGN KEY("replyId") REFERENCES "replies"(id) ON DELETE CASCADE,
+  CONSTRAINT flags_user_post_unique UNIQUE("userId", "postId"),
+  CONSTRAINT flags_user_reply_unique UNIQUE("userId", "replyId")
+);
+
+CREATE TABLE "notifications" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  type TEXT NOT NULL,
+  "isRead" BOOLEAN DEFAULT FALSE,
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "userId" TEXT NOT NULL,
+  metadata JSONB,
+  CONSTRAINT notifications_user_fkey FOREIGN KEY("userId") REFERENCES "users"(id) ON DELETE CASCADE
+);
+
+CREATE TABLE "resources" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  description TEXT,
+  content TEXT,
+  type "ResourceType" NOT NULL,
+  language TEXT DEFAULT 'en',
+  "fileUrl" TEXT,
+  "fileKey" TEXT,
+  "fileSize" INTEGER,
+  duration INTEGER,
+  author TEXT,
+  tags TEXT[] NOT NULL,
+  categories TEXT[] NOT NULL,
+  "isPublished" BOOLEAN DEFAULT FALSE,
+  "isFeatured" BOOLEAN DEFAULT FALSE,
+  "viewCount" INTEGER DEFAULT 0,
+  "downloadCount" INTEGER DEFAULT 0,
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "updatedAt" TIMESTAMP DEFAULT now(),
+  translations JSONB,
+  summary TEXT,
+  "summaryGeneratedAt" TIMESTAMP
+);
+
+CREATE TABLE "resource_ratings" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  rating INTEGER NOT NULL,
+  comment TEXT,
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "userId" TEXT NOT NULL,
+  "resourceId" TEXT NOT NULL,
+  CONSTRAINT resource_ratings_user_fkey FOREIGN KEY("userId") REFERENCES "users"(id) ON DELETE CASCADE,
+  CONSTRAINT resource_ratings_resource_fkey FOREIGN KEY("resourceId") REFERENCES "resources"(id) ON DELETE CASCADE,
+  CONSTRAINT resource_ratings_user_resource_unique UNIQUE("userId", "resourceId")
+);
+
+CREATE TABLE "resource_bookmarks" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "userId" TEXT NOT NULL,
+  "resourceId" TEXT NOT NULL,
+  CONSTRAINT resource_bookmarks_user_fkey FOREIGN KEY("userId") REFERENCES "users"(id) ON DELETE CASCADE,
+  CONSTRAINT resource_bookmarks_resource_fkey FOREIGN KEY("resourceId") REFERENCES "resources"(id) ON DELETE CASCADE,
+  CONSTRAINT resource_bookmarks_user_resource_unique UNIQUE("userId", "resourceId")
+);
+
+CREATE TABLE "resource_downloads" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "userId" TEXT NOT NULL,
+  "resourceId" TEXT NOT NULL,
+  CONSTRAINT resource_downloads_user_fkey FOREIGN KEY("userId") REFERENCES "users"(id) ON DELETE CASCADE,
+  CONSTRAINT resource_downloads_resource_fkey FOREIGN KEY("resourceId") REFERENCES "resources"(id) ON DELETE CASCADE
+);
+
+CREATE TABLE "resource_shares" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  platform TEXT NOT NULL,
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "userId" TEXT NOT NULL,
+  "resourceId" TEXT NOT NULL,
+  CONSTRAINT resource_shares_user_fkey FOREIGN KEY("userId") REFERENCES "users"(id) ON DELETE CASCADE,
+  CONSTRAINT resource_shares_resource_fkey FOREIGN KEY("resourceId") REFERENCES "resources"(id) ON DELETE CASCADE
+);
+
+CREATE TABLE "resource_views" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "userId" TEXT,
+  "resourceId" TEXT NOT NULL,
+  CONSTRAINT resource_views_user_fkey FOREIGN KEY("userId") REFERENCES "users"(id) ON DELETE SET NULL,
+  CONSTRAINT resource_views_resource_fkey FOREIGN KEY("resourceId") REFERENCES "resources"(id) ON DELETE CASCADE
+);
+
+CREATE TABLE "resource_recommendations" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  score DOUBLE PRECISION NOT NULL,
+  reason TEXT,
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "userId" TEXT NOT NULL,
+  "resourceId" TEXT NOT NULL,
+  CONSTRAINT resource_recommendations_user_fkey FOREIGN KEY("userId") REFERENCES "users"(id) ON DELETE CASCADE,
+  CONSTRAINT resource_recommendations_resource_fkey FOREIGN KEY("resourceId") REFERENCES "resources"(id) ON DELETE CASCADE,
+  CONSTRAINT resource_recommendations_user_resource_unique UNIQUE("userId", "resourceId")
+);
+
+CREATE TABLE "resource_comments" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  content TEXT NOT NULL,
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "updatedAt" TIMESTAMP DEFAULT now(),
+  "userId" TEXT NOT NULL,
+  "resourceId" TEXT NOT NULL,
+  "parentId" TEXT,
+  CONSTRAINT resource_comments_user_fkey FOREIGN KEY("userId") REFERENCES "users"(id) ON DELETE CASCADE,
+  CONSTRAINT resource_comments_resource_fkey FOREIGN KEY("resourceId") REFERENCES "resources"(id) ON DELETE CASCADE,
+  CONSTRAINT resource_comments_parent_fkey FOREIGN KEY("parentId") REFERENCES "resource_comments"(id)
+);
+
+CREATE TABLE "resource_comment_likes" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "userId" TEXT NOT NULL,
+  "commentId" TEXT NOT NULL,
+  CONSTRAINT resource_comment_likes_user_fkey FOREIGN KEY("userId") REFERENCES "users"(id) ON DELETE CASCADE,
+  CONSTRAINT resource_comment_likes_comment_fkey FOREIGN KEY("commentId") REFERENCES "resource_comments"(id) ON DELETE CASCADE,
+  CONSTRAINT resource_comment_likes_user_comment_unique UNIQUE("userId", "commentId")
+);
+
+CREATE TABLE "resource_comment_flags" (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid(),
+  "createdAt" TIMESTAMP DEFAULT now(),
+  "userId" TEXT NOT NULL,
+  "commentId" TEXT NOT NULL,
+  reason TEXT,
+  CONSTRAINT resource_comment_flags_user_fkey FOREIGN KEY("userId") REFERENCES "users"(id) ON DELETE CASCADE,
+  CONSTRAINT resource_comment_flags_comment_fkey FOREIGN KEY("commentId") REFERENCES "resource_comments"(id) ON DELETE CASCADE,
+  CONSTRAINT resource_comment_flags_user_comment_unique UNIQUE("userId", "commentId")
+);
+
+-- ============= INDEXES =============
+
+CREATE INDEX contact_messages_status_idx ON "contact_messages"(status);
+CREATE INDEX contact_messages_urgency_idx ON "contact_messages"(urgency);
+CREATE INDEX contact_messages_created_at_idx ON "contact_messages"("createdAt");
+CREATE INDEX contact_replies_message_id_idx ON "contact_replies"("messageId");
+
+CREATE INDEX posts_author_idx ON "posts"("authorId");
+CREATE INDEX posts_created_at_idx ON "posts"("createdAt");
+CREATE INDEX posts_moderation_status_idx ON "posts"("moderationStatus");
+
+CREATE INDEX replies_post_idx ON "replies"("postId");
+CREATE INDEX replies_author_idx ON "replies"("authorId");
+CREATE INDEX replies_parent_idx ON "replies"("parentId");
+
+CREATE INDEX resources_type_idx ON "resources"(type);
+CREATE INDEX resources_published_idx ON "resources"("isPublished");
+CREATE INDEX resources_featured_idx ON "resources"("isFeatured");
+CREATE INDEX resources_created_at_idx ON "resources"("createdAt");
+
+CREATE INDEX resource_comments_resource_idx ON "resource_comments"("resourceId");
+CREATE INDEX resource_comments_user_idx ON "resource_comments"("userId");
+CREATE INDEX resource_comments_parent_idx ON "resource_comments"("parentId");
