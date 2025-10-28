@@ -51,10 +51,7 @@ export default function AuthButtons() {
         {isLoading === "github" ? "Signing in..." : "Continue with GitHub"}
       </Button>
 
-      {/* GitHub specific info */}
-      <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
-        <p>For GitHub: Make sure your email is public or you&apos;ve added it to your GitHub account.</p>
-      </div>
+      
     </div>
   )
 }
