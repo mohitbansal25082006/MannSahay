@@ -82,7 +82,7 @@ Transform student mental health from **stigma-driven silence** to **proactive, c
 ### 🌈 What Makes Us Different
 
 ✅ **100% Indian Context** - Built with Indian cultural nuances, idioms, and social dynamics  
-✅ **10 Indian Languages** - Hindi, Tamil, Bengali, Telugu, Marathi, Gujarati, Kannada, Malayalam, Punjabi, English  
+✅ **5 Indian Languages** - Hindi, Tamil, Bengali, Telugu, Marathi, Gujarati, Kannada, Malayalam, Punjabi, English  
 ✅ **AI + Human Hybrid** - LLM-powered assistance with professional counselor oversight  
 ✅ **Privacy-First** - Anonymous posting, no PII storage, GDPR/DPDP compliant  
 ✅ **Institutional Analytics** - Data-driven insights for proactive interventions  
